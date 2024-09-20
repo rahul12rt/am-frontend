@@ -7,8 +7,24 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {
+    container: {
+      center: true,
+      padding: "30px",
+      screens: {
+        "2xl": "1372px",
+      },
+    },
+    extend: {      
       colors: {
+        white: {
+          1: "#ffffff",
+        },
+        black: {
+          1: "#000000",
+        },
+        red: {
+          1: "#DB4444",
+        }
       },
     },
   },
