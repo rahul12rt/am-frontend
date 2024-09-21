@@ -1,9 +1,30 @@
+'use client';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 const Header = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 0) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <header className='text-white-1 fixed top-0 left-0 w-full z-[1]'>
+    <header
+      className={`text-white-1 fixed top-0 left-0 w-full z-[1] transition-all duration-300${
+        isScrolled ? ' bg-black-1' : ''
+      }`}
+    >
       <nav className='container flex justify-between items-center py-[13px]'>
         <div className='flex items-center gap-[24px]'>
           <button className='flex justify-center items-center gap-[4px]'>
