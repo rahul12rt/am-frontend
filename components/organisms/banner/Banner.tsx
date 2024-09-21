@@ -6,7 +6,7 @@ const Banner = () => {
     >
       <div className='container h-full'>
         <div className='h-full flex flex-col justify-end items-start py-[60px]'>
-          <h1 className='text-[1.6rem] text-white-1 leading-[19px] pb-[17px] max-w-[550px]'>
+          <h1 className='text-[1.6rem] text-white-1 leading-[19px] pb-[17px] max-w-[505px]'>
             Mechanical watches may go through up to 50 or 60 different processes
             before the watch is considered to be as near to perfect as humanly
             possible before delivery.
