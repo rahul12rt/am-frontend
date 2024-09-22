@@ -14,7 +14,12 @@ const config: Config = {
         "2xl": "1372px",
       },
     },
-    extend: {      
+    extend: {
+      screens: {
+        "custom-xsm": "320px",
+        "custom-sm": "745px",
+        "custom-md": "1024px",
+      },
       colors: {
         white: {
           1: "#ffffff",
@@ -24,7 +29,7 @@ const config: Config = {
         },
         red: {
           1: "#DB4444",
-        }
+        },
       },
     },
   },
