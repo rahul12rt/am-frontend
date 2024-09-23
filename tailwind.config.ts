@@ -14,17 +14,24 @@ const config: Config = {
         "2xl": "1372px",
       },
     },
-    extend: {      
+    extend: {
+      screens: {
+        "custom-xsm": "320px",
+        "custom-sm": "745px",
+        "custom-xmd": "992px",
+        "custom-md": "1024px",
+      },
       colors: {
         white: {
           1: "#ffffff",
+          2: "#d9d9d9",
         },
         black: {
           1: "#000000",
         },
         red: {
           1: "#DB4444",
-        }
+        },
       },
     },
   },

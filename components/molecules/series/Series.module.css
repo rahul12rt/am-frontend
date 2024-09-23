@@ -1,0 +1,3 @@
+.cardWrap::-webkit-scrollbar {
+  display: none;
+}
