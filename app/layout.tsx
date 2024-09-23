@@ -19,6 +19,11 @@ const ppeditorialnewitalic = localFont({
   variable: '--font-ppeditorialnewitalic',
 });
 
+const timesNewRomanNormal = localFont({
+  src: '../public/fonts/timesNewRoman/times-new-roman.ttf',
+  variable: '--font-timesNewRomanNormal',
+});
+
 export const metadata: Metadata = {
   title: 'ALBAN MARCUS',
   description:
@@ -33,7 +38,7 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body
-        className={`${centurygothic.className} ${ppneuemontrealNormal.variable} ${ppeditorialnewitalic.variable} bg-black-1 text-white-1`}
+        className={`${centurygothic.className} ${ppneuemontrealNormal.variable} ${ppeditorialnewitalic.variable} ${timesNewRomanNormal.variable} bg-black-1 text-white-1`}
       >
         <Header />
         {children}
