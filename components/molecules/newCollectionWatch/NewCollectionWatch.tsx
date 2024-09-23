@@ -11,7 +11,7 @@ const NewCollectionWatch = ({ item }: { item: WatchItemNewCollection }) => {
       <p className='text-[1.6rem] pb-[16px]'>{item.description}</p>
       <Image
         src={item.imageSrc}
-        width={item.imageWidth}
+        width={234}
         height={307}
         alt='alban marcus'
       />
