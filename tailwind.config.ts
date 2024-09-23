@@ -18,6 +18,7 @@ const config: Config = {
       screens: {
         "custom-xsm": "320px",
         "custom-sm": "745px",
+        "custom-xmd": "992px",
         "custom-md": "1024px",
       },
       colors: {
