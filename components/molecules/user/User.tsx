@@ -1,7 +1,7 @@
 import { useState, ChangeEvent, FormEvent } from "react";
 import Image from 'next/image';
-import { toast, Toaster } from 'react-hot-toast'; // Import toast and Toaster
 import styles from './User.module.scss';
+import { toast, Toaster } from 'react-hot-toast'; // Import toast and Toaster
 
 interface FormData {
   email: string;
@@ -162,7 +162,7 @@ const User = () => {
                 {errors.email}
               </p>
             )}
-            <div className='border-b-2 border-white-1 pb-[15px]'>&nbsp;</div>
+            <div className='border-b-2 border-white-1 mb-[15px]'></div>
 
             {/* Password Field */}
             <div className='flex item-center pb-[10px]'>
@@ -178,7 +178,7 @@ const User = () => {
                 onChange={handleChange}
               />
               <div
-                className='mr-[10px]'
+                className='mr-[10px] flex items-center'
                 onClick={togglePasswordVisibility}
                 style={{ cursor: 'pointer' }}
               >
@@ -195,7 +195,7 @@ const User = () => {
                 {errors.password}
               </p>
             )}
-            <div className='border-b-2 border-white-1 pb-[15px]'>&nbsp;</div>
+            <div className='border-b-2 border-white-1 mb-[15px]'></div>
 
             {/* Conditionally render Username and Confirm Password for Register */}
             {!isLogin && (
@@ -224,9 +224,7 @@ const User = () => {
                     {errors.username}
                   </p>
                 )}
-                <div className='border-b-2 border-white-1 pb-[15px]'>
-                  &nbsp;
-                </div>
+                <div className='border-b-2 border-white-1 mb-[15px]'></div>
 
                 {/* Confirm Password Field */}
                 <div className='pb-[10px]'>
@@ -268,9 +266,7 @@ const User = () => {
                     {errors.confirmPassword}
                   </p>
                 )}
-                <div className='border-b-2 border-white-1 pb-[15px]'>
-                  &nbsp;
-                </div>
+                <div className='border-b-2 border-white-1 mb-[15px]'></div>
               </>
             )}
 
