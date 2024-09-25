@@ -25,12 +25,14 @@ const config: Config = {
         white: {
           1: "#ffffff",
           2: "#d9d9d9",
+          3: "#f0f0f0",
         },
         black: {
           1: "#000000",
         },
         red: {
           1: "#DB4444",
+          2: "#ff3333",
         },
       },
     },
