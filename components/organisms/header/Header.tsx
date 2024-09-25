@@ -9,7 +9,7 @@ import User from "@/components/molecules/user/User";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [drawerType, setDrawerType] = useState(null); // null means no drawer is open
+  const [drawerType, setDrawerType] = useState<string | null>(null); // null means no drawer is open
   const [isAnimating, setIsAnimating] = useState(false);
 
   const pathname = usePathname();
@@ -23,14 +23,14 @@ const Header = () => {
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const isCollectionRoute = pathname === "/collections";
+  const isCollectionRoute = pathname === '/collections';
 
   // Single function to toggle between series and user drawers
-  const toggleDrawer = (type: any) => {
+  const toggleDrawer = (type: string | null) => {
     if (!isAnimating) {
       setIsAnimating(true);
       setDrawerType(drawerType === type ? null : type);

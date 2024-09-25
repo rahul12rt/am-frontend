@@ -55,7 +55,7 @@ const User = () => {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    let validationErrors: Errors = {};
+    const validationErrors: Errors = {};
 
     // Common validation for both login and register
     if (!formData.email) {
