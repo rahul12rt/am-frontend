@@ -5,10 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FaBars } from "react-icons/fa";
 import Series from "@/components/molecules/series/Series";
+import User from "@/components/molecules/user/User";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerType, setDrawerType] = useState(null); // null means no drawer is open
   const [isAnimating, setIsAnimating] = useState(false);
 
   const pathname = usePathname();
@@ -28,10 +29,11 @@ const Header = () => {
 
   const isCollectionRoute = pathname === "/collections";
 
-  const toggleDrawer = () => {
+  // Single function to toggle between series and user drawers
+  const toggleDrawer = (type: any) => {
     if (!isAnimating) {
       setIsAnimating(true);
-      setIsDrawerOpen(!isDrawerOpen);
+      setDrawerType(drawerType === type ? null : type);
     }
   };
 
@@ -44,13 +46,15 @@ const Header = () => {
     }
   }, [isAnimating]);
 
+  const isDrawerOpen = drawerType !== null;
+
   return (
     <>
       <header
         style={{
-          backdropFilter: isScrolled || isCollectionRoute ? "blur(5px)" : "",
+          backdropFilter: isScrolled || isCollectionRoute ? "blur(20px)" : "",
         }}
-        className={`text-white-1 fixed top-0 left-0 w-full z-[1] transition-all duration-300 z-[3] ${
+        className={`text-white-1 fixed top-0 left-0 w-full z-[3] transition-all duration-300 ${
           isScrolled || isCollectionRoute ? "bg-black-1 bg-opacity-60" : ""
         }`}
       >
@@ -65,9 +69,9 @@ const Header = () => {
 
             {/* Series Button */}
             <button
-              onClick={toggleDrawer}
+              onClick={() => toggleDrawer("series")}
               className={`flex justify-center items-center gap-[10px] hidden custom-xmd:block hover:border-white-1 transition-all duration-300 ${
-                isDrawerOpen
+                drawerType === "series"
                   ? "border-b-2 border-white-1"
                   : "border-b-2 border-transparent"
               }`}
@@ -89,13 +93,6 @@ const Header = () => {
           </div>
 
           <Link href="/" className="text-[16px] zen-dots-regular ">
-            {/* <Image
-              src="/icons/logo.svg"
-              width={257}
-              height={27}
-              alt="logo"
-              className="custom-xmd:w-[357px] w-[230px]"
-            /> */}
             <p className="tracking-[0px] lg:tracking-[10px] text-[16px]">
               ALBAN MARCUS
             </p>
@@ -127,7 +124,10 @@ const Header = () => {
               </span>
               <Image src="/icons/bag.svg" alt="menu" width={27} height={27} />
             </button>
-            <button className="flex justify-center items-center">
+            <button
+              className="flex justify-center items-center"
+              onClick={() => toggleDrawer("user")}
+            >
               <Image
                 src="/icons/user.svg"
                 alt="menu"
@@ -176,7 +176,7 @@ const Header = () => {
         }
       `}</style>
       <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-[2] ${
+        className={`fixed inset-0 bg-black-1 bg-opacity-50 z-[2] ${
           isDrawerOpen || isAnimating ? "block" : "hidden"
         }`}
         style={{
@@ -186,12 +186,12 @@ const Header = () => {
             ? "fadeOut 0.3s ease-in"
             : "none",
           opacity: isDrawerOpen ? 1 : 0,
-          backdropFilter: "blur(5px)",
+          backdropFilter: "blur(20px)",
         }}
-        onClick={toggleDrawer}
+        onClick={() => toggleDrawer(null)}
       >
         <div
-          className="fixed inset-x-0 top-0 bg-black-1 text-white-1"
+          className="fixed inset-x-0 top-0 bg-black text-white-1"
           style={{
             animation: isDrawerOpen
               ? "slideIn 0.5s ease-out"
@@ -202,7 +202,8 @@ const Header = () => {
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <Series />
+          {drawerType === "series" && <Series />}
+          {drawerType === "user" && <User />}
         </div>
       </div>
     </>

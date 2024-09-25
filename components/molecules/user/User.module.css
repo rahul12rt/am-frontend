@@ -1,0 +1,113 @@
+.userForm {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+}
+.wrap {
+  max-width: 400px;
+  width: 100%;
+  height: auto;
+}
+.userForm h3 {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 36px;
+  text-align: left;
+  padding-top: 20px;
+}
+
+.userForm h6 {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 36px;
+  text-align: left;
+  padding-bottom: 20px;
+}
+
+.inputContainer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.inputIcon {
+  margin-right: 10px;
+}
+
+.inputIcon img {
+  width: 20px;
+  height: 20px;
+}
+
+.customInput {
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: white !important;
+  font-size: 16px !important;
+  width: 100% !important;
+}
+
+.customInput::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-weight: 500 !important;
+  font-family: Century Gothic;
+}
+
+.underline {
+  width: 100%;
+  height: 2px;
+  background-color: white;
+  margin-bottom: 15px;
+}
+
+.submitButton {
+  background-color: #ffffff;
+  color: #000000;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 12px 24px;
+  margin-top: 20px;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.submitButton:hover {
+  background-color: #f0f0f0;
+}
+
+.submitButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+}
+
+.info {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 21px;
+  text-align: left;
+}
+
+.info span {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 21px;
+  text-align: left;
+  letter-spacing: 0.02rem;
+  cursor: pointer;
+}
+
+.error {
+  color: #ff3333;
+  font-size: 10px;
+  letter-spacing: 0.02rem;
+  margin-bottom: 4px;
+}
