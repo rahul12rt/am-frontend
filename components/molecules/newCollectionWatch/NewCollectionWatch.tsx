@@ -14,6 +14,7 @@ const NewCollectionWatch = ({ item }: { item: WatchItemNewCollection }) => {
         width={234}
         height={307}
         alt='alban marcus'
+        className='mx-auto'
       />
     </Link>
   );

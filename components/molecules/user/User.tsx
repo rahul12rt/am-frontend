@@ -167,7 +167,12 @@ const User = () => {
             {/* Password Field */}
             <div className='flex item-center pb-[10px]'>
               <div className='mr-[10px] flex item-center'>
-                <img src='/icons/lock.svg' alt='Icon' width={20} height={20} />
+                <Image
+                  src='/icons/lock.svg'
+                  alt='Icon'
+                  width={20}
+                  height={20}
+                />
               </div>
               <input
                 type={showPassword ? 'text' : 'password'} // Toggle between text and password
