@@ -1,10 +1,13 @@
 'use client';
 import useEmblaCarousel from 'embla-carousel-react';
 import { EmblaOptionsType } from 'embla-carousel';
-import { DotButton, useDotButton } from '../../atoms/CarouselDotButton/CarouselDotButton';
+import {
+  CarouselDotButton,
+  useDotButton,
+} from '../../atoms/CarouselDotButton/CarouselDotButton';
 import NewCollectionWatch from '@/components/molecules/newCollectionWatch/NewCollectionWatch';
 import { mostLovedItems } from '@/data/watches';
-import styles from './EmblaCarousel.module.scss';
+import styles from './MostLovedCarousel.module.scss';
 
 type PropType = {
   options?: EmblaOptionsType;
@@ -36,7 +39,7 @@ const MostLovedCarousel: React.FC<PropType> = (props) => {
 
       <div className={`${styles.embla__dots} pt-[60px]`}>
         {scrollSnaps.map((_, index) => (
-          <DotButton
+          <CarouselDotButton
             key={index}
             onClick={() => onDotButtonClick(index)}
             className={`${styles.embla__dot} ${

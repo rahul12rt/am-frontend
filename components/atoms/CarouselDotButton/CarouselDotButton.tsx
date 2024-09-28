@@ -46,7 +46,7 @@ export const useDotButton = (
 
 type PropType = ComponentPropsWithRef<'button'>;
 
-export const DotButton: React.FC<PropType> = (props) => {
+export const CarouselDotButton: React.FC<PropType> = (props) => {
   const { children, ...restProps } = props;
 
   return (
