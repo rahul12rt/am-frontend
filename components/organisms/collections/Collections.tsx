@@ -1,9 +1,10 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { CollectionWatchesTypes } from '@/types';
 
 const Collections = ({ data }: { data: CollectionWatchesTypes[] }) => {
   return (
-    <div className='grid grid-cols-1 custom-xsm:grid-cols-1 custom-sm:grid-cols-2 custom-md:grid-cols-4 gap-4'>
+    <div className='grid grid-cols-1 custom-xsm:grid-cols-1 custom-sm:grid-cols-2 custom-md:grid-cols-4 gap-x-4 gap-y-[50px]'>
       {data.map((product) => (
         <div
           key={product.id}
@@ -18,11 +19,14 @@ const Collections = ({ data }: { data: CollectionWatchesTypes[] }) => {
                 <h3 className='text-[16px] font-bold'>{product.name}</h3>
               </div>
             </div>
-            <img
-              src={product.image}
-              alt={product.name}
-              className='object-cover mb-6 mt-6 h-[260px]'
-            />
+            <div className='relative min-w-full h-[260px]'>
+              <Image
+                fill
+                src={product.image}
+                alt={product.name}
+                className='object-contain'
+              />
+            </div>
             <h2 className='text-[14px] text-gray-400 m-2 text-center max-w-[250px] mx-auto'>
               {product.description}
             </h2>
@@ -32,9 +36,6 @@ const Collections = ({ data }: { data: CollectionWatchesTypes[] }) => {
               <span className='text-[24px] text-gray-400 line-through font-bold'>
                 ${product.originalPrice}
               </span>
-              <div className='flex justify-center items-center text-[28px] text-black-1'>
-                <img src='/icons/rightArrow.svg' alt='right arrow' />
-              </div>
             </div>
           </Link>
         </div>
