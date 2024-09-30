@@ -6,7 +6,7 @@ const OPTIONS: EmblaOptionsType = { dragFree: true };
 
 const MostLoved = () => {
   return (
-    <section className='pb-[25px]'>
+    <section>
       <div
         className='h-[288px] bg-contain bg-center bg-no-repeat'
         style={{ backgroundImage: 'url("/images/mostLoved.webp")' }}
