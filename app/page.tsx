@@ -5,6 +5,7 @@ import MostLoved from '@/components/organisms/mostLoved/MostLoved';
 import WatchAnimation from '@/components/organisms/watchAnimation/watchAnimation';
 import Upgrade from '@/components/organisms/upgrade/Upgrade';
 import QaulityMarque from '@/components/organisms/qualityMarque/QualityMarque';
+import Gallery from '@/components/organisms/gallery/Gallery';
 
 export default function Home() {
   return (
@@ -16,6 +17,7 @@ export default function Home() {
       <WatchAnimation />
       <Upgrade />
       <QaulityMarque />
+      <Gallery />
     </>
   );
 }
