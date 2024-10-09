@@ -11,8 +11,8 @@ const GetInTouch = () => {
             </h3>
             <p className='text-[2rem] leading-[25px]'>
               Lorem Ipsum is simply dummy text of the printing and typesetting
-              industry. Lorem Ipsum has been the industry's standard dummy text
-              ever since the 1500s
+              industry. Lorem Ipsum has been the industry&lsquo;s standard dummy
+              text ever since the 1500s
             </p>
           </div>
           <Link
