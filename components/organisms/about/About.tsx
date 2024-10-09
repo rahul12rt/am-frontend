@@ -2,7 +2,7 @@ const About = () => {
   return (
     <section className='pt-[90px] pb-[70px]'>
       <div className='container'>
-        <div className='flex justify-center gap-[141px]'>
+        <div className='flex justify-center gap-[141px] max-[1280px]:gap-[40px] max-[1024px]:flex-col'>
           <h2 className='font-[family-name:var(--font-ppneuemontrealNormal)] max-w-[522px] flex-shrink-0 text-[4.8rem] leading-[58px] text-white-1'>
             Upgrade
             <i className='font-[family-name:var(--font-ppeditorialnewitalic)]'>
