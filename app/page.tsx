@@ -6,6 +6,8 @@ import WatchAnimation from '@/components/organisms/watchAnimation/watchAnimation
 import Upgrade from '@/components/organisms/upgrade/Upgrade';
 import QaulityMarque from '@/components/organisms/qualityMarque/QualityMarque';
 import Gallery from '@/components/organisms/gallery/Gallery';
+import Articles from '@/components/organisms/articles/Articles';
+import GetInTouch from '@/components/organisms/getInTouch/GetInTouch';
 
 export default function Home() {
   return (
@@ -18,6 +20,8 @@ export default function Home() {
       <Upgrade />
       <QaulityMarque />
       <Gallery />
+      <GetInTouch />
+      <Articles />
     </>
   );
 }
