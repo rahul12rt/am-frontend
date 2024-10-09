@@ -17,11 +17,22 @@ const Gallery = () => {
   return (
     <section className='pb-[80px]'>
       <div className='container'>
-        <div className='grid grid-cols-3 grid-rows-2 gap-5 h-[753px]'>
+        <div className='grid grid-cols-1 gap-5 md:grid-cols-3 md:grid-rows-2 md:h-[753px]'>
           {images.map((image, index) => (
             <div
               key={index}
-              className={`relative rounded-lg cursor-pointer [&:nth-child(3)]:col-span-2 [&:nth-child(3)]:col-start-1 [&:nth-child(3)]:row-start-2 last-of-type:row-span-2 last-of-type:col-start-3 last-of-type:row-start-1] ${image}`}
+              className={`relative rounded-lg cursor-pointer h-[300px] md:h-auto
+                ${
+                  index === 2
+                    ? 'md:[&]:col-span-2 md:[&]:col-start-1 md:[&]:row-start-2'
+                    : ''
+                }
+                ${
+                  index === 3
+                    ? 'md:[&]:row-span-2 md:[&]:col-start-3 md:[&]:row-start-1'
+                    : ''
+                }
+              `}
               onClick={() => setSelectedImage(image)}
             >
               <Image
@@ -29,12 +40,12 @@ const Gallery = () => {
                 src={`/images/${image}`}
                 alt='gallery'
                 fill
+                sizes='(max-width: 768px) 100vw, 33vw'
               />
             </div>
           ))}
         </div>
       </div>
-
       {selectedImage && (
         <ImageModal
           selectedImage={selectedImage}

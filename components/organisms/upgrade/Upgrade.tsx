@@ -7,7 +7,7 @@ const Upgrade = () => {
       style={{ backgroundImage: 'url("/images/bgNet.webp")' }}
     >
       <div className='container'>
-        <div className='flex justify-center wrap gap-[141px]'>
+        <div className='flex justify-center wrap gap-[141px] max-[1280px]:gap-[40px] max-[1024px]:flex-col'>
           <div className='max-w-[522px] flex-shrink-0'>
             <h2 className='font-[family-name:var(--font-ppneuemontrealNormal)] text-[4.8rem] leading-[58px] text-white-1 pb-[22px]'>
               Upgrade
@@ -24,7 +24,7 @@ const Upgrade = () => {
               Book now
             </Link>
           </div>
-          <ul className='text-[2rem] leading-[2.5rem] list-disc'>
+          <ul className='text-[2rem] leading-[2.5rem] list-disc max-[1024px]:pl-[20px]'>
             <li>
               Movement: Landeron 24 Skeleton AutomaticMovement - Swiss data to
               move Made merge data to be made single

@@ -14,7 +14,7 @@ const MostLoved = () => {
         &nbsp;
       </div>
 
-      <div className='container translate-y-[-170px]'>
+      <div className='container md:translate-y-[-170px] translate-y-[-100px]'>
         <MostLovedCarousel options={OPTIONS} />
         <div className='text-center pt-[14px]'>
           <Link href='/collections' className='text-[1.6rem] leading-[2rem]'>
