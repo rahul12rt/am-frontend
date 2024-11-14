@@ -6,7 +6,7 @@ import ScrollTrigger from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 const ImageSequence: React.FC = () => {
-  const totalImages: number = 652;
+  const totalImages: number = 120;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [currentImage, setCurrentImage] = useState<string>(
     "/images/sequence/watch1.png"
@@ -45,7 +45,7 @@ const ImageSequence: React.FC = () => {
         <img
           src={currentImage}
           alt="Watch Sequence"
-          style={{ width: "100%", height: "100vh" }}
+          className="sequenceWrapper"
         />
       </div>
     </div>

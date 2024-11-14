@@ -1,10 +1,8 @@
+@import url("https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Zen+Dots&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url("https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Zen+Dots&display=swap");
-
 html {
   font-size: 10px;
 }
@@ -31,7 +29,6 @@ html {
     transform: translateX(-100%);
   }
 }
-
 @keyframes marquee-reverse {
   from {
     transform: translateX(-100%);
@@ -40,7 +37,6 @@ html {
     transform: translateX(100%);
   }
 }
-
 .animate-marquee-reverse {
   animation: marquee-reverse 200s linear infinite;
 }
@@ -50,24 +46,8 @@ html {
 }
 
 .sequenceWrapper {
-  width: 100%;
-  height: 100vh;
-}
-
-.bg-custom {
-  background-image: url("/images/bgNet.webp");
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: top;
-}
-
-@media screen and (max-width: 768px) {
-  .sequenceWrapper {
-    width: 100%;
-    height: 100vh;
-    object-fit: cover;
-  }
-  .bg-custom {
-    background-image: none;
-  }
-}
+  width: "100%";
+  height: "100vh";
+  -o-object-fit: "cover";
+     object-fit: "cover";
+}/*# sourceMappingURL=globals.css.map */
