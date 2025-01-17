@@ -4,7 +4,7 @@ import { WatchItemNewCollection } from "@/types";
 
 const NewCollectionWatch = ({ item }: { item: WatchItemNewCollection }) => {
   return (
-    <Link href="/" key={item.title}>
+    <Link href="/1" key={item.title}>
       <h3 className="text-[2.4rem] font-bold text-white-1 pb-[3px]">
         {item.title}
       </h3>

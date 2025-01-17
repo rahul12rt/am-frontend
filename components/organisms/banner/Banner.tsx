@@ -49,7 +49,7 @@ const Banner = () => {
       // Explicitly return void
       return undefined;
     };
-  }, []); // Empty dependency array
+  }, []); 
 
   return (
     <section

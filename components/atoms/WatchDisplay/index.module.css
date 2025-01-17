@@ -1,0 +1,67 @@
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #000;
+    color: #fff;
+    height: 100vh;
+    padding: 20px;
+  }
+  
+  .watchImageContainer {
+    flex: 1;
+    display: flex;
+    justify-content: end;
+    align-items: center;
+  }
+  
+  .watchImage {
+    width: 80%;
+    max-width: 400px;
+  }
+  
+  .textContainer {
+    flex: 1;
+    text-align: left;
+    padding: 20px;
+  }
+  
+  .title {
+    font-size: 56px;
+  }
+
+  .customFont {
+    font-family: var(--font-ppeditorialnewitalic);
+  }
+  
+  
+  .description {
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 2rem;
+    width: 500px;
+  }
+  
+  .colorOptions {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .colorCircle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .colorCircle:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  }
+  
+  .active {
+    outline: 2px solid #ffffff;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  }
+  

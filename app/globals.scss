@@ -54,12 +54,64 @@ html {
   height: 100vh;
 }
 
+.customFont {
+  font-family: var(--font-ppeditorialnewitalic);
+}
+
 .bg-custom {
   background-image: url("/images/bgNet.webp");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: top;
 }
+
+.buttonWrap{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.primaryButton{
+  background-color: #F4F4F4;
+  padding: 16px 32px;
+  border-radius: 4px;
+  color: #000;
+  font-size: 14px;
+  font-weight: 500;
+  display: block;
+  width: 150px;
+}
+
+.secoundaryButton{
+  background-color: #FFF;
+  padding: 16px 32px;
+  border-radius: 4px;
+  color: #000;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #000;
+  width: 150px;
+}
+
+#flex{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 80px 0px;
+  gap: 40px;
+}
+
+.content{
+  text-align: center;
+}
+
+.content h6{
+  font-size: 64px;
+}
+
+.content p{
+  font-size: 14px;
+}
+
 
 @media screen and (max-width: 768px) {
   .sequenceWrapper {

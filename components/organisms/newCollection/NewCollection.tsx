@@ -19,7 +19,7 @@ const NewCollection = () => {
       </div>
 
       <div className="container py-[80px] max-[768px]:pb-[0px]">
-        <div className="flex justify-between items-center text-center gap-[30px] max-[768px]:flex-wrap max-[768px]:justify-center max-[768px]:gap-[50px]">
+        <div className="flex justify-around items-center text-center gap-[30px] max-[768px]:flex-wrap max-[768px]:justify-center max-[768px]:gap-[50px]">
           {collectionItems.map((item, index) => (
             <NewCollectionWatch key={index} item={item} />
           ))}
