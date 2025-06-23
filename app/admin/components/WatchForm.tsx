@@ -42,7 +42,10 @@ const WatchForm: React.FC<Props> = ({ onSubmit, initialData = {}, onCancel, isEd
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-3">
-          <label htmlFor="external_id" className="block text-sm font-medium text-slate-200">
+          <label
+            htmlFor="external_id"
+            className="block text-[1.2rem] font-medium text-slate-200"
+          >
             External ID *
           </label>
           <input
@@ -54,12 +57,15 @@ const WatchForm: React.FC<Props> = ({ onSubmit, initialData = {}, onCancel, isEd
             onChange={handleChange}
             required
             disabled={isSubmitting}
-            className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-600 disabled:text-slate-400 text-sm"
+            className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-600 disabled:text-slate-400 text-[1.2rem]"
           />
         </div>
 
         <div className="space-y-3">
-          <label htmlFor="name" className="block text-sm font-medium text-slate-200">
+          <label
+            htmlFor="name"
+            className="block text-[1.2rem] font-medium text-slate-200"
+          >
             Watch Name *
           </label>
           <input
@@ -71,12 +77,15 @@ const WatchForm: React.FC<Props> = ({ onSubmit, initialData = {}, onCancel, isEd
             onChange={handleChange}
             required
             disabled={isSubmitting}
-            className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-600 disabled:text-slate-400 text-sm"
+            className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-600 disabled:text-slate-400 text-[1.2rem]"
           />
         </div>
 
         <div className="space-y-3">
-          <label htmlFor="brand" className="block text-sm font-medium text-slate-200">
+          <label
+            htmlFor="brand"
+            className="block text-[1.2rem] font-medium text-slate-200"
+          >
             Brand
           </label>
           <input
@@ -87,12 +96,15 @@ const WatchForm: React.FC<Props> = ({ onSubmit, initialData = {}, onCancel, isEd
             value={form.brand || ""}
             onChange={handleChange}
             disabled={isSubmitting}
-            className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-600 disabled:text-slate-400 text-sm"
+            className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-600 disabled:text-slate-400 text-[1.2rem]"
           />
         </div>
 
         <div className="space-y-3">
-          <label htmlFor="model" className="block text-sm font-medium text-slate-200">
+          <label
+            htmlFor="model"
+            className="block text-[1.2rem] font-medium text-slate-200"
+          >
             Model
           </label>
           <input
@@ -103,12 +115,15 @@ const WatchForm: React.FC<Props> = ({ onSubmit, initialData = {}, onCancel, isEd
             value={form.model || ""}
             onChange={handleChange}
             disabled={isSubmitting}
-            className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-600 disabled:text-slate-400 text-sm"
+            className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-600 disabled:text-slate-400 text-[1.2rem]"
           />
         </div>
 
         <div className="space-y-3">
-          <label htmlFor="price" className="block text-sm font-medium text-slate-200">
+          <label
+            htmlFor="price"
+            className="block text-[1.2rem] font-medium text-slate-200"
+          >
             Price
           </label>
           <input
@@ -119,12 +134,15 @@ const WatchForm: React.FC<Props> = ({ onSubmit, initialData = {}, onCancel, isEd
             value={form.price || ""}
             onChange={handleChange}
             disabled={isSubmitting}
-            className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-600 disabled:text-slate-400 text-sm"
+            className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-600 disabled:text-slate-400 text-[1.2rem]"
           />
         </div>
 
         <div className="space-y-3 md:col-span-2">
-          <label htmlFor="description" className="block text-sm font-medium text-slate-200">
+          <label
+            htmlFor="description"
+            className="block text-[1.2rem] font-medium text-slate-200"
+          >
             Description
           </label>
           <textarea
@@ -135,7 +153,7 @@ const WatchForm: React.FC<Props> = ({ onSubmit, initialData = {}, onCancel, isEd
             onChange={handleChange}
             disabled={isSubmitting}
             rows={4}
-            className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-600 disabled:text-slate-400 resize-none text-sm"
+            className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-600 disabled:text-slate-400 resize-none text-[1.2rem]"
           />
         </div>
       </div>
@@ -144,17 +162,19 @@ const WatchForm: React.FC<Props> = ({ onSubmit, initialData = {}, onCancel, isEd
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 text-white px-6 py-4 rounded-xl flex items-center justify-center gap-3 transition-colors text-sm font-medium"
+          className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 text-white px-6 py-4 rounded-xl flex items-center justify-center gap-3 transition-colors text-[1.2rem] font-medium"
         >
           {isSubmitting ? (
             <>
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              <span className="text-sm">Saving...</span>
+              <span className="text-[1.2rem]">Saving...</span>
             </>
           ) : (
             <>
               <Save className="h-5 w-5" />
-              <span className="text-sm">{isEditing ? "Update Watch" : "Add Watch"}</span>
+              <span className="text-[1.2rem]">
+                {isEditing ? "Update Watch" : "Add Watch"}
+              </span>
             </>
           )}
         </button>
@@ -162,14 +182,14 @@ const WatchForm: React.FC<Props> = ({ onSubmit, initialData = {}, onCancel, isEd
           type="button"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="bg-slate-700 text-slate-200 border border-slate-600 hover:bg-slate-600 disabled:bg-slate-600 px-6 py-4 rounded-xl flex items-center gap-3 transition-colors text-sm font-medium"
+          className="bg-slate-700 text-slate-200 border border-slate-600 hover:bg-slate-600 disabled:bg-slate-600 px-6 py-4 rounded-xl flex items-center gap-3 transition-colors text-[1.2rem] font-medium"
         >
           <X className="h-5 w-5" />
-          <span className="text-sm">Cancel</span>
+          <span className="text-[1.2rem]">Cancel</span>
         </button>
       </div>
     </form>
-  )
+  );
 }
 
 export default WatchForm
