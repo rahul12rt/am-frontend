@@ -86,7 +86,7 @@ const AdminPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 pt-[63px]">
-      <div className="container mx-auto px-6 py-10 max-w-7xl">
+      <div className="container mx-auto px-6 py-10">
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-4 mb-3">

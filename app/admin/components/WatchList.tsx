@@ -45,16 +45,16 @@ const WatchList: React.FC<Props> = ({ watches, onEdit, onDelete }) => {
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-700 bg-slate-750">
-              <th className="text-left py-6 px-8 font-semibold text-slate-200 text-base">
+              <th className="text-left py-6 px-8 font-semibold text-slate-200 text-[1.2rem]">
                 Watch Details
               </th>
-              <th className="text-left py-6 px-8 font-semibold text-slate-200 text-base">
+              <th className="text-left py-6 px-8 font-semibold text-slate-200 text-[1.2rem]">
                 Brand & Model
               </th>
-              <th className="text-left py-6 px-8 font-semibold text-slate-200 text-base">
+              <th className="text-left py-6 px-8 font-semibold text-slate-200 text-[1.2rem]">
                 Price
               </th>
-              <th className="text-right py-6 px-8 font-semibold text-slate-200 text-base">
+              <th className="text-right py-6 px-8 font-semibold text-slate-200 text-[1.2rem]">
                 Actions
               </th>
             </tr>
@@ -76,12 +76,12 @@ const WatchList: React.FC<Props> = ({ watches, onEdit, onDelete }) => {
                       <div className="font-semibold text-white text-lg">
                         {watch.name}
                       </div>
-                      <div className="text-base text-slate-400 flex items-center gap-2 mt-2">
+                      <div className="text-[1.2rem] text-slate-400 flex items-center gap-2 mt-2">
                         <Tag className="h-4 w-4" />
-                        {watch.external_id}
+                        <span className="text-[1.2rem]">{watch.external_id}</span>
                       </div>
                       {watch.description && (
-                        <div className="text-base text-slate-300 mt-2 max-w-md">
+                        <div className="text-[1.2rem] text-slate-300 mt-2 max-w-md">
                           {watch.description}
                         </div>
                       )}
@@ -91,17 +91,17 @@ const WatchList: React.FC<Props> = ({ watches, onEdit, onDelete }) => {
                 <td className="py-6 px-8">
                   <div>
                     {watch.brand && (
-                      <div className="font-semibold text-white text-base">
+                      <div className="font-semibold text-white text-[1.2rem]">
                         {watch.brand}
                       </div>
                     )}
                     {watch.model && (
-                      <div className="text-base text-slate-400 mt-1">
+                      <div className="text-[1.2rem] text-slate-400 mt-1">
                         {watch.model}
                       </div>
                     )}
                     {!watch.brand && !watch.model && (
-                      <span className="text-slate-500 text-base">
+                      <span className="text-slate-500 text-[1.2rem]">
                         Not specified
                       </span>
                     )}
@@ -111,32 +111,32 @@ const WatchList: React.FC<Props> = ({ watches, onEdit, onDelete }) => {
                   {watch.price ? (
                     <div className="flex items-center gap-2 text-emerald-400 font-semibold text-lg">
                       <DollarSign className="h-5 w-5" />
-                      {Number.parseFloat(watch.price).toLocaleString()}
+                      <span className="text-lg">
+                        {Number.parseFloat(watch.price).toLocaleString()}
+                      </span>
                     </div>
                   ) : (
-                    <span className="text-slate-500 text-base">Not set</span>
+                    <span className="text-slate-500 text-[1.2rem]">Not set</span>
                   )}
                 </td>
                 <td className="py-6 px-8">
                   <div className="flex items-center justify-end gap-3">
                     <button
                       onClick={() => onEdit(watch)}
-                      className="bg-slate-700 text-slate-200 border border-slate-600 hover:bg-slate-600 hover:text-white px-4 py-3 rounded-xl flex items-center gap-2 transition-colors text-base font-medium"
+                      className="bg-slate-700 text-slate-200 border border-slate-600 hover:bg-slate-600 hover:text-white px-4 py-3 rounded-xl flex items-center gap-2 transition-colors text-[1.2rem] font-medium"
                     >
                       <Edit className="h-5 w-5" />
-                      Edit
                     </button>
                     <button
                       onClick={() => handleDelete(watch.external_id)}
                       disabled={deletingId === watch.external_id}
-                      className="bg-slate-700 text-red-400 border border-slate-600 hover:bg-red-900 hover:border-red-700 hover:text-red-300 disabled:bg-slate-600 px-4 py-3 rounded-xl flex items-center gap-2 transition-colors text-base font-medium"
+                      className="bg-slate-700 text-red-400 border border-slate-600 hover:bg-red-900 hover:border-red-700 hover:text-red-300 disabled:bg-slate-600 px-4 py-3 rounded-xl flex items-center gap-2 transition-colors text-[1.2rem] font-medium"
                     >
                       {deletingId === watch.external_id ? (
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-400"></div>
                       ) : (
                         <>
                           <Trash2 className="h-5 w-5" />
-                          Delete
                         </>
                       )}
                     </button>
@@ -164,9 +164,9 @@ const WatchList: React.FC<Props> = ({ watches, onEdit, onDelete }) => {
                   <h3 className="font-semibold text-white text-lg">
                     {watch.name}
                   </h3>
-                  <p className="text-base text-slate-400 flex items-center gap-2 mt-1">
+                  <p className="text-[1.2rem] text-slate-400 flex items-center gap-2 mt-1">
                     <Tag className="h-4 w-4" />
-                    {watch.external_id}
+                    <span className="text-[1.2rem]">{watch.external_id}</span>
                   </p>
                 </div>
               </div>
@@ -175,53 +175,49 @@ const WatchList: React.FC<Props> = ({ watches, onEdit, onDelete }) => {
             {(watch.brand || watch.model) && (
               <div className="mb-4">
                 {watch.brand && (
-                  <span className="font-semibold text-white text-base">
+                  <span className="font-semibold text-white text-[1.2rem]">
                     {watch.brand}
                   </span>
                 )}
                 {watch.brand && watch.model && (
-                  <span className="text-slate-400 text-base"> • </span>
+                  <span className="text-slate-400 text-[1.2rem]"> • </span>
                 )}
                 {watch.model && (
-                  <span className="text-slate-300 text-base">
-                    {watch.model}
-                  </span>
+                  <span className="text-slate-300 text-[1.2rem]">{watch.model}</span>
                 )}
               </div>
             )}
 
             {watch.price && (
               <div className="flex items-center gap-2 text-emerald-400 font-semibold mb-4 text-lg">
-                <DollarSign className="h-5 w-5" />$
-                {Number.parseFloat(watch.price).toLocaleString()}
+                <DollarSign className="h-5 w-5" />
+                <span className="text-lg">
+                  ${Number.parseFloat(watch.price).toLocaleString()}
+                </span>
               </div>
             )}
 
             {watch.description && (
-              <p className="text-base text-slate-300 mb-4">
-                {watch.description}
-              </p>
+              <p className="text-[1.2rem] text-slate-300 mb-4">{watch.description}</p>
             )}
 
             <div className="flex gap-3 pt-4 border-t border-slate-700">
               <button
                 onClick={() => onEdit(watch)}
-                className="flex-1 bg-slate-700 text-slate-200 border border-slate-600 hover:bg-slate-600 hover:text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-base font-medium"
+                className="flex-1 bg-slate-700 text-slate-200 border border-slate-600 hover:bg-slate-600 hover:text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-[1.2rem] font-medium"
               >
                 <Edit className="h-5 w-5" />
-                Edit
               </button>
               <button
                 onClick={() => handleDelete(watch.external_id)}
                 disabled={deletingId === watch.external_id}
-                className="flex-1 bg-slate-700 text-red-400 border border-slate-600 hover:bg-red-900 hover:text-red-300 disabled:bg-slate-600 px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-base font-medium"
+                className="flex-1 bg-slate-700 text-red-400 border border-slate-600 hover:bg-red-900 hover:text-red-300 disabled:bg-slate-600 px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-[1.2rem] font-medium"
               >
                 {deletingId === watch.external_id ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-400"></div>
                 ) : (
                   <>
                     <Trash2 className="h-5 w-5" />
-                    Delete
                   </>
                 )}
               </button>
@@ -234,4 +230,3 @@ const WatchList: React.FC<Props> = ({ watches, onEdit, onDelete }) => {
 };
 
 export default WatchList;
-// This code defines a React component for displaying a list of watches in both desktop and mobile formats.
