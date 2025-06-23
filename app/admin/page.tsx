@@ -8,11 +8,12 @@ import {
   fetchWatches,
   updateWatch,
 } from "./utils/adminApi";
-import { Plus, Watch } from "lucide-react";
+import { Plus, Watch as WatchIcon } from "lucide-react";
+import type { Watch } from "./types/watch";
 
 const AdminPage = () => {
-  const [watches, setWatches] = useState<any[]>([]);
-  const [editing, setEditing] = useState<any | null>(null);
+  const [watches, setWatches] = useState<Watch[]>([]);
+  const [editing, setEditing] = useState<Watch | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
@@ -30,7 +31,7 @@ const AdminPage = () => {
     loadWatches();
   }, []);
 
-  const handleAdd = async (data: any) => {
+  const handleAdd = async (data: Watch) => {
     try {
       await addWatch(data);
       const updatedWatches = await fetchWatches();
@@ -41,7 +42,7 @@ const AdminPage = () => {
     }
   };
 
-  const handleUpdate = async (data: any) => {
+  const handleUpdate = async (data: Watch) => {
     try {
       await updateWatch(data);
       setEditing(null);
@@ -63,7 +64,7 @@ const AdminPage = () => {
     }
   };
 
-  const handleEdit = (watch: any) => {
+  const handleEdit = (watch: Watch) => {
     setEditing(watch);
     setShowForm(true);
   };
@@ -91,7 +92,7 @@ const AdminPage = () => {
         <div className="mb-10">
           <div className="flex items-center gap-4 mb-3">
             <div className="p-3 bg-emerald-600 rounded-xl">
-              <Watch className="h-8 w-8 text-white" />
+              <WatchIcon className="h-8 w-8 text-white" />
             </div>
             <h1 className="text-4xl font-bold text-white">
               Watch Collection Admin

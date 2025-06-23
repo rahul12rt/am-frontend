@@ -2,11 +2,12 @@
 
 import type React from "react";
 import { useState } from "react";
-import { Edit, Trash2, Watch, DollarSign, Tag } from "lucide-react";
+import { Edit, Trash2, Watch as WatchIcon, DollarSign, Tag } from "lucide-react";
+import type { Watch } from "../types/watch";
 
 interface Props {
-  watches: any[];
-  onEdit: (watch: any) => void;
+  watches: Watch[];
+  onEdit: (watch: Watch) => void;
   onDelete: (external_id: string) => void;
 }
 
@@ -28,7 +29,7 @@ const WatchList: React.FC<Props> = ({ watches, onEdit, onDelete }) => {
     return (
       <div className="p-16 text-center">
         <div className="mx-auto w-32 h-32 bg-slate-700 rounded-full flex items-center justify-center mb-6">
-          <Watch className="h-16 w-16 text-slate-400" />
+          <WatchIcon className="h-16 w-16 text-slate-400" />
         </div>
         <h3 className="text-2xl font-medium text-white mb-3">No watches yet</h3>
         <p className="text-slate-400 text-lg">
@@ -70,7 +71,7 @@ const WatchList: React.FC<Props> = ({ watches, onEdit, onDelete }) => {
                 <td className="py-6 px-8">
                   <div className="flex items-start gap-4">
                     <div className="p-3 bg-slate-700 rounded-xl">
-                      <Watch className="h-6 w-6 text-slate-300" />
+                      <WatchIcon className="h-6 w-6 text-slate-300" />
                     </div>
                     <div>
                       <div className="font-semibold text-white text-lg">
@@ -158,7 +159,7 @@ const WatchList: React.FC<Props> = ({ watches, onEdit, onDelete }) => {
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-slate-700 rounded-xl">
-                  <Watch className="h-6 w-6 text-slate-300" />
+                  <WatchIcon className="h-6 w-6 text-slate-300" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-white text-lg">
