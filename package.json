@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@shadcn/ui": "^0.0.4",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/supabase-js": "^2.50.3",
     "embla-carousel": "^8.3.0",
     "embla-carousel-react": "^8.3.0",
     "framer-motion": "^11.9.0",

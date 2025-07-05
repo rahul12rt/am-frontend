@@ -1,33 +1,39 @@
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import Image from "next/image";
 import styles from "./User.module.scss";
-import { toast, Toaster } from "react-hot-toast"; // Import toast and Toaster
+import { toast, Toaster } from "react-hot-toast";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/navigation";
+import type { User } from "@supabase/auth-helpers-nextjs";
 
 interface FormData {
   email: string;
   password: string;
-  confirmPassword: string;
-  username: string;
 }
 
 interface Errors {
   email?: string;
   password?: string;
-  confirmPassword?: string;
-  username?: string;
 }
 
-const User = () => {
-  const [isLogin, setIsLogin] = useState(true); // State to toggle between login and register
+interface UserProps {
+  onClose?: () => void;
+}
+
+const User = ({ onClose }: UserProps) => {
+  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
-    confirmPassword: "",
-    username: "",
   });
   const [errors, setErrors] = useState<Errors>({});
-  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // For confirmPassword
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  const supabase = createClientComponentClient();
+  const router = useRouter();
 
   const toggleForm = () => {
     setIsLogin((prevState) => !prevState);
@@ -35,89 +41,231 @@ const User = () => {
     setFormData({
       email: "",
       password: "",
-      confirmPassword: "",
-      username: "",
     });
   };
 
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const validationErrors: Errors = {};
-
-    // Common validation for both login and register
-    if (!formData.email) {
-      validationErrors.email = "Email is required";
-    } else if (!validateEmail(formData.email)) {
-      validationErrors.email = "Please enter a valid email";
-    }
-
-    if (!formData.password) {
-      validationErrors.password = "Password is required";
-    }
-
-    // Validation for registration
-    if (!isLogin) {
-      if (!formData.username) {
-        validationErrors.username = "Username is required";
-      }
-
-      if (!formData.confirmPassword) {
-        validationErrors.confirmPassword = "Please confirm your password";
-      } else if (formData.password !== formData.confirmPassword) {
-        validationErrors.confirmPassword = "Passwords do not match";
-      }
-    }
-
-    // If no errors, submit the form (or handle it)
-    if (Object.keys(validationErrors).length === 0) {
-      console.log("Form submitted:", formData);
-
-      // Show success toast based on login or register
-      if (isLogin) {
-        toast.success("Logged in successfully!");
-      } else {
-        toast.success("Registered successfully!");
-      }
-
-      // Reset form fields after submission
-      setFormData({
-        email: "",
-        password: "",
-        confirmPassword: "",
-        username: "",
-      });
-      setErrors({});
-    } else {
-      setErrors(validationErrors);
-    }
-  };
-
-  // Toggle Password Visibility
   const togglePasswordVisibility = () => {
     setShowPassword((prevState) => !prevState);
   };
 
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword((prevState) => !prevState);
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Clear error when user starts typing
+    if (errors[name as keyof Errors]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: undefined,
+      }));
+    }
   };
 
+  const validateForm = (): boolean => {
+    const newErrors: Errors = {};
+
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // Password validation
+    if (!formData.password.trim()) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters long";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSignOut = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Signed out successfully!");
+        setUser(null);
+        // Reset form data
+        setFormData({ email: "", password: "" });
+        setIsLogin(true);
+      }
+    } catch (error) {
+      toast.error("An error occurred while signing out");
+      console.error("Sign out error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      if (isLogin) {
+        // Login user
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success("Login successful!");
+        }
+      } else {
+        // Register user
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success(
+            "Registration successful! Please check your email for verification."
+          );
+          setIsLogin(true);
+          setFormData({ email: "", password: "" });
+        }
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred. Please try again.");
+      console.error("Auth error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const getUser = async () => {
+      setAuthLoading(true);
+      const { data, error } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUser(data.user as User);
+      } else {
+        setUser(null);
+      }
+      setAuthLoading(false);
+    };
+    getUser();
+
+    // Listen for auth state changes
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => {
+      listener?.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="rounded-bl-[10px] rounded-br-[10px]">
+        <div className="container pt-[90px] pb-[30px]">
+          <div className="flex flex-col items-end">
+            <div className="max-w-[400px] w-full h-auto flex justify-center items-center py-[40px]">
+              <p className="text-white-1 text-[1.6rem]">Loading...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show authenticated user interface
+  if (user) {
+    return (
+      <div className="rounded-bl-[10px] rounded-br-[10px]">
+        <div className="container pt-[90px] pb-[30px]">
+          <Toaster
+            position="top-right"
+            reverseOrder={false}
+            toastOptions={{
+              style: {
+                marginTop: "50px",
+                fontSize: 12,
+              },
+            }}
+          />
+
+          <div className="flex flex-col items-end">
+            <div className={`max-w-[400px] w-full h-auto ${styles.loginForm}`}>
+              <h3 className="text-[2.4rem] font-bold leading-[36px] pt-[20px]">
+                Welcome Back!
+              </h3>
+              <h6 className="text-[1.6rem] leading-[36px] pb-[20px]">
+                You're logged in
+              </h6>
+
+              {/* User Profile Info */}
+              <div className="flex items-center pb-[10px] mb-[15px]">
+                <div className="mr-[10px] flex items-center">
+                  <Image
+                    src="/icons/sms.svg"
+                    alt="Icon"
+                    width={20}
+                    height={20}
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className="text-white-1 text-[1.6rem] font-medium">
+                    {user.email}
+                  </p>
+                  <p className="text-white-1 text-[1.2rem] opacity-70">
+                    {user.email_confirmed_at
+                      ? "Email verified"
+                      : "Email not verified"}
+                  </p>
+                </div>
+              </div>
+              <div className="border-b-2 border-white-1 mb-[15px]"></div>
+
+              {/* Sign Out Button */}
+              <button
+                onClick={handleSignOut}
+                disabled={isLoading}
+                className={`${styles.submitButton} bg-red-500 hover:bg-red-600 text-white border-none rounded-[5px] text-[1.6rem] font-bold py-[12px] px-[24px] mt-[20px] cursor-pointer w-full flex justify-between items-center gap-[10px] mb-[10px] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {isLoading ? "Signing out..." : "Sign Out"}
+                <Image
+                  src="/icons/rightArrow.svg"
+                  alt="Arrow Icon"
+                  width={24}
+                  height={24}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login/register form for unauthenticated users
   return (
     <div className="rounded-bl-[10px] rounded-br-[10px]">
       <div className="container pt-[90px] pb-[30px]">
-        {/* Toaster for showing notifications */}
         <Toaster
           position="top-right"
           reverseOrder={false}
@@ -131,10 +279,10 @@ const User = () => {
 
         <div className="flex flex-col items-end">
           <form
+            onSubmit={handleSubmit}
             className={`max-w-[400px] w-full h-auto ${
               isLogin ? styles.loginForm : styles.registerForm
             }`}
-            onSubmit={handleSubmit}
           >
             <h3 className="text-[2.4rem] font-bold leading-[36px] pt-[20px]">
               {isLogin ? "Existing member" : "Register New Account"}
@@ -154,7 +302,8 @@ const User = () => {
                 placeholder="Enter Email"
                 className="bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full placeholder:text-white-1 font-medium"
                 value={formData.email}
-                onChange={handleChange}
+                onChange={handleInputChange}
+                disabled={isLoading}
               />
             </div>
             {errors.email && (
@@ -175,12 +324,13 @@ const User = () => {
                 />
               </div>
               <input
-                type={showPassword ? "text" : "password"} // Toggle between text and password
+                type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Enter Password"
                 className="bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full placeholder:text-white-1 font-medium"
                 value={formData.password}
-                onChange={handleChange}
+                onChange={handleInputChange}
+                disabled={isLoading}
               />
               <div
                 className="mr-[10px] flex items-center"
@@ -202,85 +352,13 @@ const User = () => {
             )}
             <div className="border-b-2 border-white-1 mb-[15px]"></div>
 
-            {/* Conditionally render Username and Confirm Password for Register */}
-            {!isLogin && (
-              <>
-                {/* Username Field */}
-                <div className="pb-[10px] flex item-center">
-                  <div className="mr-[10px]">
-                    <Image
-                      src="/icons/user.svg"
-                      alt="Icon"
-                      width={20}
-                      height={20}
-                    />
-                  </div>
-                  <input
-                    type="text"
-                    name="username"
-                    placeholder="Enter Username"
-                    className="bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full placeholder:text-white-1 font-medium"
-                    value={formData.username}
-                    onChange={handleChange}
-                  />
-                </div>
-                {errors.username && (
-                  <p className="text-red-2 text-[1rem] tracking-[0.02rem] mb-[4px]">
-                    {errors.username}
-                  </p>
-                )}
-                <div className="border-b-2 border-white-1 mb-[15px]"></div>
-
-                {/* Confirm Password Field */}
-                <div className="pb-[10px] flex item-center">
-                  <div className="mr-[10px]">
-                    <Image
-                      src="/icons/lock.svg"
-                      alt="Icon"
-                      width={20}
-                      height={20}
-                    />
-                  </div>
-                  <input
-                    type={showConfirmPassword ? "text" : "password"} // Toggle for confirmPassword
-                    name="confirmPassword"
-                    placeholder="Confirm Password"
-                    className="bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full placeholder:text-white-1 font-medium"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                  />
-                  <div
-                    className="mr-[10px]"
-                    onClick={toggleConfirmPasswordVisibility}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <Image
-                      src={
-                        showConfirmPassword
-                          ? "/icons/eyeOff.svg"
-                          : "/icons/eye.svg"
-                      }
-                      alt="Toggle Confirm Password"
-                      width={20}
-                      height={20}
-                    />
-                  </div>
-                </div>
-                {errors.confirmPassword && (
-                  <p className="text-red-2 text-[1rem] tracking-[0.02rem] mb-[4px]">
-                    {errors.confirmPassword}
-                  </p>
-                )}
-                <div className="border-b-2 border-white-1 mb-[15px]"></div>
-              </>
-            )}
-
             {/* Submit Button */}
             <button
               type="submit"
-              className={`${styles.submitButton} bg-white-1 text-black-1 border-none rounded-[5px] text-[1.6rem] font-bold py-[12px] px-[24px] mt-[20px] cursor-pointer w-full flex justify-between items-center gap-[10px] mb-[10px] hover:bg-white-3 focus:outline-none`}
+              disabled={isLoading}
+              className={`${styles.submitButton} bg-white-1 text-black-1 border-none rounded-[5px] text-[1.6rem] font-bold py-[12px] px-[24px] mt-[20px] cursor-pointer w-full flex justify-between items-center gap-[10px] mb-[10px] hover:bg-white-3 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {isLogin ? "Login" : "Register"}
+              {isLoading ? "Loading..." : isLogin ? "Login" : "Register"}
               <Image
                 src="/icons/rightArrow.svg"
                 alt="Arrow Icon"
@@ -291,10 +369,10 @@ const User = () => {
 
             {/* Toggle between Login and Register */}
             <p className="text-[1.2rem] font-medium leading-[21px] text-left">
-              {isLogin ? "Don’t have an account?" : "Already have an account?"}{" "}
+              {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
               <span
                 onClick={toggleForm}
-                className="text-[1.2rem] font-bold leading-[21px] text-left tracking-[0.02rem] cursor-pointer"
+                className="text-[1.2rem] font-bold leading-[21px] text-left tracking-[0.02rem] cursor-pointer hover:underline"
               >
                 {isLogin ? "Register Now" : "Login"}
               </span>
