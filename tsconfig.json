@@ -21,6 +21,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "db/utils/dbClient.ts", "db/api/watches/add.ts", "db/api/watches/delete.ts", "db/api/watches/index.ts", "db/api/watches/update.ts"],
   "exclude": ["node_modules"]
 }
