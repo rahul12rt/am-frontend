@@ -1,8 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { CollectionWatchesTypes } from '@/types';
+import { Watch } from '@/data/watches';
 
-const Collections = ({ data }: { data: CollectionWatchesTypes[] }) => {
+const Collections = ({ data }: { data: Watch[] }) => {
   return (
     <div className='grid grid-cols-1 custom-xsm:grid-cols-1 custom-sm:grid-cols-2 custom-md:grid-cols-4 gap-x-4 gap-y-[50px]'>
       {data.map((product) => (
@@ -22,7 +22,7 @@ const Collections = ({ data }: { data: CollectionWatchesTypes[] }) => {
             <div className='relative min-w-full h-[260px]'>
               <Image
                 fill
-                src={product.image}
+                src={product.WatchImages?.[0]?.isoview || '/images/am0s1.webp'}
                 alt={product.name}
                 className='object-contain'
               />
@@ -31,10 +31,12 @@ const Collections = ({ data }: { data: CollectionWatchesTypes[] }) => {
               {product.description}
             </h2>
             <div className='mb-2 text-center'>
-              <span className='text-[24px] text-center'>${product.price}</span>
+              <span className='text-[24px] text-center'>
+                ${product.offerprice}
+              </span>
               &nbsp; &nbsp;
               <span className='text-[24px] text-gray-400 line-through font-bold'>
-                ${product.originalPrice}
+                ${product.actualprice}
               </span>
             </div>
           </Link>
