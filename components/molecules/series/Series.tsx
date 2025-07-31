@@ -23,7 +23,7 @@ function Series() {
           {loading ? (
             <div className='text-white-1 text-center w-full'>Loading...</div>
           ) : (
-            seriesWatches.map((series, index) => (
+            seriesWatches.map((series) => (
               <div
                 key={series.id}
                 className='max-w-[360px] w-full max-[768px]:w-[80%] h-[258px] max-[768px]:h-[135px] bg-white-2 text-black-1 p-[20px] max-[768px]:py-[8px] max-[768px]:px-[12px] rounded-[8px] shrink-0 relative'
