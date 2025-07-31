@@ -1,10 +1,15 @@
-import { useState, ChangeEvent, FormEvent, useEffect } from "react";
-import Image from "next/image";
-import styles from "./User.module.scss";
-import { toast, Toaster } from "react-hot-toast";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/navigation";
-import type { User } from "@supabase/auth-helpers-nextjs";
+import {
+  useState,
+  ChangeEvent,
+  FormEvent,
+  useEffect,
+  useCallback,
+} from 'react';
+import Image from 'next/image';
+import styles from './User.module.scss';
+import { toast, Toaster } from 'react-hot-toast';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { User } from '@supabase/auth-helpers-nextjs';
 
 interface FormData {
   email: string;
@@ -23,8 +28,8 @@ interface UserProps {
 const User = ({ onClose }: UserProps) => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState<FormData>({
-    email: "",
-    password: "",
+    email: '',
+    password: '',
   });
   const [errors, setErrors] = useState<Errors>({});
   const [showPassword, setShowPassword] = useState(false);
@@ -33,14 +38,25 @@ const User = ({ onClose }: UserProps) => {
   const [authLoading, setAuthLoading] = useState(true);
 
   const supabase = createClientComponentClient();
-  const router = useRouter();
+
+  // Use useCallback to memoize the function and avoid useEffect dependency warning
+  const getUser = useCallback(async () => {
+    setAuthLoading(true);
+    const { data } = await supabase.auth.getUser();
+    if (data?.user) {
+      setUser(data.user as User);
+    } else {
+      setUser(null);
+    }
+    setAuthLoading(false);
+  }, [supabase.auth]);
 
   const toggleForm = () => {
     setIsLogin((prevState) => !prevState);
     setErrors({});
     setFormData({
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     });
   };
 
@@ -69,16 +85,16 @@ const User = ({ onClose }: UserProps) => {
 
     // Email validation
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
+      newErrors.email = 'Please enter a valid email address';
     }
 
     // Password validation
     if (!formData.password.trim()) {
-      newErrors.password = "Password is required";
+      newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters long";
+      newErrors.password = 'Password must be at least 6 characters long';
     }
 
     setErrors(newErrors);
@@ -92,15 +108,17 @@ const User = ({ onClose }: UserProps) => {
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Signed out successfully!");
+        toast.success('Signed out successfully!');
         setUser(null);
         // Reset form data
-        setFormData({ email: "", password: "" });
+        setFormData({ email: '', password: '' });
         setIsLogin(true);
+        // Call onClose if provided
+        onClose?.();
       }
     } catch (error) {
-      toast.error("An error occurred while signing out");
-      console.error("Sign out error:", error);
+      toast.error('An error occurred while signing out');
+      console.error('Sign out error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +136,7 @@ const User = ({ onClose }: UserProps) => {
     try {
       if (isLogin) {
         // Login user
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
         });
@@ -126,11 +144,13 @@ const User = ({ onClose }: UserProps) => {
         if (error) {
           toast.error(error.message);
         } else {
-          toast.success("Login successful!");
+          toast.success('Login successful!');
+          // Call onClose if provided after successful login
+          onClose?.();
         }
       } else {
         // Register user
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
         });
@@ -139,31 +159,21 @@ const User = ({ onClose }: UserProps) => {
           toast.error(error.message);
         } else {
           toast.success(
-            "Registration successful! Please check your email for verification."
+            'Registration successful! Please check your email for verification.'
           );
           setIsLogin(true);
-          setFormData({ email: "", password: "" });
+          setFormData({ email: '', password: '' });
         }
       }
     } catch (error) {
-      toast.error("An unexpected error occurred. Please try again.");
-      console.error("Auth error:", error);
+      toast.error('An unexpected error occurred. Please try again.');
+      console.error('Auth error:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    const getUser = async () => {
-      setAuthLoading(true);
-      const { data, error } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUser(data.user as User);
-      } else {
-        setUser(null);
-      }
-      setAuthLoading(false);
-    };
     getUser();
 
     // Listen for auth state changes
@@ -176,16 +186,16 @@ const User = ({ onClose }: UserProps) => {
     return () => {
       listener?.subscription.unsubscribe();
     };
-  }, []);
+  }, [getUser, supabase.auth]);
 
   // Loading state while checking authentication
   if (authLoading) {
     return (
-      <div className="rounded-bl-[10px] rounded-br-[10px]">
-        <div className="container pt-[90px] pb-[30px]">
-          <div className="flex flex-col items-end">
-            <div className="max-w-[400px] w-full h-auto flex justify-center items-center py-[40px]">
-              <p className="text-white-1 text-[1.6rem]">Loading...</p>
+      <div className='rounded-bl-[10px] rounded-br-[10px]'>
+        <div className='container pt-[90px] pb-[30px]'>
+          <div className='flex flex-col items-end'>
+            <div className='max-w-[400px] w-full h-auto flex justify-center items-center py-[40px]'>
+              <p className='text-white-1 text-[1.6rem]'>Loading...</p>
             </div>
           </div>
         </div>
@@ -196,50 +206,50 @@ const User = ({ onClose }: UserProps) => {
   // Show authenticated user interface
   if (user) {
     return (
-      <div className="rounded-bl-[10px] rounded-br-[10px]">
-        <div className="container pt-[90px] pb-[30px]">
+      <div className='rounded-bl-[10px] rounded-br-[10px]'>
+        <div className='container pt-[90px] pb-[30px]'>
           <Toaster
-            position="top-right"
+            position='top-right'
             reverseOrder={false}
             toastOptions={{
               style: {
-                marginTop: "50px",
+                marginTop: '50px',
                 fontSize: 12,
               },
             }}
           />
 
-          <div className="flex flex-col items-end">
+          <div className='flex flex-col items-end'>
             <div className={`max-w-[400px] w-full h-auto ${styles.loginForm}`}>
-              <h3 className="text-[2.4rem] font-bold leading-[36px] pt-[20px]">
+              <h3 className='text-[2.4rem] font-bold leading-[36px] pt-[20px]'>
                 Welcome Back!
               </h3>
-              <h6 className="text-[1.6rem] leading-[36px] pb-[20px]">
-                You're logged in
+              <h6 className='text-[1.6rem] leading-[36px] pb-[20px]'>
+                You&apos;re logged in
               </h6>
 
               {/* User Profile Info */}
-              <div className="flex items-center pb-[10px] mb-[15px]">
-                <div className="mr-[10px] flex items-center">
+              <div className='flex items-center pb-[10px] mb-[15px]'>
+                <div className='mr-[10px] flex items-center'>
                   <Image
-                    src="/icons/sms.svg"
-                    alt="Icon"
+                    src='/icons/sms.svg'
+                    alt='Icon'
                     width={20}
                     height={20}
                   />
                 </div>
-                <div className="flex-1">
-                  <p className="text-white-1 text-[1.6rem] font-medium">
+                <div className='flex-1'>
+                  <p className='text-white-1 text-[1.6rem] font-medium'>
                     {user.email}
                   </p>
-                  <p className="text-white-1 text-[1.2rem] opacity-70">
+                  <p className='text-white-1 text-[1.2rem] opacity-70'>
                     {user.email_confirmed_at
-                      ? "Email verified"
-                      : "Email not verified"}
+                      ? 'Email verified'
+                      : 'Email not verified'}
                   </p>
                 </div>
               </div>
-              <div className="border-b-2 border-white-1 mb-[15px]"></div>
+              <div className='border-b-2 border-white-1 mb-[15px]'></div>
 
               {/* Sign Out Button */}
               <button
@@ -247,10 +257,10 @@ const User = ({ onClose }: UserProps) => {
                 disabled={isLoading}
                 className={`${styles.submitButton} bg-red-500 hover:bg-red-600 text-white border-none rounded-[5px] text-[1.6rem] font-bold py-[12px] px-[24px] mt-[20px] cursor-pointer w-full flex justify-between items-center gap-[10px] mb-[10px] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                {isLoading ? "Signing out..." : "Sign Out"}
+                {isLoading ? 'Signing out...' : 'Sign Out'}
                 <Image
-                  src="/icons/rightArrow.svg"
-                  alt="Arrow Icon"
+                  src='/icons/rightArrow.svg'
+                  alt='Arrow Icon'
                   width={24}
                   height={24}
                 />
@@ -264,117 +274,119 @@ const User = ({ onClose }: UserProps) => {
 
   // Show login/register form for unauthenticated users
   return (
-    <div className="rounded-bl-[10px] rounded-br-[10px]">
-      <div className="container pt-[90px] pb-[30px]">
+    <div className='rounded-bl-[10px] rounded-br-[10px]'>
+      <div className='container pt-[90px] pb-[30px]'>
         <Toaster
-          position="top-right"
+          position='top-right'
           reverseOrder={false}
           toastOptions={{
             style: {
-              marginTop: "50px",
+              marginTop: '50px',
               fontSize: 12,
             },
           }}
         />
 
-        <div className="flex flex-col items-end">
+        <div className='flex flex-col items-end'>
           <form
             onSubmit={handleSubmit}
             className={`max-w-[400px] w-full h-auto ${
               isLogin ? styles.loginForm : styles.registerForm
             }`}
           >
-            <h3 className="text-[2.4rem] font-bold leading-[36px] pt-[20px]">
-              {isLogin ? "Existing member" : "Register New Account"}
+            <h3 className='text-[2.4rem] font-bold leading-[36px] pt-[20px]'>
+              {isLogin ? 'Existing member' : 'Register New Account'}
             </h3>
-            <h6 className="text-[1.6rem] leading-[36px] pb-[20px]">
-              {isLogin ? "Welcome Back!" : "Join Us!"}
+            <h6 className='text-[1.6rem] leading-[36px] pb-[20px]'>
+              {isLogin ? 'Welcome Back!' : 'Join Us!'}
             </h6>
 
             {/* Email Field */}
-            <div className="flex item-center pb-[10px]">
-              <div className="mr-[10px] flex item-center">
-                <Image src="/icons/sms.svg" alt="Icon" width={20} height={20} />
+            <div className='flex item-center pb-[10px]'>
+              <div className='mr-[10px] flex item-center'>
+                <Image src='/icons/sms.svg' alt='Icon' width={20} height={20} />
               </div>
               <input
-                type="email"
-                name="email"
-                placeholder="Enter Email"
-                className="bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full placeholder:text-white-1 font-medium"
+                type='email'
+                name='email'
+                placeholder='Enter Email'
+                className='bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full placeholder:text-white-1 font-medium'
                 value={formData.email}
                 onChange={handleInputChange}
                 disabled={isLoading}
               />
             </div>
             {errors.email && (
-              <p className="text-red-2 text-[1rem] tracking-[0.02rem] mb-[4px]">
+              <p className='text-red-2 text-[1rem] tracking-[0.02rem] mb-[4px]'>
                 {errors.email}
               </p>
             )}
-            <div className="border-b-2 border-white-1 mb-[15px]"></div>
+            <div className='border-b-2 border-white-1 mb-[15px]'></div>
 
             {/* Password Field */}
-            <div className="flex item-center pb-[10px]">
-              <div className="mr-[10px] flex item-center">
+            <div className='flex item-center pb-[10px]'>
+              <div className='mr-[10px] flex item-center'>
                 <Image
-                  src="/icons/lock.svg"
-                  alt="Icon"
+                  src='/icons/lock.svg'
+                  alt='Icon'
                   width={20}
                   height={20}
                 />
               </div>
               <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                placeholder="Enter Password"
-                className="bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full placeholder:text-white-1 font-medium"
+                type={showPassword ? 'text' : 'password'}
+                name='password'
+                placeholder='Enter Password'
+                className='bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full placeholder:text-white-1 font-medium'
                 value={formData.password}
                 onChange={handleInputChange}
                 disabled={isLoading}
               />
               <div
-                className="mr-[10px] flex items-center"
+                className='mr-[10px] flex items-center'
                 onClick={togglePasswordVisibility}
-                style={{ cursor: "pointer" }}
+                style={{ cursor: 'pointer' }}
               >
                 <Image
-                  src={showPassword ? "/icons/eyeOff.svg" : "/icons/eye.svg"}
-                  alt="Toggle Password"
+                  src={showPassword ? '/icons/eyeOff.svg' : '/icons/eye.svg'}
+                  alt='Toggle Password'
                   width={20}
                   height={20}
                 />
               </div>
             </div>
             {errors.password && (
-              <p className="text-red-2 text-[1rem] tracking-[0.02rem] mb-[4px]">
+              <p className='text-red-2 text-[1rem] tracking-[0.02rem] mb-[4px]'>
                 {errors.password}
               </p>
             )}
-            <div className="border-b-2 border-white-1 mb-[15px]"></div>
+            <div className='border-b-2 border-white-1 mb-[15px]'></div>
 
             {/* Submit Button */}
             <button
-              type="submit"
+              type='submit'
               disabled={isLoading}
               className={`${styles.submitButton} bg-white-1 text-black-1 border-none rounded-[5px] text-[1.6rem] font-bold py-[12px] px-[24px] mt-[20px] cursor-pointer w-full flex justify-between items-center gap-[10px] mb-[10px] hover:bg-white-3 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {isLoading ? "Loading..." : isLogin ? "Login" : "Register"}
+              {isLoading ? 'Loading...' : isLogin ? 'Login' : 'Register'}
               <Image
-                src="/icons/rightArrow.svg"
-                alt="Arrow Icon"
+                src='/icons/rightArrow.svg'
+                alt='Arrow Icon'
                 width={24}
                 height={24}
               />
             </button>
 
             {/* Toggle between Login and Register */}
-            <p className="text-[1.2rem] font-medium leading-[21px] text-left">
-              {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+            <p className='text-[1.2rem] font-medium leading-[21px] text-left'>
+              {isLogin
+                ? 'Don&apos;t have an account?'
+                : 'Already have an account?'}{' '}
               <span
                 onClick={toggleForm}
-                className="text-[1.2rem] font-bold leading-[21px] text-left tracking-[0.02rem] cursor-pointer hover:underline"
+                className='text-[1.2rem] font-bold leading-[21px] text-left tracking-[0.02rem] cursor-pointer hover:underline'
               >
-                {isLogin ? "Register Now" : "Login"}
+                {isLogin ? 'Register Now' : 'Login'}
               </span>
             </p>
           </form>
