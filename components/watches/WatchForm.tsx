@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useCreateWatch, useUpdateWatch } from "@/hooks/useWatch";
 
 interface Watch {
   id?: string;
@@ -10,9 +11,7 @@ interface Watch {
   characteristics: string;
   actualprice: number;
   offerprice: number;
-  offerpercentage: string;
-  rating: number;
-  reviewscount: number;
+  offerpercentage: number;
   category: string;
   series: string;
   modelgroup: string;
@@ -33,16 +32,20 @@ const WatchForm: React.FC<WatchFormProps> = ({
   isEdit = false,
 }) => {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+
+  const createWatchMutation = useCreateWatch();
+  const updateWatchMutation = useUpdateWatch();
+
+  const loading =
+    createWatchMutation.isPending || updateWatchMutation.isPending;
+
   const [formData, setFormData] = useState<Watch>({
     name: "",
     description: "",
     characteristics: "",
     actualprice: 0,
     offerprice: 0,
-    offerpercentage: "0%",
-    rating: 0,
-    reviewscount: 0,
+    offerpercentage: 0,
     category: "",
     series: "",
     modelgroup: "",
@@ -54,6 +57,17 @@ const WatchForm: React.FC<WatchFormProps> = ({
     ...initialData,
   });
 
+  // Image files state
+  const [imageFiles, setImageFiles] = useState<{ [key: string]: File | null }>({
+    isoview: null,
+    front: null,
+    back: null,
+    side: null,
+    strap: null,
+    closeup: null,
+    dial: null,
+  });
+
   // Calculate offer percentage when prices change
   useEffect(() => {
     if (formData.actualprice > 0 && formData.offerprice > 0) {
@@ -63,7 +77,7 @@ const WatchForm: React.FC<WatchFormProps> = ({
       );
       setFormData((prev) => ({
         ...prev,
-        offerpercentage: `${percentage}%`,
+        offerpercentage: percentage,
       }));
     }
   }, [formData.actualprice, formData.offerprice]);
@@ -94,33 +108,83 @@ const WatchForm: React.FC<WatchFormProps> = ({
     }
   };
 
+  const handleImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    fieldName: string
+  ) => {
+    const file = e.target.files?.[0] || null;
+    setImageFiles((prev) => ({
+      ...prev,
+      [fieldName]: file,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
     try {
-      const url = isEdit ? `/api/watches/${formData.id}` : "/api/watches";
-      const method = isEdit ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        router.push("/admin/watches"); // Adjust redirect path as needed
+      if (isEdit && formData.id) {
+        // Update existing watch
+        await updateWatchMutation.mutateAsync({
+          id: formData.id,
+          formData: {
+            name: formData.name,
+            description: formData.description,
+            characteristics: formData.characteristics,
+            actualprice: formData.actualprice,
+            offerprice: formData.offerprice,
+            offerpercentage: formData.offerpercentage,
+            category: formData.category,
+            series: formData.series,
+            modelgroup: formData.modelgroup,
+            releasedate: formData.releasedate,
+            theme: formData.theme,
+            warrantyperiod: formData.warrantyperiod,
+            stockavailability: formData.stockavailability ? "true" : "false",
+            isfeatured: formData.isfeatured,
+          },
+          images: imageFiles, // Only include if there are new images
+        });
       } else {
-        console.error("Failed to save watch");
+        // Create new watch
+        await createWatchMutation.mutateAsync({
+          formData: {
+            name: formData.name,
+            description: formData.description,
+            characteristics: formData.characteristics,
+            actualprice: formData.actualprice,
+            offerprice: formData.offerprice,
+            offerpercentage: formData.offerpercentage,
+            category: formData.category,
+            series: formData.series,
+            modelgroup: formData.modelgroup,
+            releasedate: formData.releasedate,
+            theme: formData.theme,
+            warrantyperiod: formData.warrantyperiod,
+            stockavailability: formData.stockavailability ? "true" : "false",
+            isfeatured: formData.isfeatured,
+          },
+          images: imageFiles,
+        });
       }
+
+      // Navigate to collections page on success
+      router.push("/collections");
     } catch (error) {
+      // Error handling is already done in the mutation hooks
       console.error("Error saving watch:", error);
-    } finally {
-      setLoading(false);
     }
   };
+
+  const imageFields = [
+    { key: "isoview", label: "Isometric View" },
+    { key: "front", label: "Front View" },
+    { key: "back", label: "Back View" },
+    { key: "side", label: "Side View" },
+    { key: "strap", label: "Strap View" },
+    { key: "closeup", label: "Close-up View" },
+    { key: "dial", label: "Dial View" },
+  ];
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -198,6 +262,35 @@ const WatchForm: React.FC<WatchFormProps> = ({
             />
           </div>
 
+          {/* Image Upload Section */}
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Product Images
+            </h3>
+            <div className="space-y-4">
+              {imageFields.map(({ key, label }) => (
+                <div key={key} className="space-y-2">
+                  <label className="block text-sm font-medium text-white">
+                    {label}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageChange(e, key)}
+                      className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                    />
+                    {imageFiles[key] && (
+                      <p className="text-xs text-green-400 mt-1">
+                        Selected: {imageFiles[key]?.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Pricing */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
@@ -238,13 +331,15 @@ const WatchForm: React.FC<WatchFormProps> = ({
                 Offer Percentage
               </label>
               <input
-                type="text"
+                type="number" // Changed from "text" to "number"
                 name="offerpercentage"
                 value={formData.offerpercentage}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
-                placeholder="0%"
-                readOnly
+                min="0"
+                max="100"
+                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
+                placeholder="0"
+                // Remove readOnly if you want users to be able to edit it manually
               />
             </div>
           </div>
@@ -298,41 +393,6 @@ const WatchForm: React.FC<WatchFormProps> = ({
             </div>
           </div>
 
-          {/* Rating and Reviews */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">
-                Rating (0-5)
-              </label>
-              <input
-                type="number"
-                name="rating"
-                value={formData.rating}
-                onChange={handleInputChange}
-                min="0"
-                max="5"
-                step="0.1"
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
-                placeholder="0.0"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">
-                Reviews Count
-              </label>
-              <input
-                type="number"
-                name="reviewscount"
-                value={formData.reviewscount}
-                onChange={handleInputChange}
-                min="0"
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
-                placeholder="0"
-              />
-            </div>
-          </div>
-
           {/* Date and Warranty */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -350,7 +410,7 @@ const WatchForm: React.FC<WatchFormProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-white mb-2">
-                Warranty Period
+                Warranty Period (In months)
               </label>
               <input
                 type="text"
@@ -358,7 +418,7 @@ const WatchForm: React.FC<WatchFormProps> = ({
                 value={formData.warrantyperiod}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
-                placeholder="e.g., 2 years"
+                placeholder="e.g., 24"
               />
             </div>
           </div>

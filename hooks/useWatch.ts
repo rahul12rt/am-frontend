@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { protectedApiClient, handleApiError } from '@/lib/api-clients';
 import { AxiosError } from 'axios';
 
-// Types for the watch creation
+// Types for the watch creation and updates
 export interface WatchFormData {
   name: string;
   description: string;
@@ -11,8 +11,6 @@ export interface WatchFormData {
   actualprice: number;
   offerprice: number;
   offerpercentage: number;
-  rating: number;
-  reviewscount: number;
   category: string;
   series: string;
   modelgroup: string;
@@ -21,6 +19,10 @@ export interface WatchFormData {
   warrantyperiod: string;
   stockavailability: string;
   isfeatured: boolean;
+}
+
+export interface UpdateWatchFormData extends Partial<WatchFormData> {
+  // All fields are optional for updates
 }
 
 export interface WatchImages {
@@ -36,6 +38,12 @@ export interface WatchImages {
 export interface CreateWatchPayload {
   formData: WatchFormData;
   images: WatchImages;
+}
+
+export interface UpdateWatchPayload {
+  id: string;
+  formData: UpdateWatchFormData;
+  images?: WatchImages; // Images are optional for updates
 }
 
 export interface WatchImage {
@@ -57,8 +65,6 @@ export interface Watch {
   actualprice: number;
   offerprice: number;
   offerpercentage: number;
-  rating: number;
-  reviewscount: number;
   category: string;
   series: string;
   modelgroup: string;
@@ -78,6 +84,12 @@ export interface CreateWatchResponse {
   data: Watch;
 }
 
+export interface UpdateWatchResponse {
+  success: boolean;
+  message: string;
+  data: Watch;
+}
+
 // Query keys for cache management
 export const watchQueryKeys = {
   all: ['watches'] as const,
@@ -86,6 +98,8 @@ export const watchQueryKeys = {
   details: () => [...watchQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...watchQueryKeys.details(), id] as const,
 } as const;
+
+// ============= CREATE WATCH =============
 
 // API function to create a watch with images
 const createWatch = async ({ formData, images }: CreateWatchPayload): Promise<CreateWatchResponse> => {
@@ -140,6 +154,65 @@ export const useCreateWatch = () => {
   });
 };
 
+// ============= UPDATE WATCH =============
 
+// API function to update a watch with optional images
+const updateWatch = async ({ id, formData, images }: UpdateWatchPayload): Promise<UpdateWatchResponse> => {
+  const formPayload = new FormData();
+  
+  // Append form data (only fields that are provided)
+  Object.entries(formData).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      formPayload.append(key, value.toString());
+    }
+  });
+  
+  // Append image files if provided
+  if (images) {
+    Object.entries(images).forEach(([key, file]) => {
+      if (file && file instanceof File) {
+        formPayload.append(key, file);
+      }
+    });
+  }
 
+  const response = await protectedApiClient.put<UpdateWatchResponse>(`/watches/${id}`, formPayload, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    timeout: 30000, // 30 seconds for file upload
+  });
+
+  return response.data;
+};
+
+// Hook for updating a watch (with optional images)
+export const useUpdateWatch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateWatch,
+    onSuccess: (data, variables) => {
+      // Invalidate and refetch watch lists
+      queryClient.invalidateQueries({ queryKey: watchQueryKeys.lists() });
+      
+      // Update the specific watch in the cache
+      queryClient.setQueryData(
+        watchQueryKeys.detail(variables.id),
+        data.data
+      );
+
+      // Also invalidate the specific watch detail to ensure fresh data
+      queryClient.invalidateQueries({ 
+        queryKey: watchQueryKeys.detail(variables.id) 
+      });
+
+      console.log('Watch updated successfully:', data.data);
+    },
+    onError: (error: AxiosError, variables) => {
+      const errorMessage = handleApiError(error);
+      console.error(`Failed to update watch ${variables.id}:`, errorMessage);
+    },
+  });
+};
 
