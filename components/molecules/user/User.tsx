@@ -23,10 +23,14 @@ interface UserProps {
   onClose?: () => void;
 }
 
+interface UserMetadata {
+  name?: string;
+}
+
 interface User {
   id: string;
   email: string;
-  user_metadata?: any;
+  user_metadata?: UserMetadata;
 }
 
 interface AuthResponse {
