@@ -1,8 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useCreateWatch, useUpdateWatch } from "@/hooks/useWatch";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  useCreateWatch,
+  useUpdateWatch,
+  useGetWatchById,
+} from "@/hooks/useWatch";
 
 interface Watch {
   id?: string;
@@ -24,20 +28,27 @@ interface Watch {
 
 interface WatchFormProps {
   initialData?: Watch;
-  isEdit?: boolean;
 }
 
-const WatchForm: React.FC<WatchFormProps> = ({
-  initialData,
-  isEdit = false,
-}) => {
+const WatchForm: React.FC<WatchFormProps> = ({ initialData }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const watchId = searchParams.get("id");
 
   const createWatchMutation = useCreateWatch();
   const updateWatchMutation = useUpdateWatch();
 
+  // Fetch watch details if ID is present
+  const {
+    data: watchData,
+    isLoading: isFetching,
+    error: fetchError,
+  } = useGetWatchById(watchId || "");
+
   const loading =
-    createWatchMutation.isPending || updateWatchMutation.isPending;
+    createWatchMutation.isPending ||
+    updateWatchMutation.isPending ||
+    isFetching;
 
   const [formData, setFormData] = useState<Watch>({
     name: "",
@@ -67,6 +78,45 @@ const WatchForm: React.FC<WatchFormProps> = ({
     closeup: null,
     dial: null,
   });
+
+  // Update form data when watch data is fetched
+  useEffect(() => {
+    if (watchData) {
+      setFormData({
+        ...watchData,
+        releasedate: watchData.releasedate
+          ? new Date(watchData.releasedate).toISOString().split("T")[0]
+          : new Date().toISOString().split("T")[0],
+        stockavailability:
+          typeof watchData.stockavailability === "string"
+            ? watchData.stockavailability === "true"
+            : watchData.stockavailability,
+      });
+    }
+  }, [watchData]);
+
+  // Test data
+
+  // useEffect(() => {
+  //   setFormData({
+  //     name: "Watch",
+  //     description:
+  //       "Luxurious day-date watch featuring an elegant olive green sunburst dial with Roman numeral hour markers. The watch displays both day and date complications with a distinctive green gradient face that shifts from deep forest green at the edges to lighter olive in the center.",
+  //     characteristics:
+  //       "Stainless steel case and bracelet, fluted bezel, day-date display, Roman numeral markers, green sunburst dial, automatic movement, water resistant",
+  //     actualprice: 8500,
+  //     offerprice: 7650,
+  //     offerpercentage: 10,
+  //     category: "Luxury",
+  //     series: "Day-Date",
+  //     modelgroup: "Classic",
+  //     releasedate: "2025-08-07",
+  //     theme: "Standard",
+  //     warrantyperiod: "24",
+  //     stockavailability: true,
+  //     isfeatured: false,
+  //   });
+  // }, []);
 
   // Calculate offer percentage when prices change
   useEffect(() => {
@@ -123,7 +173,7 @@ const WatchForm: React.FC<WatchFormProps> = ({
     e.preventDefault();
 
     try {
-      if (isEdit && formData.id) {
+      if (watchId && formData.id) {
         // Update existing watch
         await updateWatchMutation.mutateAsync({
           id: formData.id,
@@ -186,11 +236,31 @@ const WatchForm: React.FC<WatchFormProps> = ({
     { key: "dial", label: "Dial View" },
   ];
 
+  // Show error message if fetch failed
+  if (fetchError) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-red-900 border border-red-700 rounded-lg p-4">
+          <h2 className="text-red-400 font-bold text-lg mb-2">Error</h2>
+          <p className="text-red-300">
+            Failed to load watch details. Please try again.
+          </p>
+          <button
+            onClick={() => router.back()}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-gray-900 rounded-lg shadow-lg p-8 border border-gray-700">
         <h2 className="text-2xl font-bold text-white mb-8">
-          {isEdit ? "Edit Watch" : "Add New Watch"}
+          {watchId ? "Edit Watch" : "Add New Watch"}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -206,7 +276,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
                 value={formData.name}
                 onChange={handleInputChange}
                 required
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 disabled:opacity-50"
                 placeholder="Enter watch name"
               />
             </div>
@@ -219,7 +290,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
                 name="category"
                 value={formData.category}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50"
               >
                 <option value="">Select Category</option>
                 <option value="Luxury">Luxury</option>
@@ -242,7 +314,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
               value={formData.description}
               onChange={handleInputChange}
               rows={4}
-              className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
+              disabled={loading}
+              className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 disabled:opacity-50"
               placeholder="Enter watch description"
             />
           </div>
@@ -257,7 +330,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
               value={formData.characteristics}
               onChange={handleInputChange}
               rows={3}
-              className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
+              disabled={loading}
+              className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 disabled:opacity-50"
               placeholder="Enter watch characteristics"
             />
           </div>
@@ -278,7 +352,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
                       type="file"
                       accept="image/*"
                       onChange={(e) => handleImageChange(e, key)}
-                      className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                      disabled={loading}
+                      className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700 disabled:opacity-50"
                     />
                     {imageFiles[key] && (
                       <p className="text-xs text-green-400 mt-1">
@@ -305,7 +380,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
                 required
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 disabled:opacity-50"
                 placeholder="0.00"
               />
             </div>
@@ -321,7 +397,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
                 onChange={handleInputChange}
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 disabled:opacity-50"
                 placeholder="0.00"
               />
             </div>
@@ -331,15 +408,15 @@ const WatchForm: React.FC<WatchFormProps> = ({
                 Offer Percentage
               </label>
               <input
-                type="number" // Changed from "text" to "number"
+                type="number"
                 name="offerpercentage"
                 value={formData.offerpercentage}
                 onChange={handleInputChange}
                 min="0"
                 max="100"
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 disabled:opacity-50"
                 placeholder="0"
-                // Remove readOnly if you want users to be able to edit it manually
               />
             </div>
           </div>
@@ -355,7 +432,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
                 name="series"
                 value={formData.series}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 disabled:opacity-50"
                 placeholder="Enter series"
               />
             </div>
@@ -369,7 +447,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
                 name="modelgroup"
                 value={formData.modelgroup}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 disabled:opacity-50"
                 placeholder="Enter model group"
               />
             </div>
@@ -382,7 +461,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
                 name="theme"
                 value={formData.theme}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50"
               >
                 <option value="Standard">Standard</option>
                 <option value="Limited Edition">Limited Edition</option>
@@ -404,7 +484,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
                 name="releasedate"
                 value={formData.releasedate}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50"
               />
             </div>
 
@@ -417,7 +498,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
                 name="warrantyperiod"
                 value={formData.warrantyperiod}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 disabled:opacity-50"
                 placeholder="e.g., 24"
               />
             </div>
@@ -431,7 +513,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
                 name="stockavailability"
                 checked={formData.stockavailability}
                 onChange={handleInputChange}
-                className="w-4 h-4 text-blue-600 border-gray-600 bg-gray-800 rounded focus:ring-blue-500"
+                disabled={loading}
+                className="w-4 h-4 text-blue-600 border-gray-600 bg-gray-800 rounded focus:ring-blue-500 disabled:opacity-50"
               />
               <label className="ml-3 text-sm font-medium text-white">
                 Stock Available
@@ -444,7 +527,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
                 name="isfeatured"
                 checked={formData.isfeatured}
                 onChange={handleInputChange}
-                className="w-4 h-4 text-blue-600 border-gray-600 bg-gray-800 rounded focus:ring-blue-500"
+                disabled={loading}
+                className="w-4 h-4 text-blue-600 border-gray-600 bg-gray-800 rounded focus:ring-blue-500 disabled:opacity-50"
               />
               <label className="ml-3 text-sm font-medium text-white">
                 Featured Product
@@ -481,9 +565,9 @@ const WatchForm: React.FC<WatchFormProps> = ({
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  {isEdit ? "Updating..." : "Adding..."}
+                  {watchId ? "Updating..." : "Adding..."}
                 </span>
-              ) : isEdit ? (
+              ) : watchId ? (
                 "Update Watch"
               ) : (
                 "Add Watch"
@@ -493,7 +577,8 @@ const WatchForm: React.FC<WatchFormProps> = ({
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-8 py-3 border border-gray-600 text-gray-300 bg-gray-800 font-medium rounded-lg hover:bg-gray-700 hover:text-white focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors"
+              disabled={loading}
+              className="px-8 py-3 border border-gray-600 text-gray-300 bg-gray-800 font-medium rounded-lg hover:bg-gray-700 hover:text-white focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>

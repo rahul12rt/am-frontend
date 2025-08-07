@@ -1,5 +1,5 @@
 // hooks/useWatchApi.ts
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { protectedApiClient, handleApiError } from '@/lib/api-clients';
 import { AxiosError } from 'axios';
 
@@ -212,6 +212,43 @@ export const useUpdateWatch = () => {
     onError: (error: AxiosError, variables) => {
       const errorMessage = handleApiError(error);
       console.error(`Failed to update watch ${variables.id}:`, errorMessage);
+    },
+  });
+};
+
+// ============= GET WATCH DETAILS =============
+
+// API function to get a single watch by ID
+const getWatchById = async (id: string): Promise<Watch> => {
+  const response = await protectedApiClient.get<{
+    success: boolean;
+    message: string;
+    data: Watch;
+  }>(`/watches/${id}`);
+
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to fetch watch details');
+  }
+
+  return response.data.data;
+};
+
+// Hook for getting watch details by ID - useQuery IS REQUIRED
+export const useGetWatchById = (id: string) => {
+  
+
+  return useQuery({
+    queryKey: watchQueryKeys.detail(id),
+    queryFn: () => getWatchById(id),
+    enabled: !!id, // Only run query if id is provided
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error) => {
+      // Don't retry on 404 errors
+      if (error instanceof AxiosError && error.response?.status === 404) {
+        return false;
+      }
+      return failureCount < 3;
     },
   });
 };
