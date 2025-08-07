@@ -8,8 +8,6 @@ import {
 import Image from 'next/image';
 import styles from './User.module.scss';
 import { toast, Toaster } from 'react-hot-toast';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import type { User } from '@supabase/auth-helpers-nextjs';
 
 interface FormData {
   email: string;
@@ -25,6 +23,30 @@ interface UserProps {
   onClose?: () => void;
 }
 
+interface UserMetadata {
+  name?: string;
+}
+
+interface User {
+  id: string;
+  email: string;
+  user_metadata?: UserMetadata;
+}
+
+interface AuthResponse {
+  success: boolean;
+  message: string;
+  user?: User;
+  session?: {
+    access_token: string;
+    refresh_token: string;
+    expires_at: number;
+  };
+  requiresVerification?: boolean;
+  error?: string;
+  code?: string;
+}
+
 const User = ({ onClose }: UserProps) => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState<FormData>({
@@ -37,19 +59,39 @@ const User = ({ onClose }: UserProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  const supabase = createClientComponentClient();
+  // API base URL - update this to your backend URL
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
 
-  // Use useCallback to memoize the function and avoid useEffect dependency warning
-  const getUser = useCallback(async () => {
+  // Check if user is logged in by checking localStorage for session
+  const checkAuthStatus = useCallback(() => {
     setAuthLoading(true);
-    const { data } = await supabase.auth.getUser();
-    if (data?.user) {
-      setUser(data.user as User);
-    } else {
+    try {
+      const userSession = localStorage.getItem('user_session');
+      const userData = localStorage.getItem('user_data');
+
+      if (userSession && userData) {
+        const session = JSON.parse(userSession);
+        const user = JSON.parse(userData);
+
+        // Check if session is still valid
+        if (session.expires_at && Date.now() < session.expires_at * 1000) {
+          setUser(user);
+        } else {
+          // Session expired, clear storage
+          localStorage.removeItem('user_session');
+          localStorage.removeItem('user_data');
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
       setUser(null);
     }
     setAuthLoading(false);
-  }, [supabase.auth]);
+  }, []);
 
   const toggleForm = () => {
     setIsLogin((prevState) => !prevState);
@@ -104,18 +146,17 @@ const User = ({ onClose }: UserProps) => {
   const handleSignOut = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success('Signed out successfully!');
-        setUser(null);
-        // Reset form data
-        setFormData({ email: '', password: '' });
-        setIsLogin(true);
-        // Call onClose if provided
-        onClose?.();
-      }
+      // Clear local storage
+      localStorage.removeItem('user_session');
+      localStorage.removeItem('user_data');
+
+      // Update state
+      setUser(null);
+      setFormData({ email: '', password: '' });
+      setIsLogin(true);
+
+      toast.success('Signed out successfully!');
+      onClose?.();
     } catch (error) {
       toast.error('An error occurred while signing out');
       console.error('Sign out error:', error);
@@ -134,59 +175,82 @@ const User = ({ onClose }: UserProps) => {
     setIsLoading(true);
 
     try {
-      if (isLogin) {
-        // Login user
-        const { error } = await supabase.auth.signInWithPassword({
+      const endpoint = isLogin ? '/auth/login' : '/auth/signup';
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           email: formData.email,
           password: formData.password,
-        });
+          metadata: isLogin
+            ? undefined
+            : { name: formData.email.split('@')[0] }, // Optional metadata for signup
+        }),
+      });
 
-        if (error) {
-          toast.error(error.message);
-        } else {
-          toast.success('Login successful!');
-          // Call onClose if provided after successful login
-          onClose?.();
-        }
-      } else {
-        // Register user
-        const { error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-        });
+      const data: AuthResponse = await response.json();
 
-        if (error) {
-          toast.error(error.message);
-        } else {
-          toast.success(
-            'Registration successful! Please check your email for verification.'
+      if (!response.ok) {
+        // Handle specific error codes
+        if (data.code === 'USER_ALREADY_EXISTS') {
+          toast.error(
+            'An account with this email already exists. Please try logging in instead.'
           );
-          setIsLogin(true);
-          setFormData({ email: '', password: '' });
+          setIsLogin(true); // Switch to login form
+        } else if (data.code === 'INVALID_CREDENTIALS') {
+          toast.error('Invalid email or password. Please try again.');
+        } else if (data.code === 'EMAIL_NOT_CONFIRMED') {
+          toast.error('Please verify your email before signing in.');
+        } else {
+          toast.error(data.error || 'An error occurred. Please try again.');
+        }
+        return;
+      }
+
+      if (data.success) {
+        if (isLogin) {
+          // Login successful
+          if (data.user && data.session) {
+            // Store user data and session in localStorage
+            localStorage.setItem('user_data', JSON.stringify(data.user));
+            localStorage.setItem('user_session', JSON.stringify(data.session));
+
+            setUser(data.user);
+            toast.success('Login successful!');
+            onClose?.();
+          }
+        } else {
+          // Signup successful
+          if (data.requiresVerification) {
+            toast.success(
+              'Registration successful! Please check your email for verification.'
+            );
+            setIsLogin(true); // Switch to login form
+            setFormData({ email: '', password: '' });
+          } else if (data.user && data.session) {
+            // User created and logged in
+            localStorage.setItem('user_data', JSON.stringify(data.user));
+            localStorage.setItem('user_session', JSON.stringify(data.session));
+
+            setUser(data.user);
+            toast.success('Account created and logged in successfully!');
+            onClose?.();
+          }
         }
       }
     } catch (error) {
-      toast.error('An unexpected error occurred. Please try again.');
       console.error('Auth error:', error);
+      toast.error('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    getUser();
-
-    // Listen for auth state changes
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-      }
-    );
-
-    return () => {
-      listener?.subscription.unsubscribe();
-    };
-  }, [getUser, supabase.auth]);
+    checkAuthStatus();
+  }, [checkAuthStatus]);
 
   // Loading state while checking authentication
   if (authLoading) {
@@ -243,9 +307,7 @@ const User = ({ onClose }: UserProps) => {
                     {user.email}
                   </p>
                   <p className='text-white-1 text-[1.2rem] opacity-70'>
-                    {user.email_confirmed_at
-                      ? 'Email verified'
-                      : 'Email not verified'}
+                    Welcome back!
                   </p>
                 </div>
               </div>
