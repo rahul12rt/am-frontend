@@ -11,7 +11,7 @@ const Collections = ({ data }: { data: Watch[] }) => {
           className='relative rounded-[15px] flex flex-col items-center p-[15px] pt-[20px]'
         >
           <Link
-            href={`/collections/${product.id}`}
+            href={`/${product.id}`}
             className='flex flex-col items-center'
           >
             <div className='px-[15px] py-[8px] rounded-[8px] text-center flex item-center justify-between'>
