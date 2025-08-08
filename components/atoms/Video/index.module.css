@@ -1,0 +1,91 @@
+.videoSection {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+    padding: 4rem 0;
+  }
+  
+  .videoContainer {
+    position: relative;
+    width: 100%;
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
+  
+  .thumbnailWrapper {
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.3s ease-in-out;
+  }
+  
+  .playButton {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  .playButton:hover {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  
+  .playButtonInner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 6rem;
+    height: 6rem;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.9);
+    transition: background-color 0.2s ease;
+    color: #000; /* Added black color for the icon */
+  }
+  
+  .playButtonInner:hover {
+    background-color: rgba(255, 255, 255, 1);
+  }
+  
+  .titleContainer {
+    position: absolute;
+    bottom: 2rem;
+    left: 2rem;
+    right: 1.5rem;
+    z-index: 10;
+  }
+  
+  .title {
+    font-size: 24px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+  }
+  
+  .description {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.5;
+    max-width: 80ch;
+  }
+  
+  .gradientOverlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+  }
+  
+  @media (max-width: 768px) {
+    .title {
+      font-size: 2rem;
+    }
+    
+    .description {
+      font-size: 1rem;
+    }
+    
+    .playButtonInner {
+      width: 3.5rem;
+      height: 3.5rem;
+    }
+  }

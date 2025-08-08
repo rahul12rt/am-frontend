@@ -8,7 +8,7 @@ const NewCollectionWatch = ({ item }: { item: Watch }) => {
     item.WatchImages?.[0]?.front ||
     '/images/am0s1.webp';
   return (
-    <Link href={`/collections/${item.id}`} key={item.id}>
+    <Link href={`/${item.id}`} key={item.id}>
       <h3 className='text-[2.4rem] font-bold text-white-1 pb-[3px]'>
         {item.name}
       </h3>
