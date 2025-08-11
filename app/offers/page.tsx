@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import { fetchWatches, Watch } from '@/data/watches';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 const Offers = () => {
   const [watches, setWatches] = useState<Watch[]>([]);
@@ -25,7 +26,11 @@ const Offers = () => {
               <div className='text-center text-white-1 w-full'>Loading...</div>
             ) : (
               watches.map((product) => (
-                <div className='text-center' key={product.id}>
+                <Link
+                  href={`/${product.id}`}
+                  className='text-center'
+                  key={product.id}
+                >
                   <h3 className='text-[2.4rem] leading-[30px] font-bold max-[768px]:text-=[1.8rem] pb-[16px]'>
                     {product.name}
                   </h3>
@@ -40,13 +45,13 @@ const Offers = () => {
                       alt={product.name}
                     />
                     <p className='bg-white-1 text-black-1 text-[1.6rem] font-bold leading-[20px] text-center rounded-full w-[50px] h-[50px] flex items-center justify-center absolute bottom-[35px] right-[5px] max-[768px]:text-=[1.4rem]'>
-                      {product.offerpercentage}
+                      {product.offerpercentage}%
                     </p>
                   </div>
                   <h2 className='text-[14px] text-gray-400 m-2 text-center max-w-[250px] mx-auto'>
                     {product.characteristics}
                   </h2>
-                </div>
+                </Link>
               ))
             )}
           </div>
