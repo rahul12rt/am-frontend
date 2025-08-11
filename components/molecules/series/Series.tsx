@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import styles from './Series.module.css';
 import { fetchWatches, Watch } from '@/data/watches';
+import Link from 'next/link';
 
 function Series() {
   const [seriesWatches, setSeriesWatches] = useState<Watch[]>([]);
@@ -24,7 +25,8 @@ function Series() {
             <div className='text-white-1 text-center w-full'>Loading...</div>
           ) : (
             seriesWatches.map((series) => (
-              <div
+              <Link
+                href={`/${series.id}`}
                 key={series.id}
                 className='max-w-[360px] w-full max-[768px]:w-[80%] h-[258px] max-[768px]:h-[135px] bg-white-2 text-black-1 p-[20px] max-[768px]:py-[8px] max-[768px]:px-[12px] rounded-[8px] shrink-0 relative'
               >
@@ -47,7 +49,7 @@ function Series() {
                     alt={series.name}
                   />
                 </div>
-              </div>
+              </Link>
             ))
           )}
         </div>
