@@ -27,6 +27,7 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const isHomePage = pathname === '/';
   const isCollectionRoute = pathname === '/collections';
   const isWatchDetailRoute = pathname === '/watchdetail';
 
@@ -57,7 +58,8 @@ const Header = () => {
         }}
         className={`text-white-1 fixed top-0 left-0 w-full z-[3] transition-all duration-300 ${
           isScrolled || isCollectionRoute ? 'bg-black-1 bg-opacity-60' : ''
-        } ${isWatchDetailRoute ? 'bg-black-1' : ''}`}
+          } ${isWatchDetailRoute ? 'bg-black-1' : ''} 
+          ${!isHomePage ? 'bg-black-1' : ''}`}
       >
         <nav className='container flex justify-between items-center py-[16px] opacity-100 gap-[20px]'>
           <div className='flex items-center gap-[0px] custom-xmd:gap-[24px]'>

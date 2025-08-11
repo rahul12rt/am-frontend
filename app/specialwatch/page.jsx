@@ -10,7 +10,7 @@ import QaulityMarque from '@/components/organisms/qualityMarque/QualityMarque';
 import Gallery from '@/components/organisms/gallery/Gallery';
 import GetInTouch from '@/components/organisms/getInTouch/GetInTouch';
 
-function ProductPage() {
+function SpecialWatch() {
   const containerRef = useRef(null);
   const wrapperRef = useRef(null);
 
@@ -139,4 +139,4 @@ function ProductPage() {
   );
 }
 
-export default ProductPage;
+export default SpecialWatch;
