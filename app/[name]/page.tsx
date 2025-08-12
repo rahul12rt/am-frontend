@@ -116,7 +116,7 @@ export default function Component() {
       try {
         setLoading(true);
         const response = await fetch(
-          `http://localhost:3000/watches/${watchId}`
+          `http://localhost:5000/watches/${watchId}`
         );
 
         if (!response.ok) {

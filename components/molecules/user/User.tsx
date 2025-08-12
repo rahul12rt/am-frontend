@@ -61,7 +61,7 @@ const User = ({ onClose }: UserProps) => {
 
   // API base URL - update this to your backend URL
   const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+    process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 
   // Check if user is logged in by checking localStorage for session
   const checkAuthStatus = useCallback(() => {

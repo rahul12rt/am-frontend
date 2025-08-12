@@ -33,7 +33,7 @@ export interface Watch {
 }
 
 export async function fetchWatches(): Promise<Watch[]> {
-  const res = await fetch("http://localhost:3000/watches");
+  const res = await fetch("http://localhost:5000/watches");
   if (!res.ok) throw new Error("Failed to fetch watches");
   return res.json();
 }
