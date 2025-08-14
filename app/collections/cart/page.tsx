@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { MdKeyboardArrowRight } from "react-icons/md";
+import { useCreateOrder, useVerifyPayment } from "../../../hooks/usePayment";
 
 interface WatchImage {
   id: string;
@@ -132,11 +133,134 @@ const CartPage: React.FC = () => {
     },
   };
 
+  const createOrderMutation = useCreateOrder();
+  const verifyPaymentMutation = useVerifyPayment();
+
   const [cartItems, setCartItems] = useState<CartItem[]>(
     apiResponse.data.items
   );
   const [couponCode, setCouponCode] = useState<string>("");
   const [imageError, setImageError] = useState<{ [key: string]: boolean }>({});
+
+  // Add payment processing state
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Razorpay script loader
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const proceedToCheckout = async () => {
+    if (cartItems.length === 0) {
+      alert("Your cart is empty");
+      return;
+    }
+
+    try {
+      setIsProcessingPayment(true);
+
+      // Load Razorpay script
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error("Razorpay script failed to load");
+      }
+
+      // Verify Razorpay is available
+      if (!window.Razorpay) {
+        throw new Error("Razorpay is not available on window object");
+      }
+
+      // Create order with the total amount
+      const orderResponse = await createOrderMutation.mutateAsync({
+        amount: total,
+        currency: "INR",
+        receipt: `cart_${Date.now()}`,
+      });
+
+      if (!orderResponse.success) {
+        throw new Error("Failed to create payment order");
+      }
+
+      const { order_id, key_id, amount: orderAmount } = orderResponse;
+
+      // Verify all required fields
+      if (!order_id || !key_id || !orderAmount) {
+        throw new Error("Missing required order details");
+      }
+
+      // Prepare cart items summary for description
+      const itemsSummary =
+        cartItems.length === 1
+          ? cartItems[0].Watch.name
+          : `${cartItems.length} watches`;
+
+      // Razorpay checkout options
+      const options = {
+        key: key_id,
+        amount: orderAmount,
+        currency: "INR",
+        name: "Alban Marcus",
+        description: `Purchase: ${itemsSummary}`,
+        order_id: order_id,
+        prefill: {
+          name: "Customer",
+          email: "customer@example.com",
+          contact: "9999999999",
+        },
+        theme: {
+          color: "#000000",
+        },
+        handler: async (response: any) => {
+          try {
+            // Verify payment
+            const verificationResponse =
+              await verifyPaymentMutation.mutateAsync({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              });
+
+            if (verificationResponse.success) {
+              // Payment successful
+              alert("Payment successful! Thank you for your purchase.");
+              setCartItems([]);
+            } else {
+              throw new Error("Payment verification failed");
+            }
+          } catch (error) {
+            console.error("Payment verification error:", error);
+            alert("Payment verification failed! Please contact support.");
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setIsProcessingPayment(false);
+          },
+        },
+      };
+
+      // Create and open Razorpay instance
+      const razorpay = new (window as any).Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      console.error("Payment initiation error:", error);
+      const errorMessage = error?.message || "Unknown error occurred";
+      alert(`Failed to initiate payment: ${errorMessage}`);
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
 
   // Function to get the best available image from API response
   const getProductImage = (watch: Watch): string => {
@@ -193,15 +317,6 @@ const CartPage: React.FC = () => {
     }
     console.log("Applying coupon:", couponCode);
     // Handle coupon application logic here
-  };
-
-  const proceedToCheckout = () => {
-    if (cartItems.length === 0) {
-      alert("Your cart is empty");
-      return;
-    }
-    console.log("Proceeding to checkout with items:", cartItems);
-    // Handle checkout logic here
   };
 
   const returnToShop = () => {
@@ -408,7 +523,6 @@ const CartPage: React.FC = () => {
                 <h3 className="text-lg font-semibold mb-4 text-gray-900">
                   Cart Total
                 </h3>
-
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal:</span>
@@ -431,13 +545,20 @@ const CartPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
-                {/* FIXED PROCEED TO CHECKOUT BUTTON - SIMPLE BLACK BACKGROUND */}
                 <button
                   onClick={proceedToCheckout}
-                  className="w-full mt-6 px-6 py-3 !bg-[#000000] !text-[#ffffff] !border-none rounded text-sm font-medium"
+                  disabled={
+                    isProcessingPayment ||
+                    createOrderMutation.isPending ||
+                    verifyPaymentMutation.isPending
+                  }
+                  className="w-full mt-6 px-6 py-3 !bg-[#000000] !text-[#ffffff] !border-none rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Proceed to checkout
+                  {isProcessingPayment ||
+                  createOrderMutation.isPending ||
+                  verifyPaymentMutation.isPending
+                    ? "Processing..."
+                    : `Proceed to checkout - $${total.toLocaleString()}`}
                 </button>
               </div>
             </div>
