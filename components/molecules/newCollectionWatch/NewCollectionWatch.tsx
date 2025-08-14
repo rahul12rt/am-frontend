@@ -7,12 +7,20 @@ const NewCollectionWatch = ({ item }: { item: Watch }) => {
     item.WatchImages?.[0]?.isoview ||
     item.WatchImages?.[0]?.front ||
     '/images/am0s1.webp';
+  
+  const truncateText = (text: string, maxLength = 80) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + '...';
+  };
+
   return (
-    <Link href={`/collections/${item.id}`} key={item.id}>
+    <Link href={`/${item.id}`} key={item.id}>
       <h3 className='text-[2.4rem] font-bold text-white-1 pb-[3px]'>
         {item.name}
       </h3>
-      <p className='text-[1.6rem] pb-[16px]'>{item.description}</p>
+      <p className='text-[1.6rem] pb-[16px] leading-relaxed'>
+        {truncateText(item.description)}
+      </p>
       <Image
         src={imageSrc}
         width={234}
