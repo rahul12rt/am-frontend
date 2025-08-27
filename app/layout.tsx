@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import Header from '@/components/organisms/header/Header';
 
 import "./globals.scss";
+import Footer from "@/components/organisms/footer/Footer";
 
 const centurygothic = localFont({
   src: '../public/fonts/gothic/centurygothic.ttf',
@@ -42,6 +43,7 @@ export default function RootLayout({
       >
         <Header />
         {children}
+        <Footer />
       </body>
     </html>
   );
