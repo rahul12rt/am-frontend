@@ -73,6 +73,13 @@ export default function Component() {
   const [selectedColor, setSelectedColor] = useState(0);
   const [quantity, setQuantity] = useState(2);
   const [activeTab, setActiveTab] = useState("information")
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewData, setReviewData] = useState({
+    name: "",
+    rating: 0,
+    comment: "",
+  });
+
 
   const colors = [
     {
@@ -454,8 +461,8 @@ export default function Component() {
               <button
                 onClick={() => setActiveTab("information")}
                 className={`px-6 py-3 text-[16px] font-medium border-b-2 transition-colors ${activeTab === "information"
-                    ? "border-blue-500 text-blue-500"
-                    : "border-transparent text-[rgba(0,0,0,0.6)] hover:text-black-1"
+                  ? "border-blue-500 text-blue-500"
+                  : "border-transparent text-[rgba(0,0,0,0.6)] hover:text-black-1"
                   }`}
               >
                 Product Information
@@ -463,8 +470,8 @@ export default function Component() {
               <button
                 onClick={() => setActiveTab("reviews")}
                 className={`px-6 py-3 text-[16px] font-medium border-b-2 transition-colors ${activeTab === "reviews"
-                    ? "border-blue-500 text-blue-500"
-                    : "border-transparent text-[rgba(0,0,0,0.6)] hover:text-black-1"
+                  ? "border-blue-500 text-blue-500"
+                  : "border-transparent text-[rgba(0,0,0,0.6)] hover:text-black-1"
                   }`}
               >
                 Reviews ({watch.reviewscount})
@@ -476,7 +483,7 @@ export default function Component() {
               <div>
                 {/* Product Description */}
                 <div className="mb-12">
-                  <h3 className="text-[24px] font-bold text-black-1 mb-4">Description</h3>
+                  <h4 className="text-[18px] font-semibold text-black-1 mb-2">Description</h4>
                   <p className="text-[16px] text-[rgba(0,0,0,0.6)] leading-relaxed">
                     {watch.description}
                   </p>
@@ -529,8 +536,8 @@ export default function Component() {
                           <Star
                             key={i}
                             className={`w-5 h-5 ${i < Math.floor(watch.rating || 0)
-                                ? "fill-[#ffc600] text-[#ffc600]"
-                                : "fill-gray-200 text-gray-200"
+                              ? "fill-[#ffc600] text-[#ffc600]"
+                              : "fill-gray-200 text-gray-200"
                               }`}
                           />
                         ))}
@@ -549,7 +556,6 @@ export default function Component() {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {/* Replace below with actual fetched reviews when available */}
                     {watch.reviews?.map((review) => (
                       <div key={review.id} className="border-b border-[#d9d9d9] pb-6">
                         <div className="flex items-start justify-between mb-3">
@@ -565,8 +571,8 @@ export default function Component() {
                                   <Star
                                     key={i}
                                     className={`w-4 h-4 ${i < review.rating
-                                        ? "fill-[#ffc600] text-[#ffc600]"
-                                        : "fill-gray-200 text-gray-200"
+                                      ? "fill-[#ffc600] text-[#ffc600]"
+                                      : "fill-gray-200 text-gray-200"
                                       }`}
                                   />
                                 ))}
@@ -585,11 +591,74 @@ export default function Component() {
                   </div>
                 )}
 
-                {/* Write Review Button */}
+                {/* Write Review Section */}
                 <div className="mt-8 text-center">
-                  <button className="bg-[#000000] text-white-1 px-8 py-3 rounded hover:bg-[#262626] transition-colors">
-                    Write a Review
-                  </button>
+                  {!showReviewForm ? (
+                    <button
+                      onClick={() => setShowReviewForm(true)}
+                      className="bg-[#000000] text-white-1 px-8 py-3 rounded hover:bg-[#262626] transition-colors text-[16px]"
+                    >
+                      Write a Review
+                    </button>
+                  ) : (
+                    <div className="p-6 border rounded-lg text-left bg-white">
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          console.log("Submitting review:", reviewData);
+                          // TODO: API call to save review
+                          setShowReviewForm(false);
+                          setReviewData({ name: "", rating: 0, comment: "" });
+                        }}
+                        className="space-y-4"
+                      >
+                        <div>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                onClick={() =>
+                                  setReviewData({ ...reviewData, rating: star })
+                                }
+                                className={`w-10 h-10 cursor-pointer ${star <= reviewData.rating
+                                    ? "fill-[#ffc600] text-[#ffc600]"
+                                    : "fill-gray-200 text-gray-200"
+                                  }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <textarea
+                            value={reviewData.comment}
+                            onChange={(e) =>
+                              setReviewData({ ...reviewData, comment: e.target.value })
+                            }
+                            className="w-full border rounded px-3 py-2 text-[16px] h-28"
+                            placeholder='Write Review'
+                            required
+                          />
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setShowReviewForm(false)}
+                            className="px-6 py-2 rounded border text-[16px]"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="bg-[#000000] text-white-1 px-6 py-2 rounded hover:bg-[#262626]"
+                          >
+                            Submit
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
