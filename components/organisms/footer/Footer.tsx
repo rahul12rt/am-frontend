@@ -5,7 +5,7 @@ import { Facebook, Twitter, Instagram } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="w-full border-gray-200 py-6 mt-10">
+    <footer className="w-full border-gray-200 py-10 mt-10">
       <div className="container flex flex-col md:flex-row justify-between items-center gap-4">
         {/* Left Section */}
         <p className="text-[14px] text-white">
@@ -14,11 +14,11 @@ const Footer = () => {
 
         {/* Middle Section */}
         <div className="flex gap-4 text-[14px] text-white">
-          <Link href="/privacy-policy" className="hover:text-black">
+          <Link href="/privacypolicy" className="hover:text-black">
             Privacy Policy
           </Link>
           <span>|</span>
-          <Link href="/terms-and-conditions" className="hover:text-black">
+          <Link href="/termsandconditions" className="hover:text-black">
             Terms & Conditions
           </Link>
         </div>
