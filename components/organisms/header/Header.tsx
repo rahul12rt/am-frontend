@@ -5,10 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FaBars } from "react-icons/fa";
-import Series from "@/components/molecules/series/Series";
-import User from "@/components/molecules/user/User";
-// 🔥 Create this component for mobile navigation links
-// import Menu from "@/components/molecules/menu/Menu";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);

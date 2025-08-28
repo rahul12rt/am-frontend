@@ -127,35 +127,6 @@ export default function Component() {
       image: '/placeholder.svg?height=200&width=200',
     }));
 
-  const mockReviews = [
-    {
-      id: 1,
-      name: "John Smith",
-      rating: 5,
-      date: "2024-01-15",
-      comment:
-        "Excellent watch! The build quality is outstanding and it looks even better in person. Highly recommend!",
-      verified: true,
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      rating: 4,
-      date: "2024-01-10",
-      comment:
-        "Beautiful design and comfortable to wear. The only minor issue is that the strap could be a bit softer.",
-      verified: true,
-    },
-    {
-      id: 3,
-      name: "Mike Chen",
-      rating: 5,
-      date: "2024-01-05",
-      comment: "Perfect watch for both casual and formal occasions. Great value for money!",
-      verified: false,
-    },
-  ]
-
   useEffect(() => {
     const fetchWatch = async () => {
       if (!watchId) return;
