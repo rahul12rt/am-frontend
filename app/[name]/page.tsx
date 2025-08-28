@@ -26,6 +26,15 @@ interface WatchImage {
   dial?: string;
 }
 
+interface Review {
+  id: number;
+  name: string;
+  rating: number;
+  date: string;
+  comment: string;
+  verified?: boolean;
+}
+
 interface Watch {
   id: string;
   name: string;
@@ -45,6 +54,7 @@ interface Watch {
   stockavailability: boolean;
   isfeatured: boolean;
   WatchImages: WatchImage[];
+  reviews?: Review[];
 }
 
 interface ApiResponse {
@@ -62,6 +72,14 @@ export default function Component() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState(0);
   const [quantity, setQuantity] = useState(2);
+  const [activeTab, setActiveTab] = useState("information")
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewData, setReviewData] = useState({
+    name: "",
+    rating: 0,
+    comment: "",
+  });
+
 
   const colors = [
     {
@@ -116,7 +134,7 @@ export default function Component() {
       try {
         setLoading(true);
         const response = await fetch(
-          `http://localhost:3000/watches/${watchId}`
+          `http://localhost:5000/watches/${watchId}`
         );
 
         if (!response.ok) {
@@ -124,6 +142,8 @@ export default function Component() {
         }
 
         const result: ApiResponse = await response.json();
+
+        console.log({ result });
 
         if (result.success && result.data) {
           setWatch(result.data);
@@ -177,7 +197,7 @@ export default function Component() {
   const discountPercentage = Math.round(
     ((parseFloat(watch.actualprice) - parseFloat(watch.offerprice)) /
       parseFloat(watch.actualprice)) *
-      100
+    100
   );
 
   return (
@@ -203,11 +223,10 @@ export default function Component() {
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`w-20 h-20 rounded-lg border-2 overflow-hidden ${
-                        selectedImage === index
-                          ? 'border-[#ff3333]'
-                          : 'border-[#d9d9d9]'
-                      }`}
+                      className={`w-20 h-20 rounded-lg border-2 overflow-hidden ${selectedImage === index
+                        ? 'border-[#ff3333]'
+                        : 'border-[#d9d9d9]'
+                        }`}
                       title={view.label}
                     >
                       <Image
@@ -263,11 +282,10 @@ export default function Component() {
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-6 h-6 ${
-                          i < Math.floor(watch.rating || 0)
-                            ? 'fill-[#ffc600] text-[#ffc600]'
-                            : 'fill-gray-200 text-gray-200'
-                        }`}
+                        className={`w-6 h-6 ${i < Math.floor(watch.rating || 0)
+                          ? 'fill-[#ffc600] text-[#ffc600]'
+                          : 'fill-gray-200 text-gray-200'
+                          }`}
                       />
                     ))}
                     {watch.reviewscount > 0 && (
@@ -293,11 +311,10 @@ export default function Component() {
                     <button
                       key={index}
                       onClick={() => setSelectedColor(index)}
-                      className={`rounded-full p-2 border ${
-                        selectedColor === index
-                          ? 'border-[#A59E9E]'
-                          : 'border-[#ffffff]'
-                      }`}
+                      className={`rounded-full p-2 border ${selectedColor === index
+                        ? 'border-[#A59E9E]'
+                        : 'border-[#ffffff]'
+                        }`}
                       title={color.name}
                     >
                       <span
@@ -314,9 +331,8 @@ export default function Component() {
               {/* Stock Status */}
               <div className='py-2'>
                 <span
-                  className={`text-sm ${
-                    watch.stockavailability ? 'text-green-600' : 'text-red-600'
-                  }`}
+                  className={`text-sm ${watch.stockavailability ? 'text-green-600' : 'text-red-600'
+                    }`}
                 >
                   {watch.stockavailability ? '✓ In Stock' : '✗ Out of Stock'}
                 </span>
@@ -341,11 +357,10 @@ export default function Component() {
                 </div>
 
                 <button
-                  className={`px-[19px] py-[12px] flex items-center gap-[8px] rounded ${
-                    watch.stockavailability
-                      ? 'bg-[#000000] text-white-1 hover:bg-[#262626]'
-                      : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                  }`}
+                  className={`px-[19px] py-[12px] flex items-center gap-[8px] rounded ${watch.stockavailability
+                    ? 'bg-[#000000] text-white-1 hover:bg-[#262626]'
+                    : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    }`}
                   disabled={!watch.stockavailability}
                 >
                   <ShoppingBag className='w-9 h-9' />
@@ -409,6 +424,217 @@ export default function Component() {
               )}
             </div>
           </div>
+
+          {/* Tabs Section */}
+          <div className="pb-[88px]">
+            {/* Tab Navigation */}
+            <div className="flex border-b border-[#d9d9d9] mb-8">
+              <button
+                onClick={() => setActiveTab("information")}
+                className={`px-6 py-3 text-[16px] font-medium border-b-2 transition-colors ${activeTab === "information"
+                  ? "border-blue-500 text-blue-500"
+                  : "border-transparent text-[rgba(0,0,0,0.6)] hover:text-black-1"
+                  }`}
+              >
+                Product Information
+              </button>
+              <button
+                onClick={() => setActiveTab("reviews")}
+                className={`px-6 py-3 text-[16px] font-medium border-b-2 transition-colors ${activeTab === "reviews"
+                  ? "border-blue-500 text-blue-500"
+                  : "border-transparent text-[rgba(0,0,0,0.6)] hover:text-black-1"
+                  }`}
+              >
+                Reviews ({watch.reviewscount})
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === "information" && (
+              <div>
+                {/* Product Description */}
+                <div className="mb-12">
+                  <h4 className="text-[18px] font-semibold text-black-1 mb-2">Description</h4>
+                  <p className="text-[16px] text-[rgba(0,0,0,0.6)] leading-relaxed">
+                    {watch.description}
+                  </p>
+
+                  {watch.characteristics && (
+                    <div className="mt-6">
+                      <h4 className="text-[18px] font-semibold text-black-1 mb-2">
+                        Additional Details
+                      </h4>
+                      <p className="text-[16px] text-[rgba(0,0,0,0.6)] leading-relaxed">
+                        {watch.characteristics}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Warranty & Release Info */}
+                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="text-[18px] font-semibold text-black-1 mb-1">
+                        Warranty
+                      </h4>
+                      <p className="text-[16px] text-[rgba(0,0,0,0.6)]">
+                        {watch.warrantyperiod} Months
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="text-[18px] font-semibold text-black-1 mb-1">
+                        Release Date
+                      </h4>
+                      <p className="text-[16px] text-[rgba(0,0,0,0.6)]">
+                        {new Date(watch.releasedate).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "reviews" && (
+              <div>
+                {/* Reviews Summary */}
+                <div className="mb-8 p-6 bg-[#f8f8fb] rounded-lg">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="text-[48px] font-bold text-black-1">
+                      {watch.rating?.toFixed(1) || "0.0"}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1 mb-2">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-5 h-5 ${i < Math.floor(watch.rating || 0)
+                              ? "fill-[#ffc600] text-[#ffc600]"
+                              : "fill-gray-200 text-gray-200"
+                              }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-[16px] text-[rgba(0,0,0,0.6)]">
+                        Based on {watch.reviewscount} reviews
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* If no reviews */}
+                {watch.reviewscount === 0 ? (
+                  <div className="text-center text-[16px] text-[rgba(0,0,0,0.6)] py-6">
+                    No reviews yet. Be the first to write a review!
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {watch.reviews?.map((review) => (
+                      <div key={review.id} className="border-b border-[#d9d9d9] pb-6">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="text-[16px] font-semibold text-black-1">
+                                {review.name}
+                              </h4>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`w-4 h-4 ${i < review.rating
+                                      ? "fill-[#ffc600] text-[#ffc600]"
+                                      : "fill-gray-200 text-gray-200"
+                                      }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-[14px] text-[rgba(0,0,0,0.6)]">
+                                {new Date(review.date).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-[16px] text-[rgba(0,0,0,0.8)] leading-relaxed">
+                          {review.comment}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Write Review Section */}
+                <div className="mt-8 text-center">
+                  {!showReviewForm ? (
+                    <button
+                      onClick={() => setShowReviewForm(true)}
+                      className="bg-[#000000] text-white-1 px-8 py-3 rounded hover:bg-[#262626] transition-colors text-[16px]"
+                    >
+                      Write a Review
+                    </button>
+                  ) : (
+                    <div className="p-6 border rounded-lg text-left bg-white">
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          console.log("Submitting review:", reviewData);
+                          // TODO: API call to save review
+                          setShowReviewForm(false);
+                          setReviewData({ name: "", rating: 0, comment: "" });
+                        }}
+                        className="space-y-4"
+                      >
+                        <div>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                onClick={() =>
+                                  setReviewData({ ...reviewData, rating: star })
+                                }
+                                className={`w-10 h-10 cursor-pointer ${star <= reviewData.rating
+                                    ? "fill-[#ffc600] text-[#ffc600]"
+                                    : "fill-gray-200 text-gray-200"
+                                  }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <textarea
+                            value={reviewData.comment}
+                            onChange={(e) =>
+                              setReviewData({ ...reviewData, comment: e.target.value })
+                            }
+                            className="w-full border rounded px-3 py-2 text-[16px] h-28"
+                            placeholder='Write Review'
+                            required
+                          />
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setShowReviewForm(false)}
+                            className="px-6 py-2 rounded border text-[16px]"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="bg-[#000000] text-white-1 px-6 py-2 rounded hover:bg-[#262626]"
+                          >
+                            Submit
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
 
           {/* Most Liked */}
           <div>

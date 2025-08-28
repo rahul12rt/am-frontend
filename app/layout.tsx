@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 
 import Header from "@/components/organisms/header/Header";
-
 import "./globals.scss";
+import Footer from "@/components/organisms/footer/Footer";
 import { Providers } from "./providers";
 
 const centurygothic = localFont({
@@ -44,6 +44,7 @@ export default function RootLayout({
         <Providers>
           <Header />
           {children}
+          <Footer />
         </Providers>
       </body>
     </html>
