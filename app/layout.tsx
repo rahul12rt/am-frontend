@@ -1,34 +1,34 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 
-import Header from '@/components/organisms/header/Header';
-
+import Header from "@/components/organisms/header/Header";
 import "./globals.scss";
 import Footer from "@/components/organisms/footer/Footer";
+import { Providers } from "./providers";
 
 const centurygothic = localFont({
-  src: '../public/fonts/gothic/centurygothic.ttf',
+  src: "../public/fonts/gothic/centurygothic.ttf",
 });
 
 const ppneuemontrealNormal = localFont({
-  src: '../public/fonts/ppneuemontreal/ppneuemontreal-book.woff',
-  variable: '--font-ppneuemontrealNormal',
+  src: "../public/fonts/ppneuemontreal/ppneuemontreal-book.woff",
+  variable: "--font-ppneuemontrealNormal",
 });
 
 const ppeditorialnewitalic = localFont({
-  src: '../public/fonts/ppeditorialnew/ppeditorialnew-ultralightItalic.otf',
-  variable: '--font-ppeditorialnewitalic',
+  src: "../public/fonts/ppeditorialnew/ppeditorialnew-ultralightItalic.otf",
+  variable: "--font-ppeditorialnewitalic",
 });
 
 const timesNewRomanNormal = localFont({
-  src: '../public/fonts/timesNewRoman/times-new-roman.ttf',
-  variable: '--font-timesNewRomanNormal',
+  src: "../public/fonts/timesNewRoman/times-new-roman.ttf",
+  variable: "--font-timesNewRomanNormal",
 });
 
 export const metadata: Metadata = {
-  title: 'ALBAN MARCUS',
+  title: "ALBAN MARCUS",
   description:
-    'Mechanical watches may go through up to 50 or 60 different processes before the watch is considered to be as near to perfect as humanly possible before delivery.',
+    "Mechanical watches may go through up to 50 or 60 different processes before the watch is considered to be as near to perfect as humanly possible before delivery.",
 };
 
 export default function RootLayout({
@@ -37,13 +37,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='en'>
+    <html lang="en">
       <body
         className={`${centurygothic.className} ${ppneuemontrealNormal.variable} ${ppeditorialnewitalic.variable} ${timesNewRomanNormal.variable} bg-black-1 text-white-1`}
       >
-        <Header />
-        {children}
-        <Footer />
+        <Providers>
+          <Header />
+          {children}
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

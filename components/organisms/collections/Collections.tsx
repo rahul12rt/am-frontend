@@ -1,6 +1,6 @@
-import Image from 'next/image';
-import Link from 'next/link';
-import { Watch } from '@/data/watches';
+import Image from "next/image";
+import Link from "next/link";
+import { Watch } from "@/data/watches";
 
 const Collections = ({ data }: { data: Watch[] }) => {
     const truncateText = (text: string, maxLength = 80) => {
@@ -9,40 +9,49 @@ const Collections = ({ data }: { data: Watch[] }) => {
     };
 
     return (
-      <div className='grid grid-cols-1 custom-xsm:grid-cols-1 custom-sm:grid-cols-2 custom-md:grid-cols-4 gap-x-4 gap-y-[50px]'>
+      <div className=" grid grid-cols-1 custom-xsm:grid-cols-1 custom-sm:grid-cols-2 custom-md:grid-cols-4 gap-x-4 gap-y-[50px]">
         {data.map((product) => (
           <div
             key={product.id}
-            className='relative rounded-[15px] flex flex-col items-center p-[15px] pt-[20px]'
+            className="relative rounded-[15px] flex flex-col items-center p-[15px] pt-[20px]"
           >
-            <Link
+            {/* Edit button positioned at top-right */}
+          <Link
+            prefetch={false}
+            href={`/product?id=${product.id}`}
+            className="absolute top-2 right-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors z-10"
+          >
+            Edit
+          </Link>
+
+          <Link
               href={`/${product.id}`}
-              className='flex flex-col items-center'
+              className="flex flex-col items-center"
             >
-              <div className='px-[15px] py-[8px] rounded-[8px] text-center flex item-center justify-between'>
+              <div className="px-[15px] py-[8px] rounded-[8px] text-center flex item-center justify-between">
                 <div>
-                  <h3 className='text-[16px] font-bold'>{product.name}</h3>
+                  <h3 className="text-[16px] font-bold">{product.name}</h3>
                 </div>
               </div>
-              <div className='relative min-w-full h-[260px]'>
+              <div className="relative min-w-full h-[260px]">
                 <Image
                   fill
                   src={
-                    product.WatchImages?.[0]?.isoview || '/images/am0s1.webp'
+                    product.WatchImages?.[0]?.isoview || "/images/am0s1.webp"
                   }
                   alt={product.name}
-                  className='object-contain'
+                  className="object-contain"
                 />
               </div>
-              <h2 className='text-[14px] text-gray-400 m-2 text-center max-w-[250px] mx-auto leading-relaxed'>
+              <h2 className="text-[14px] text-gray-400 m-2 text-center max-w-[250px] mx-auto leading-relaxed">
                 {truncateText(product.description)}
               </h2>
-              <div className='mb-2 text-center'>
-                <span className='text-[24px] text-center'>
+              <div className="mb-2 text-center">
+                <span className="text-[24px] text-center">
                   ${product.offerprice}
                 </span>
                 &nbsp; &nbsp;
-                <span className='text-[24px] text-gray-400 line-through font-bold'>
+                <span className="text-[24px] text-gray-400 line-through font-bold">
                   ${product.actualprice}
                 </span>
               </div>
