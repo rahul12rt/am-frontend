@@ -143,12 +143,14 @@ const Header = () => {
             </Link>
 
             {/* Bag */}
-            <button className="flex justify-center items-center relative hidden custom-xmd:block">
-              <span className="flex justify-center items-center rounded-full bg-red-1 min-w-[16px] min-h-[16px] absolute top-[-1px] right-[-2px]">
-                4
-              </span>
-              <Image src="/icons/bag.svg" alt="menu" width={27} height={27} />
-            </button>
+            <Link href='/cart'>
+              <button className="flex justify-center items-center relative hidden custom-xmd:block">
+                <span className="flex justify-center items-center rounded-full bg-red-1 min-w-[16px] min-h-[16px] absolute top-[-1px] right-[-2px]">
+                  4
+                </span>
+                <Image src="/icons/bag.svg" alt="menu" width={27} height={27} />
+              </button>
+            </Link>
 
             {/* User Drawer Button */}
             <button

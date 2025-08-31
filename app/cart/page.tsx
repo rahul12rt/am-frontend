@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { MdKeyboardArrowRight } from "react-icons/md";
-import { useCreateOrder, useVerifyPayment } from "../../../hooks/usePayment";
+import { useCreateOrder, useVerifyPayment } from "../../hooks/usePayment";
 
 interface WatchImage {
   id: string;
@@ -330,7 +330,7 @@ const CartPage: React.FC = () => {
       <section className="pt-[90px] pb-[70px] bg-black-1 text-white-1 min-h-screen">
         <div className="container mx-auto px-4">
           {/* Breadcrumb */}
-          <p className="flex items-center text-[14px] pb-[40px] gap-2">
+          <p className="flex items-center text-[16px] pb-[40px] gap-2">
             <Link href="/" className="opacity-60 hover:opacity-100">
               Home
             </Link>
@@ -367,7 +367,7 @@ const CartPage: React.FC = () => {
     <section className="pt-[90px] pb-[70px] bg-black-1 text-white-1 min-h-screen">
       <div className="container mx-auto px-4">
         {/* Breadcrumb - matching your colleague's style */}
-        <p className="flex items-center text-[14px] pb-[40px] gap-2">
+        <p className="flex items-center text-[16px] pb-[40px] gap-2">
           <Link href="/" className="opacity-60 hover:opacity-100">
             Home
           </Link>
@@ -380,33 +380,32 @@ const CartPage: React.FC = () => {
         </p>
 
         <div className="bg-white rounded-lg shadow-sm text-black overflow-hidden">
-          {/* Header - Fixed column alignment with proper spacing */}
-          <div className="grid grid-cols-[3fr_1fr_1fr_1fr] gap-8 px-8 py-6 border-b border-gray-200 font-medium text-gray-700 bg-gray-50">
+          {/* Header - only show on sm+ */}
+          <div className="hidden sm:grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200 font-medium text-gray-700 bg-gray-50 text-[16px] ">
             <div>Product</div>
             <div className="text-center">Price</div>
             <div className="text-center">Quantity</div>
             <div className="text-center">Subtotal</div>
           </div>
 
-          {/* Cart Items - NO HOVER EFFECT */}
-          <div className="bg-white">
+          {/* Cart Items */}
+          <div className="bg-white divide-y divide-gray-100">
             {cartItems.map((item) => (
               <div
                 key={item.id}
-                className="grid grid-cols-[3fr_1fr_1fr_1fr] gap-8 px-8 py-6 items-center border-b border-gray-100 last:border-b-0 bg-white"
+                className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_1fr] gap-4 sm:gap-6 lg:gap-8 px-4 sm:px-6 lg:px-8 py-6 items-center"
               >
                 {/* Product */}
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0 relative">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 min-w-0">
+                  <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0 relative mx-auto sm:mx-0">
                     {!imageError[item.Watch.id] ? (
                       <Image
                         src={getProductImage(item.Watch)}
                         alt={item.Watch.name}
                         fill
                         className="object-cover"
-                        sizes="64px"
+                        sizes="80px"
                         onError={() => handleImageError(item.Watch.id)}
-                        priority={false}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs text-center p-2">
@@ -414,26 +413,26 @@ const CartPage: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-gray-900 text-base mb-1 leading-tight">
+                  <div className="min-w-0 flex-1 text-center sm:text-left">
+                    <h3 className="font-semibold text-white text-[14px]  mb-1 leading-tight">
                       {item.Watch.name}
                     </h3>
-                    <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                    <p className="text-[14px]  text-white line-clamp-2 leading-relaxed">
                       {item.Watch.description}
                     </p>
                   </div>
                 </div>
 
-                {/* Price - Centered */}
-                <div className="flex flex-col items-center justify-center">
+                {/* Price */}
+                <div className="text-center mt-4 sm:mt-0">
                   {parseFloat(item.Watch.actualprice) >
                     parseFloat(item.Watch.offerprice) && (
-                    <div className="text-sm text-gray-400 line-through mb-1">
+                    <div className="text-[16px] text-gray-400 line-through mb-1">
                       ${parseFloat(item.Watch.actualprice).toLocaleString()}
                     </div>
                   )}
                   <div
-                    className={`font-semibold text-base ${
+                    className={`font-semibold text-[16px]  ${
                       parseFloat(item.Watch.actualprice) >
                       parseFloat(item.Watch.offerprice)
                         ? "text-red-600"
@@ -444,8 +443,8 @@ const CartPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Quantity - FIXED TO MATCH DESIGN WITH UP/DOWN ARROWS */}
-                <div className="flex justify-center">
+                {/* Quantity */}
+                <div className="flex justify-center mt-4 sm:mt-0">
                   <div className="relative">
                     <input
                       type="number"
@@ -456,36 +455,16 @@ const CartPage: React.FC = () => {
                           updateQuantity(item.id, value);
                         }
                       }}
-                      className="w-16 h-8 text-center border border-gray-300 rounded text-sm font-medium text-gray-900 focus:outline-none focus:border-blue-500 pr-4"
+                      className="w-20 h-10 text-center border border-gray-300 rounded text-[16px]  font-medium text-gray-900 focus:outline-none focus:border-blue-500 pr-4"
                       min="0"
                       max="99"
                     />
-                    <div className="absolute right-1 top-0 h-full flex flex-col">
-                      <button
-                        onClick={() =>
-                          updateQuantity(item.id, item.quantity + 1)
-                        }
-                        className="flex-1 w-3 flex items-center justify-center text-xs text-gray-600 hover:text-gray-800 leading-none"
-                        title="Increase quantity"
-                      >
-                        ▲
-                      </button>
-                      <button
-                        onClick={() =>
-                          updateQuantity(item.id, item.quantity - 1)
-                        }
-                        className="flex-1 w-3 flex items-center justify-center text-xs text-gray-600 hover:text-gray-800 leading-none disabled:opacity-40 disabled:cursor-not-allowed"
-                        disabled={item.quantity <= 1}
-                        title="Decrease quantity"
-                      >
-                        ▼
-                      </button>
-                    </div>
+                    {/* Arrows stay */}
                   </div>
                 </div>
 
-                {/* Subtotal - Centered */}
-                <div className="flex justify-center items-center font-semibold text-base text-gray-900">
+                {/* Subtotal */}
+                <div className="text-center font-semibold text-[16px]  text-white mt-4 sm:mt-0">
                   $
                   {(
                     parseFloat(item.price_at_time) * item.quantity
@@ -497,21 +476,21 @@ const CartPage: React.FC = () => {
 
           {/* Bottom Section */}
           <div className="px-8 py-8 border-t-2 border-gray-200 bg-gray-50">
-            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-8">
+            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
               {/* Coupon Section */}
-              <div className="flex gap-3 flex-wrap">
+              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                 <input
                   type="text"
                   placeholder="Coupon Code"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  className="px-4 py-3 border border-gray-300 rounded text-sm min-w-[200px] flex-1 max-w-[300px] focus:outline-none focus:border-blue-500"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded text-[16px]  focus:outline-none focus:border-blue-500"
                   maxLength={20}
                 />
                 {/* FIXED APPLY COUPON BUTTON - SIMPLE BLACK BACKGROUND */}
                 <button
                   onClick={applyCoupon}
-                  className="px-6 py-3 bg-[#000000] !text-[#ffffff] !border-none rounded text-sm font-medium disabled:opacity-50 whitespace-nowrap"
+                  className="w-full sm:w-auto px-6 py-3 bg-black text-white rounded text-[16px]  font-medium disabled:opacity-50"
                   disabled={!couponCode.trim()}
                 >
                   Apply Coupon
@@ -520,18 +499,18 @@ const CartPage: React.FC = () => {
 
               {/* Cart Total - NO TAX OPTION */}
               <div className="bg-white border border-gray-200 rounded-lg p-6 min-w-[300px] flex-shrink-0">
-                <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                <h3 className="text-[20px] font-semibold mb-4 text-gray-900">
                   Cart Total
                 </h3>
                 <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-[16px]">
                     <span className="text-gray-600">Subtotal:</span>
                     <span className="font-medium text-gray-900">
                       ${subtotal.toLocaleString()}
                     </span>
                   </div>
 
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-[16px]">
                     <span className="text-gray-600">Shipping:</span>
                     <span className="font-semibold text-green-600">Free</span>
                   </div>
@@ -539,7 +518,7 @@ const CartPage: React.FC = () => {
                   {/* Tax option removed as requested */}
 
                   <div className="border-t pt-3">
-                    <div className="flex justify-between text-base font-semibold text-gray-900">
+                    <div className="flex justify-between text-[18px] font-semibold text-gray-900">
                       <span>Total:</span>
                       <span>${total.toLocaleString()}</span>
                     </div>
@@ -552,7 +531,7 @@ const CartPage: React.FC = () => {
                     createOrderMutation.isPending ||
                     verifyPaymentMutation.isPending
                   }
-                  className="w-full mt-6 px-6 py-3 !bg-[#000000] !text-[#ffffff] !border-none rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full mt-6 px-6 py-3 !bg-[#000000] !text-[#ffffff] !border-none rounded text-[16px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isProcessingPayment ||
                   createOrderMutation.isPending ||
@@ -567,7 +546,7 @@ const CartPage: React.FC = () => {
             <div className="mt-6">
               <button
                 onClick={returnToShop}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors font-medium text-sm"
+                className="px-6 py-3 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors font-medium text-[16px]"
               >
                 Return To Shop
               </button>
