@@ -1,235 +1,76 @@
 "use client";
 
-import {
-  useState,
-  ChangeEvent,
-  FormEvent,
-  useEffect,
-  useCallback,
-} from "react";
-import Image from "next/image";
+import { useState } from "react";
 import styles from "./User.module.scss";
 import { toast, Toaster } from "react-hot-toast";
+import {
+  useSendSignupOtp,
+  useVerifySignupOtp,
+  useSendLoginOtp,
+  useVerifyLoginOtp,
+} from "@/hooks/useAuth";
 
-interface UserProps {
-  onClose?: () => void;
-}
+const User = () => {
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [step, setStep] = useState<"phone" | "otp">("phone");
 
-interface User {
-  id: string;
-  phone: string;
-}
+  const [phone, setPhone] = useState("");
+  const [countryCode, setCountryCode] = useState("91");
+  const [otp, setOtp] = useState("");
+  const [firstName, setFirstName] = useState("");
 
-interface AuthResponse {
-  success: boolean;
-  message: string;
-  user?: User;
-  session?: {
-    access_token: string;
-    refresh_token: string;
-    expires_at: number;
-  };
-  error?: string;
-  code?: string;
-}
+  // Mutations
+  const sendSignupOtp = useSendSignupOtp();
+  const verifySignupOtp = useVerifySignupOtp();
+  const sendLoginOtp = useSendLoginOtp();
+  const verifyLoginOtp = useVerifyLoginOtp();
 
-const User = ({ onClose }: UserProps) => {
-  const [formData, setFormData] = useState({
-    phone: "",
-    otp: "",
-  });
-  const [errors, setErrors] = useState<{ phone?: string; otp?: string }>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-
-  const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-
-  // Check if user is logged in by checking localStorage
-  const checkAuthStatus = useCallback(() => {
-    setAuthLoading(true);
-    try {
-      const userSession = localStorage.getItem("user_session");
-      const userData = localStorage.getItem("user_data");
-
-      if (userSession && userData) {
-        const session = JSON.parse(userSession);
-        const user = JSON.parse(userData);
-
-        if (session.expires_at && Date.now() < session.expires_at * 1000) {
-          setUser(user);
-        } else {
-          localStorage.removeItem("user_session");
-          localStorage.removeItem("user_data");
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      console.error("Error checking auth status:", error);
-      setUser(null);
-    }
-    setAuthLoading(false);
-  }, []);
-
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    if (errors[name as keyof typeof errors]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: undefined,
-      }));
-    }
-  };
-
-  const validatePhone = (): boolean => {
-    if (!formData.phone.trim()) {
-      setErrors({ phone: "Phone number is required" });
-      return false;
-    } else if (!/^\d{10}$/.test(formData.phone)) {
-      setErrors({ phone: "Enter a valid 10-digit phone number" });
-      return false;
-    }
-    return true;
-  };
-
-  const handleSendOtp = async () => {
-    if (!validatePhone()) return;
-
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/request-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: formData.phone }),
-      });
-
-      const data: AuthResponse = await response.json();
-
-      if (!response.ok || !data.success) {
-        toast.error(data.error || "Failed to send OTP");
-        return;
-      }
-
-      toast.success("OTP sent successfully!");
-      setOtpSent(true);
-    } catch (error) {
-      console.error("OTP request error:", error);
-      toast.error("Network error. Try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e: FormEvent<HTMLFormElement>) => {
+  // Handlers
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!formData.otp.trim()) {
-      setErrors({ otp: "OTP is required" });
+    if (!phone) {
+      toast.error("Phone number is required");
       return;
     }
 
-    setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone: formData.phone,
-          otp: formData.otp,
-        }),
-      });
-
-      const data: AuthResponse = await response.json();
-
-      if (!response.ok || !data.success) {
-        toast.error(data.error || "Invalid OTP");
-        return;
+      if (mode === "signup") {
+        await sendSignupOtp.mutateAsync({ phone, countryCode });
+      } else {
+        await sendLoginOtp.mutateAsync({ phone, countryCode });
       }
-
-      if (data.user && data.session) {
-        localStorage.setItem("user_data", JSON.stringify(data.user));
-        localStorage.setItem("user_session", JSON.stringify(data.session));
-        setUser(data.user);
-        toast.success("Login successful!");
-        onClose?.();
-      }
+      toast.success("OTP sent successfully");
+      setStep("otp");
     } catch (error) {
-      console.error("OTP verify error:", error);
-      toast.error("Network error. Please try again.");
-    } finally {
-      setIsLoading(false);
+      toast.error("Failed to send OTP");
     }
   };
 
-  const handleSignOut = async () => {
-    setIsLoading(true);
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp) {
+      toast.error("OTP is required");
+      return;
+    }
+
     try {
-      localStorage.removeItem("user_session");
-      localStorage.removeItem("user_data");
-      setUser(null);
-      setFormData({ phone: "", otp: "" });
-      setOtpSent(false);
-      toast.success("Signed out successfully!");
-      onClose?.();
+      if (mode === "signup") {
+        await verifySignupOtp.mutateAsync({
+          phone,
+          countryCode,
+          otp,
+          first_name: firstName,
+        });
+        toast.success("Signup successful");
+      } else {
+        await verifyLoginOtp.mutateAsync({ phone, countryCode, otp });
+        toast.success("Login successful");
+      }
+      setStep("phone");
     } catch (error) {
-      toast.error("An error occurred while signing out");
-    } finally {
-      setIsLoading(false);
+      toast.error("Invalid OTP");
     }
   };
-
-  useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
-
-  if (authLoading) {
-    return (
-      <div className="rounded-bl-[10px] rounded-br-[10px]">
-        <div className="container pt-[90px] pb-[30px]">
-          <div className="flex flex-col items-end">
-            <div className="max-w-[400px] w-full h-auto flex justify-center items-center py-[40px]">
-              <p className="text-white-1 text-[1.6rem]">Loading...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (user) {
-    return (
-      <div className="rounded-bl-[10px] rounded-br-[10px]">
-        <div className="container pt-[90px] pb-[30px]">
-          <Toaster position="top-right" reverseOrder={false} />
-          <div className="flex flex-col items-end">
-            <div className={`max-w-[400px] w-full h-auto ${styles.loginForm}`}>
-              <h3 className="text-[2.4rem] font-bold pt-[20px]">Welcome!</h3>
-              <h6 className="text-[1.6rem] pb-[20px]">
-                Logged in with {user.phone}
-              </h6>
-
-              <button
-                onClick={handleSignOut}
-                disabled={isLoading}
-                className="bg-red-500 hover:bg-red-600 text-white rounded-[5px] text-[1.6rem] font-bold py-[12px] px-[24px] w-full mb-[10px]"
-              >
-                {isLoading ? "Signing out..." : "Sign Out"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="rounded-bl-[10px] rounded-br-[10px]">
@@ -237,84 +78,102 @@ const User = ({ onClose }: UserProps) => {
         <Toaster position="top-right" reverseOrder={false} />
         <div className="flex flex-col items-end">
           <form
-            onSubmit={handleVerifyOtp}
-            className={`max-w-[400px] w-full h-auto ${styles.loginForm}`}
+            onSubmit={step === "phone" ? handleSendOtp : handleVerifyOtp}
+            className={`max-w-[400px] w-full h-auto p-5 shadow-md rounded-md bg-white ${styles.loginForm}`}
           >
-            <h3 className="text-[2.4rem] font-bold pt-[20px]">
-              Mobile OTP Login
-            </h3>
-            <h6 className="text-[1.6rem] pb-[20px]">Quick & Secure</h6>
+            <h2 className="text-xl font-semibold mb-4">
+              {mode === "login" ? "Login" : "Sign Up"}
+            </h2>
 
-            {/* Phone Number */}
-            <div className="flex item-center pb-[10px]">
-              <div className="mr-[10px] flex item-center">
-                <Image src="/icons/sms.svg" alt="Icon" width={20} height={20} />
-              </div>
-              <input
-                type="tel"
-                name="phone"
-                placeholder="Enter Mobile Number"
-                className="bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full"
-                value={formData.phone}
-                onChange={handleInputChange}
-                disabled={isLoading || otpSent}
-              />
-            </div>
-            {errors.phone && (
-              <p className="text-red-2 text-[1rem] mb-[4px]">{errors.phone}</p>
-            )}
-            <div className="border-b-2 border-white-1 mb-[15px]"></div>
-
-            {/* OTP */}
-            {otpSent && (
+            {step === "phone" && (
               <>
-                <div className="flex item-center pb-[10px]">
-                  <div className="mr-[10px] flex item-center">
-                    <Image
-                      src="/icons/lock.svg"
-                      alt="Icon"
-                      width={20}
-                      height={20}
-                    />
-                  </div>
+                <input
+                  type="text"
+                  placeholder="Country Code (e.g., 91)"
+                  value={countryCode}
+                  onChange={(e) => setCountryCode(e.target.value)}
+                  className="border p-2 w-full mb-3 rounded"
+                />
+                <input
+                  type="text"
+                  placeholder="Phone Number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="border p-2 w-full mb-3 rounded"
+                />
+                {mode === "signup" && (
                   <input
                     type="text"
-                    name="otp"
-                    placeholder="Enter OTP"
-                    className="bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full"
-                    value={formData.otp}
-                    onChange={handleInputChange}
-                    disabled={isLoading}
+                    placeholder="First Name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="border p-2 w-full mb-3 rounded"
                   />
-                </div>
-                {errors.otp && (
-                  <p className="text-red-2 text-[1rem] mb-[4px]">
-                    {errors.otp}
-                  </p>
                 )}
-                <div className="border-b-2 border-white-1 mb-[15px]"></div>
+                <button
+                  type="submit"
+                  disabled={sendSignupOtp.isPending || sendLoginOtp.isPending}
+                  className="bg-black text-white px-4 py-2 rounded w-full"
+                >
+                  {sendSignupOtp.isPending || sendLoginOtp.isPending
+                    ? "Sending..."
+                    : "Send OTP"}
+                </button>
               </>
             )}
 
-            {/* Button */}
-            {!otpSent ? (
-              <button
-                type="button"
-                onClick={handleSendOtp}
-                disabled={isLoading}
-                className="bg-white-1 text-black-1 rounded-[5px] text-[1.6rem] font-bold py-[12px] px-[24px] w-full mb-[10px]"
-              >
-                {isLoading ? "Sending..." : "Send OTP"}
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="bg-white-1 text-black-1 rounded-[5px] text-[1.6rem] font-bold py-[12px] px-[24px] w-full mb-[10px]"
-              >
-                {isLoading ? "Verifying..." : "Verify OTP"}
-              </button>
+            {step === "otp" && (
+              <>
+                <input
+                  type="text"
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  className="border p-2 w-full mb-3 rounded"
+                />
+                <button
+                  type="submit"
+                  disabled={
+                    verifySignupOtp.isPending || verifyLoginOtp.isPending
+                  }
+                  className="bg-green-600 text-white px-4 py-2 rounded w-full"
+                >
+                  {verifySignupOtp.isPending || verifyLoginOtp.isPending
+                    ? "Verifying..."
+                    : "Verify OTP"}
+                </button>
+              </>
             )}
+
+            <p className="text-sm mt-4 text-center">
+              {mode === "login" ? (
+                <>
+                  Don’t have an account?{" "}
+                  <span
+                    onClick={() => {
+                      setMode("signup");
+                      setStep("phone");
+                    }}
+                    className="text-blue-600 cursor-pointer"
+                  >
+                    Sign Up
+                  </span>
+                </>
+              ) : (
+                <>
+                  Already have an account?{" "}
+                  <span
+                    onClick={() => {
+                      setMode("login");
+                      setStep("phone");
+                    }}
+                    className="text-blue-600 cursor-pointer"
+                  >
+                    Login
+                  </span>
+                </>
+              )}
+            </p>
           </form>
         </div>
       </div>
