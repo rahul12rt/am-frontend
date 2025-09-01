@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import styles from "./User.module.scss";
-import { toast, Toaster } from "react-hot-toast";
 import {
   useSendSignupOtp,
   useVerifySignupOtp,
@@ -17,6 +16,11 @@ interface UserProfile {
   phone_verified: boolean;
 }
 
+interface InlineMessage {
+  text: string;
+  type: "success" | "error" | "info";
+}
+
 const User = () => {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [step, setStep] = useState<"phone" | "otp">("phone");
@@ -27,12 +31,19 @@ const User = () => {
   const [firstName, setFirstName] = useState("");
 
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [message, setMessage] = useState<InlineMessage | null>(null);
 
   // Mutations
   const sendSignupOtp = useSendSignupOtp();
   const verifySignupOtp = useVerifySignupOtp();
   const sendLoginOtp = useSendLoginOtp();
   const verifyLoginOtp = useVerifyLoginOtp();
+
+  /** ---- Clear message after timeout ---- */
+  const showMessage = (text: string, type: "success" | "error" | "info") => {
+    setMessage({ text, type });
+    setTimeout(() => setMessage(null), 5000);
+  };
 
   /** ---- Load user from localStorage ---- */
   useEffect(() => {
@@ -58,14 +69,16 @@ const User = () => {
     setPhone("");
     setOtp("");
     setFirstName("");
-    toast.success("Signed out successfully");
+    showMessage("Signed out successfully", "success");
   };
 
   /** ---- Handle Send OTP ---- */
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage(null); // Clear previous messages
+
     if (!phone) {
-      toast.error("Phone number is required");
+      showMessage("Phone number is required", "error");
       return;
     }
 
@@ -75,18 +88,34 @@ const User = () => {
       } else {
         await sendLoginOtp.mutateAsync({ phone, countryCode });
       }
-      toast.success("OTP sent successfully");
+      showMessage("OTP sent successfully", "success");
       setStep("otp");
-    } catch {
-      toast.error("Failed to send OTP");
+    } catch (error: any) {
+      // Show the actual error message from the API
+      const errorMessage =
+        error?.data?.error ||
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to send OTP";
+      showMessage(errorMessage, "error");
+
+      // If user exists during signup, suggest switching to login
+      if (mode === "signup" && errorMessage.includes("already exists")) {
+        setTimeout(() => {
+          showMessage("💡 Try logging in instead", "info");
+        }, 2000);
+      }
     }
   };
 
   /** ---- Handle Verify OTP ---- */
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage(null); // Clear previous messages
+
     if (!otp) {
-      toast.error("OTP is required");
+      showMessage("OTP is required", "error");
       return;
     }
 
@@ -99,7 +128,7 @@ const User = () => {
           first_name: firstName,
         });
         if (res.user) saveUser(res.user);
-        toast.success(res.message || "Signup successful");
+        showMessage(res.message || "Signup successful", "success");
       } else {
         const res = await verifyLoginOtp.mutateAsync({
           phone,
@@ -107,21 +136,33 @@ const User = () => {
           otp,
         });
         if (res.user) saveUser(res.user);
-        toast.success(res.message || "Login successful");
+        showMessage(res.message || "Login successful", "success");
       }
       setStep("phone");
       setOtp("");
       setFirstName("");
-    } catch {
-      toast.error("Invalid OTP");
+    } catch (error: any) {
+      // Show the actual error message from the API
+      const errorMessage =
+        error?.data?.error ||
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Invalid OTP";
+      showMessage(errorMessage, "error");
     }
+  };
+
+  /** ---- Handle mode switch ---- */
+  const handleModeSwitch = (newMode: "login" | "signup") => {
+    setMode(newMode);
+    setStep("phone");
+    setMessage(null); // Clear messages when switching modes
   };
 
   return (
     <div className="rounded-bl-[10px] rounded-br-[10px]">
       <div className="container pt-[30px] pb-[30px]">
-        <Toaster position="top-right" reverseOrder={false} />
-
         {!user ? (
           <form
             onSubmit={step === "phone" ? handleSendOtp : handleVerifyOtp}
@@ -130,6 +171,21 @@ const User = () => {
             <h2 className="text-xl font-semibold mb-4">
               {mode === "login" ? "Login" : "Sign Up"}
             </h2>
+
+            {/* Inline Message Display */}
+            {message && (
+              <div
+                className={`mb-4 p-3 rounded-md text-sm ${
+                  message.type === "success"
+                    ? "bg-green-100 text-green-800 border border-green-300"
+                    : message.type === "error"
+                    ? "bg-red-100 text-red-800 border border-red-300"
+                    : "bg-blue-100 text-blue-800 border border-blue-300"
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
 
             {step === "phone" && (
               <>
@@ -194,12 +250,9 @@ const User = () => {
             <p className="text-sm mt-4 text-center">
               {mode === "login" ? (
                 <>
-                  Don’t have an account?{" "}
+                  Don't have an account?{" "}
                   <span
-                    onClick={() => {
-                      setMode("signup");
-                      setStep("phone");
-                    }}
+                    onClick={() => handleModeSwitch("signup")}
                     className="text-blue-600 cursor-pointer"
                   >
                     Sign Up
@@ -209,10 +262,7 @@ const User = () => {
                 <>
                   Already have an account?{" "}
                   <span
-                    onClick={() => {
-                      setMode("login");
-                      setStep("phone");
-                    }}
+                    onClick={() => handleModeSwitch("login")}
                     className="text-blue-600 cursor-pointer"
                   >
                     Login
@@ -224,6 +274,22 @@ const User = () => {
         ) : (
           <div className="max-w-[400px] w-full p-5 shadow-md rounded-md bg-white text-black text-center">
             <h2 className="text-xl font-semibold mb-4">Profile</h2>
+
+            {/* Inline Message Display for Profile */}
+            {message && (
+              <div
+                className={`mb-4 p-3 rounded-md text-sm ${
+                  message.type === "success"
+                    ? "bg-green-100 text-green-800 border border-green-300"
+                    : message.type === "error"
+                    ? "bg-red-100 text-red-800 border border-red-300"
+                    : "bg-blue-100 text-blue-800 border border-blue-300"
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+
             <p className="mb-2">
               <strong>Name:</strong> {user.first_name}
             </p>
