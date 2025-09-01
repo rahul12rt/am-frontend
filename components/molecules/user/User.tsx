@@ -1,6 +1,5 @@
 "use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./User.module.scss";
 import { toast, Toaster } from "react-hot-toast";
 import {
@@ -9,6 +8,14 @@ import {
   useSendLoginOtp,
   useVerifyLoginOtp,
 } from "@/hooks/useAuth";
+import { tokenManager } from "@/lib/api-clients";
+
+interface UserProfile {
+  first_name: string;
+  phone_country_code: string;
+  phone_number: string;
+  phone_verified: boolean;
+}
 
 const User = () => {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -19,13 +26,42 @@ const User = () => {
   const [otp, setOtp] = useState("");
   const [firstName, setFirstName] = useState("");
 
+  const [user, setUser] = useState<UserProfile | null>(null);
+
   // Mutations
   const sendSignupOtp = useSendSignupOtp();
   const verifySignupOtp = useVerifySignupOtp();
   const sendLoginOtp = useSendLoginOtp();
   const verifyLoginOtp = useVerifyLoginOtp();
 
-  // Handlers
+  /** ---- Load user from localStorage ---- */
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
+
+  /** ---- Save user to localStorage when logged in ---- */
+  const saveUser = (userData: UserProfile) => {
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+  };
+
+  /** ---- Clear user (Sign out) ---- */
+  const handleSignOut = () => {
+    tokenManager.clearTokens();
+    setUser(null);
+    localStorage.removeItem("user");
+    setMode("login");
+    setStep("phone");
+    setPhone("");
+    setOtp("");
+    setFirstName("");
+    toast.success("Signed out successfully");
+  };
+
+  /** ---- Handle Send OTP ---- */
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone) {
@@ -41,11 +77,12 @@ const User = () => {
       }
       toast.success("OTP sent successfully");
       setStep("otp");
-    } catch (error) {
+    } catch {
       toast.error("Failed to send OTP");
     }
   };
 
+  /** ---- Handle Verify OTP ---- */
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp) {
@@ -55,31 +92,40 @@ const User = () => {
 
     try {
       if (mode === "signup") {
-        await verifySignupOtp.mutateAsync({
+        const res = await verifySignupOtp.mutateAsync({
           phone,
           countryCode,
           otp,
           first_name: firstName,
         });
-        toast.success("Signup successful");
+        if (res.user) saveUser(res.user);
+        toast.success(res.message || "Signup successful");
       } else {
-        await verifyLoginOtp.mutateAsync({ phone, countryCode, otp });
-        toast.success("Login successful");
+        const res = await verifyLoginOtp.mutateAsync({
+          phone,
+          countryCode,
+          otp,
+        });
+        if (res.user) saveUser(res.user);
+        toast.success(res.message || "Login successful");
       }
       setStep("phone");
-    } catch (error) {
+      setOtp("");
+      setFirstName("");
+    } catch {
       toast.error("Invalid OTP");
     }
   };
 
   return (
     <div className="rounded-bl-[10px] rounded-br-[10px]">
-      <div className="container pt-[90px] pb-[30px]">
+      <div className="container pt-[30px] pb-[30px]">
         <Toaster position="top-right" reverseOrder={false} />
-        <div className="flex flex-col items-end">
+
+        {!user ? (
           <form
             onSubmit={step === "phone" ? handleSendOtp : handleVerifyOtp}
-            className={`max-w-[400px] w-full h-auto p-5 shadow-md rounded-md bg-white ${styles.loginForm}`}
+            className={`max-w-[400px] w-full h-auto p-5 shadow-md rounded-md bg-white text-black ${styles.loginForm}`}
           >
             <h2 className="text-xl font-semibold mb-4">
               {mode === "login" ? "Login" : "Sign Up"}
@@ -175,7 +221,27 @@ const User = () => {
               )}
             </p>
           </form>
-        </div>
+        ) : (
+          <div className="max-w-[400px] w-full p-5 shadow-md rounded-md bg-white text-black text-center">
+            <h2 className="text-xl font-semibold mb-4">Profile</h2>
+            <p className="mb-2">
+              <strong>Name:</strong> {user.first_name}
+            </p>
+            <p className="mb-2">
+              <strong>Phone:</strong> +{user.phone_country_code}{" "}
+              {user.phone_number}
+            </p>
+            <p className="mb-4">
+              <strong>Verified:</strong> {user.phone_verified ? "Yes" : "No"}
+            </p>
+            <button
+              onClick={handleSignOut}
+              className="bg-red-600 text-white px-4 py-2 rounded w-full"
+            >
+              Sign Out
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
