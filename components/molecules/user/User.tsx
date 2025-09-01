@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import styles from "./User.module.scss";
 import {
   useSendSignupOtp,
@@ -21,7 +22,11 @@ interface InlineMessage {
   type: "success" | "error" | "info";
 }
 
-const User = () => {
+interface UserProps {
+  onClose?: () => void;
+}
+
+const User = ({ onClose }: UserProps) => {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [step, setStep] = useState<"phone" | "otp">("phone");
 
@@ -32,6 +37,8 @@ const User = () => {
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [message, setMessage] = useState<InlineMessage | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Mutations
   const sendSignupOtp = useSendSignupOtp();
@@ -47,10 +54,19 @@ const User = () => {
 
   /** ---- Load user from localStorage ---- */
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    setAuthLoading(true);
+    try {
+      const savedUser = localStorage.getItem("user");
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Error checking auth status:", error);
+      setUser(null);
     }
+    setAuthLoading(false);
   }, []);
 
   /** ---- Save user to localStorage when logged in ---- */
@@ -60,25 +76,48 @@ const User = () => {
   };
 
   /** ---- Clear user (Sign out) ---- */
-  const handleSignOut = () => {
-    tokenManager.clearTokens();
-    setUser(null);
-    localStorage.removeItem("user");
-    setMode("login");
-    setStep("phone");
-    setPhone("");
-    setOtp("");
-    setFirstName("");
-    showMessage("Signed out successfully", "success");
+  const handleSignOut = async () => {
+    setIsLoading(true);
+    try {
+      tokenManager.clearTokens();
+      setUser(null);
+      localStorage.removeItem("user");
+      setMode("login");
+      setStep("phone");
+      setPhone("");
+      setOtp("");
+      setFirstName("");
+      showMessage("Signed out successfully!", "success");
+      onClose?.();
+    } catch (error) {
+      showMessage("An error occurred while signing out", "error");
+      console.error("Sign out error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   /** ---- Handle Send OTP ---- */
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null); // Clear previous messages
+    setIsLoading(true);
 
     if (!phone) {
       showMessage("Phone number is required", "error");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!countryCode) {
+      showMessage("Country code is required", "error");
+      setIsLoading(false);
+      return;
+    }
+
+    if (mode === "signup" && !firstName.trim()) {
+      showMessage("First name is required", "error");
+      setIsLoading(false);
       return;
     }
 
@@ -106,6 +145,8 @@ const User = () => {
           showMessage("💡 Try logging in instead", "info");
         }, 2000);
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -113,9 +154,11 @@ const User = () => {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null); // Clear previous messages
+    setIsLoading(true);
 
     if (!otp) {
       showMessage("OTP is required", "error");
+      setIsLoading(false);
       return;
     }
 
@@ -128,7 +171,8 @@ const User = () => {
           first_name: firstName,
         });
         if (res.user) saveUser(res.user);
-        showMessage(res.message || "Signup successful", "success");
+        showMessage(res.message || "Signup successful!", "success");
+        onClose?.();
       } else {
         const res = await verifyLoginOtp.mutateAsync({
           phone,
@@ -136,7 +180,8 @@ const User = () => {
           otp,
         });
         if (res.user) saveUser(res.user);
-        showMessage(res.message || "Login successful", "success");
+        showMessage(res.message || "Login successful!", "success");
+        onClose?.();
       }
       setStep("phone");
       setOtp("");
@@ -150,6 +195,8 @@ const User = () => {
         error?.message ||
         "Invalid OTP";
       showMessage(errorMessage, "error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -158,19 +205,118 @@ const User = () => {
     setMode(newMode);
     setStep("phone");
     setMessage(null); // Clear messages when switching modes
+    setPhone("");
+    setOtp("");
+    setFirstName("");
+    setCountryCode("91");
   };
 
+  // Loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="rounded-bl-[10px] rounded-br-[10px]">
+        <div className="container pt-[90px] pb-[30px]">
+          <div className="flex flex-col items-end">
+            <div className="max-w-[400px] w-full h-auto flex justify-center items-center py-[40px]">
+              <p className="text-white-1 text-[1.6rem]">Loading...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show authenticated user interface
+  if (user) {
+    return (
+      <div className="rounded-bl-[10px] rounded-br-[10px]">
+        <div className="container pt-[90px] pb-[30px]">
+          <div className="flex flex-col items-end">
+            <div className={`max-w-[400px] w-full h-auto ${styles.loginForm}`}>
+              <h3 className="text-[2.4rem] font-bold leading-[36px] pt-[20px]">
+                Welcome Back!
+              </h3>
+              <h6 className="text-[1.6rem] leading-[36px] pb-[20px]">
+                You&apos;re logged in
+              </h6>
+
+              {/* Inline Message Display */}
+              {message && (
+                <div
+                  className={`mb-4 p-3 rounded-md text-sm ${
+                    message.type === "success"
+                      ? "bg-green-100 text-green-800 border border-green-300"
+                      : message.type === "error"
+                      ? "bg-red-100 text-red-800 border border-red-300"
+                      : "bg-blue-100 text-blue-800 border border-blue-300"
+                  }`}
+                >
+                  {message.text}
+                </div>
+              )}
+
+              {/* User Profile Info */}
+              <div className="flex items-center pb-[10px] mb-[15px]">
+                <div className="mr-[10px] flex items-center">
+                  <Image
+                    src="/icons/sms.svg"
+                    alt="Icon"
+                    width={20}
+                    height={20}
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className="text-white-1 text-[1.6rem] font-medium">
+                    {user.first_name}
+                  </p>
+                  <p className="text-white-1 text-[1.2rem] opacity-70">
+                    +{user.phone_country_code} {user.phone_number}
+                  </p>
+                  <p className="text-white-1 text-[1.0rem] opacity-60">
+                    Status: {user.phone_verified ? "Verified" : "Not Verified"}
+                  </p>
+                </div>
+              </div>
+              <div className="border-b-2 border-white-1 mb-[15px]"></div>
+
+              {/* Sign Out Button */}
+              <button
+                onClick={handleSignOut}
+                disabled={isLoading}
+                className={`${styles.submitButton} bg-red-500 hover:bg-red-600 text-white border-none rounded-[5px] text-[1.6rem] font-bold py-[12px] px-[24px] mt-[20px] cursor-pointer w-full flex justify-between items-center gap-[10px] mb-[10px] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {isLoading ? "Signing out..." : "Sign Out"}
+                <Image
+                  src="/icons/rightArrow.svg"
+                  alt="Arrow Icon"
+                  width={24}
+                  height={24}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login/register form for unauthenticated users
   return (
     <div className="rounded-bl-[10px] rounded-br-[10px]">
-      <div className="container pt-[30px] pb-[30px]">
-        {!user ? (
+      <div className="container pt-[90px] pb-[30px]">
+        <div className="flex flex-col items-end">
           <form
             onSubmit={step === "phone" ? handleSendOtp : handleVerifyOtp}
-            className={`max-w-[400px] w-full h-auto p-5 shadow-md rounded-md bg-white text-black ${styles.loginForm}`}
+            className={`max-w-[400px] w-full h-auto ${
+              mode === "login" ? styles.loginForm : styles.registerForm
+            }`}
           >
-            <h2 className="text-xl font-semibold mb-4">
-              {mode === "login" ? "Login" : "Sign Up"}
-            </h2>
+            <h3 className="text-[2.4rem] font-bold leading-[36px] pt-[20px]">
+              {mode === "login" ? "Existing member" : "Register New Account"}
+            </h3>
+            <h6 className="text-[1.6rem] leading-[36px] pb-[20px]">
+              {mode === "login" ? "Welcome Back!" : "Join Us!"}
+            </h6>
 
             {/* Inline Message Display */}
             {message && (
@@ -189,125 +335,162 @@ const User = () => {
 
             {step === "phone" && (
               <>
-                <input
-                  type="text"
-                  placeholder="Country Code (e.g., 91)"
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  className="border p-2 w-full mb-3 rounded"
-                />
-                <input
-                  type="text"
-                  placeholder="Phone Number"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="border p-2 w-full mb-3 rounded"
-                />
-                {mode === "signup" && (
+                {/* Country Code Field */}
+                <div className="flex item-center pb-[10px]">
+                  <div className="mr-[10px] flex item-center">
+                    <Image
+                      src="/icons/flag.svg"
+                      alt="Icon"
+                      width={20}
+                      height={20}
+                    />
+                  </div>
                   <input
                     type="text"
-                    placeholder="First Name"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="border p-2 w-full mb-3 rounded"
+                    name="countryCode"
+                    placeholder="Country Code (e.g., 91)"
+                    className="bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full placeholder:text-white-1 font-medium"
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    disabled={isLoading}
                   />
+                </div>
+                <div className="border-b-2 border-white-1 mb-[15px]"></div>
+
+                {/* Phone Number Field */}
+                <div className="flex item-center pb-[10px]">
+                  <div className="mr-[10px] flex item-center">
+                    <Image
+                      src="/icons/sms.svg"
+                      alt="Icon"
+                      width={20}
+                      height={20}
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    name="phone"
+                    placeholder="Enter Phone Number"
+                    className="bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full placeholder:text-white-1 font-medium"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="border-b-2 border-white-1 mb-[15px]"></div>
+
+                {/* First Name Field (Signup only) */}
+                {mode === "signup" && (
+                  <>
+                    <div className="flex item-center pb-[10px]">
+                      <div className="mr-[10px] flex item-center">
+                        <Image
+                          src="/icons/user.svg"
+                          alt="Icon"
+                          width={20}
+                          height={20}
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        name="firstName"
+                        placeholder="Enter First Name"
+                        className="bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full placeholder:text-white-1 font-medium"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div className="border-b-2 border-white-1 mb-[15px]"></div>
+                  </>
                 )}
+
+                {/* Send OTP Button */}
                 <button
                   type="submit"
-                  disabled={sendSignupOtp.isPending || sendLoginOtp.isPending}
-                  className="bg-black text-white px-4 py-2 rounded w-full"
+                  disabled={isLoading}
+                  className={`${styles.submitButton} bg-white-1 text-black-1 border-none rounded-[5px] text-[1.6rem] font-bold py-[12px] px-[24px] mt-[20px] cursor-pointer w-full flex justify-between items-center gap-[10px] mb-[10px] hover:bg-white-3 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  {sendSignupOtp.isPending || sendLoginOtp.isPending
-                    ? "Sending..."
-                    : "Send OTP"}
+                  {isLoading ? "Sending..." : "Send OTP"}
+                  <Image
+                    src="/icons/rightArrow.svg"
+                    alt="Arrow Icon"
+                    width={24}
+                    height={24}
+                  />
                 </button>
               </>
             )}
 
             {step === "otp" && (
               <>
-                <input
-                  type="text"
-                  placeholder="Enter OTP"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  className="border p-2 w-full mb-3 rounded"
-                />
+                {/* OTP Field */}
+                <div className="flex item-center pb-[10px]">
+                  <div className="mr-[10px] flex item-center">
+                    <Image
+                      src="/icons/lock.svg"
+                      alt="Icon"
+                      width={20}
+                      height={20}
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    name="otp"
+                    placeholder="Enter OTP"
+                    className="bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full placeholder:text-white-1 font-medium"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="border-b-2 border-white-1 mb-[15px]"></div>
+
+                {/* Verify OTP Button */}
                 <button
                   type="submit"
-                  disabled={
-                    verifySignupOtp.isPending || verifyLoginOtp.isPending
-                  }
-                  className="bg-green-600 text-white px-4 py-2 rounded w-full"
+                  disabled={isLoading}
+                  className={`${styles.submitButton} bg-green-600 hover:bg-green-700 text-white border-none rounded-[5px] text-[1.6rem] font-bold py-[12px] px-[24px] mt-[20px] cursor-pointer w-full flex justify-between items-center gap-[10px] mb-[10px] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  {verifySignupOtp.isPending || verifyLoginOtp.isPending
-                    ? "Verifying..."
-                    : "Verify OTP"}
+                  {isLoading ? "Verifying..." : "Verify OTP"}
+                  <Image
+                    src="/icons/rightArrow.svg"
+                    alt="Arrow Icon"
+                    width={24}
+                    height={24}
+                  />
+                </button>
+
+                {/* Back to Phone Button */}
+                <button
+                  type="button"
+                  onClick={() => setStep("phone")}
+                  disabled={isLoading}
+                  className="text-[1.2rem] font-medium leading-[21px] text-left text-white-1 hover:underline cursor-pointer mt-[10px] bg-transparent border-none p-0"
+                >
+                  ← Back to phone number
                 </button>
               </>
             )}
 
-            <p className="text-sm mt-4 text-center">
-              {mode === "login" ? (
-                <>
-                  Don't have an account?{" "}
-                  <span
-                    onClick={() => handleModeSwitch("signup")}
-                    className="text-blue-600 cursor-pointer"
-                  >
-                    Sign Up
-                  </span>
-                </>
-              ) : (
-                <>
-                  Already have an account?{" "}
-                  <span
-                    onClick={() => handleModeSwitch("login")}
-                    className="text-blue-600 cursor-pointer"
-                  >
-                    Login
-                  </span>
-                </>
-              )}
-            </p>
-          </form>
-        ) : (
-          <div className="max-w-[400px] w-full p-5 shadow-md rounded-md bg-white text-black text-center">
-            <h2 className="text-xl font-semibold mb-4">Profile</h2>
-
-            {/* Inline Message Display for Profile */}
-            {message && (
-              <div
-                className={`mb-4 p-3 rounded-md text-sm ${
-                  message.type === "success"
-                    ? "bg-green-100 text-green-800 border border-green-300"
-                    : message.type === "error"
-                    ? "bg-red-100 text-red-800 border border-red-300"
-                    : "bg-blue-100 text-blue-800 border border-blue-300"
-                }`}
-              >
-                {message.text}
-              </div>
+            {/* Toggle between Login and Register */}
+            {step === "phone" && (
+              <p className="text-[1.2rem] font-medium leading-[21px] text-left mt-[20px]">
+                {mode === "login"
+                  ? "Don&apos;t have an account?"
+                  : "Already have an account?"}{" "}
+                <span
+                  onClick={() =>
+                    handleModeSwitch(mode === "login" ? "signup" : "login")
+                  }
+                  className="text-[1.2rem] font-bold leading-[21px] text-left tracking-[0.02rem] cursor-pointer hover:underline"
+                >
+                  {mode === "login" ? "Register Now" : "Login"}
+                </span>
+              </p>
             )}
-
-            <p className="mb-2">
-              <strong>Name:</strong> {user.first_name}
-            </p>
-            <p className="mb-2">
-              <strong>Phone:</strong> +{user.phone_country_code}{" "}
-              {user.phone_number}
-            </p>
-            <p className="mb-4">
-              <strong>Verified:</strong> {user.phone_verified ? "Yes" : "No"}
-            </p>
-            <button
-              onClick={handleSignOut}
-              className="bg-red-600 text-white px-4 py-2 rounded w-full"
-            >
-              Sign Out
-            </button>
-          </div>
-        )}
+          </form>
+        </div>
       </div>
     </div>
   );
