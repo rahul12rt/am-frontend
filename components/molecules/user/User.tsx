@@ -9,6 +9,7 @@ import {
   useVerifyLoginOtp,
 } from "@/hooks/useAuth";
 import { tokenManager } from "@/lib/api-clients";
+import { createClient } from '@supabase/supabase-js';
 
 interface UserProfile {
   first_name: string;
@@ -25,6 +26,13 @@ interface InlineMessage {
 interface UserProps {
   onClose?: () => void;
 }
+
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 
 const User = ({ onClose }: UserProps) => {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -152,53 +160,72 @@ const User = ({ onClose }: UserProps) => {
 
   /** ---- Handle Verify OTP ---- */
   const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage(null); // Clear previous messages
-    setIsLoading(true);
+    
+  e.preventDefault();
+  setMessage(null);
+  setIsLoading(true);
 
-    if (!otp) {
-      showMessage("OTP is required", "error");
-      setIsLoading(false);
-      return;
-    }
+  if (!otp) {
+    showMessage("OTP is required", "error");
+    setIsLoading(false);
+    return;
+  }
 
-    try {
-      if (mode === "signup") {
-        const res = await verifySignupOtp.mutateAsync({
-          phone,
-          countryCode,
-          otp,
-          first_name: firstName,
-        });
-        if (res.user) saveUser(res.user);
-        showMessage(res.message || "Signup successful!", "success");
-        onClose?.();
-      } else {
-        const res = await verifyLoginOtp.mutateAsync({
-          phone,
-          countryCode,
-          otp,
-        });
-        if (res.user) saveUser(res.user);
-        showMessage(res.message || "Login successful!", "success");
-        onClose?.();
+  try {
+    if (mode === "login") {
+      // Use Supabase verifyOtp for login
+      const e164Phone = "+" + countryCode + phone;
+
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: e164Phone,   // E.164 format like '+919876543210'
+        token: otp,
+        type: 'sms'
+      });
+
+      if (error) {
+        showMessage(error.message || "Invalid OTP", "error");
+        setIsLoading(false);
+        return;
       }
+
+      // You may want to get user or session info here:
+      // const { data: sessionData } = await supabase.auth.getSession();
+
+     
+
+      showMessage("Login successful!", "success");
+      onClose?.();
       setStep("phone");
       setOtp("");
       setFirstName("");
-    } catch (error: any) {
-      // Show the actual error message from the API
-      const errorMessage =
-        error?.data?.error ||
-        error?.response?.data?.error ||
-        error?.response?.data?.message ||
-        error?.message ||
-        "Invalid OTP";
-      showMessage(errorMessage, "error");
-    } finally {
-      setIsLoading(false);
+    } else {
+      // Keep your existing signup flow
+      const res = await verifySignupOtp.mutateAsync({
+        phone,
+        countryCode,
+        otp,
+        first_name: firstName,
+      });
+      if (res.user) saveUser(res.user);
+      showMessage(res.message || "Signup successful!", "success");
+      onClose?.();
+      setStep("phone");
+      setOtp("");
+      setFirstName("");
     }
-  };
+  } catch (error: any) {
+    const errorMessage =
+      error?.data?.error ||
+      error?.response?.data?.error ||
+      error?.response?.data?.message ||
+      error?.message ||
+      "Invalid OTP";
+    showMessage(errorMessage, "error");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   /** ---- Handle mode switch ---- */
   const handleModeSwitch = (newMode: "login" | "signup") => {

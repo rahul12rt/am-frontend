@@ -55,7 +55,7 @@ export interface ProductFilters {
 }
 
 // Token management utilities
-const TOKEN_KEY = 'access_token';
+const TOKEN_KEY = `sb-${process.env.NEXT_PUBLIC_SUPABASE_DOMAIN}-auth-token`;
 const REFRESH_TOKEN_KEY = 'refresh_token';
 
 export const tokenManager = {
