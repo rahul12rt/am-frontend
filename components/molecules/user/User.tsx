@@ -43,6 +43,10 @@ const User = ({ onClose }: UserProps) => {
   const [authLoading, setAuthLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Resend OTP functionality
+  const [resendTimer, setResendTimer] = useState(0);
+  const [canResend, setCanResend] = useState(false);
+
   // Mutations
   const sendSignupOtp = useSendSignupOtp();
   const verifySignupOtp = useVerifySignupOtp();
@@ -54,6 +58,24 @@ const User = ({ onClose }: UserProps) => {
     setMessage({ text, type });
     setTimeout(() => setMessage(null), 5000);
   };
+
+  /** ---- Start resend timer ---- */
+  const startResendTimer = () => {
+    setResendTimer(60); // 60 seconds countdown
+    setCanResend(false);
+  };
+
+  /** ---- Resend timer effect ---- */
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => {
+        setResendTimer(resendTimer - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (resendTimer === 0 && step === "otp") {
+      setCanResend(true);
+    }
+  }, [resendTimer, step]);
 
   /** ---- Load user from localStorage and check Supabase session ---- */
   useEffect(() => {
@@ -121,6 +143,8 @@ const User = ({ onClose }: UserProps) => {
       setPhoneValue("");
       setOtp("");
       setFirstName("");
+      setResendTimer(0);
+      setCanResend(false);
       showMessage("Signed out successfully!", "success");
       onClose?.();
     } catch (error) {
@@ -186,6 +210,7 @@ const User = ({ onClose }: UserProps) => {
       }
       showMessage("OTP sent successfully", "success");
       setStep("otp");
+      startResendTimer(); // Start the resend timer
     } catch (error: any) {
       // Show the actual error message from the API
       const errorMessage =
@@ -202,6 +227,47 @@ const User = ({ onClose }: UserProps) => {
           showMessage("💡 Try logging in instead", "info");
         }, 2000);
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /** ---- Handle Resend OTP ---- */
+  const handleResendOtp = async () => {
+    if (!canResend || isLoading) return;
+
+    setMessage(null);
+    setIsLoading(true);
+
+    const parsedPhone = parsePhoneForApi(phoneValue);
+    if (!parsedPhone) {
+      showMessage("Invalid phone number", "error");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      if (mode === "signup") {
+        await sendSignupOtp.mutateAsync({
+          phone: parsedPhone.phone,
+          countryCode: parsedPhone.countryCode,
+        });
+      } else {
+        await sendLoginOtp.mutateAsync({
+          phone: parsedPhone.phone,
+          countryCode: parsedPhone.countryCode,
+        });
+      }
+      showMessage("OTP resent successfully", "success");
+      startResendTimer(); // Restart the timer
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.error ||
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to resend OTP";
+      showMessage(errorMessage, "error");
     } finally {
       setIsLoading(false);
     }
@@ -243,14 +309,13 @@ const User = ({ onClose }: UserProps) => {
 
         console.log("SUPABASE", data);
 
-        // You may want to get user or session info here:
-        // const { data: sessionData } = await supabase.auth.getSession();
-
         showMessage("Login successful!", "success");
         onClose?.();
         setStep("phone");
         setOtp("");
         setFirstName("");
+        setResendTimer(0);
+        setCanResend(false);
       } else {
         // Keep your existing signup flow
         const res = await verifySignupOtp.mutateAsync({
@@ -265,6 +330,8 @@ const User = ({ onClose }: UserProps) => {
         setStep("phone");
         setOtp("");
         setFirstName("");
+        setResendTimer(0);
+        setCanResend(false);
       }
     } catch (error: any) {
       const errorMessage =
@@ -287,6 +354,16 @@ const User = ({ onClose }: UserProps) => {
     setPhoneValue("");
     setOtp("");
     setFirstName("");
+    setResendTimer(0);
+    setCanResend(false);
+  };
+
+  /** ---- Handle back to phone ---- */
+  const handleBackToPhone = () => {
+    setStep("phone");
+    setOtp("");
+    setResendTimer(0);
+    setCanResend(false);
   };
 
   // Loading state while checking authentication
@@ -494,10 +571,28 @@ const User = ({ onClose }: UserProps) => {
                   />
                 </button>
 
+                {/* Resend OTP Section */}
+                <div className="flex flex-col items-center mt-[15px] mb-[10px]">
+                  {resendTimer > 0 ? (
+                    <p className="text-[1.2rem] text-white-1 opacity-70">
+                      Resend OTP in {resendTimer}s
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={!canResend || isLoading}
+                      className="text-[1.2rem] font-medium text-white-1 hover:underline cursor-pointer bg-transparent border-none p-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? "Sending..." : "Resend OTP"}
+                    </button>
+                  )}
+                </div>
+
                 {/* Back to Phone Button */}
                 <button
                   type="button"
-                  onClick={() => setStep("phone")}
+                  onClick={handleBackToPhone}
                   disabled={isLoading}
                   className="text-[1.2rem] font-medium leading-[21px] text-left text-white-1 hover:underline cursor-pointer mt-[10px] bg-transparent border-none p-0"
                 >
