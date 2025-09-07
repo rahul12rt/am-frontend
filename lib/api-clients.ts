@@ -5,6 +5,7 @@ import axios, {
   AxiosError, 
   InternalAxiosRequestConfig 
 } from 'axios';
+import { supabase } from './utils';
 
 // Types for API responses
 export interface ApiResponse<T = any> {
@@ -57,6 +58,8 @@ export interface ProductFilters {
 // Token management utilities
 const TOKEN_KEY = `sb-${process.env.NEXT_PUBLIC_SUPABASE_DOMAIN}-auth-token`;
 const REFRESH_TOKEN_KEY = 'refresh_token';
+
+
 
 export const tokenManager = {
   getToken: (): string | null => {
@@ -178,8 +181,10 @@ const createProtectedApiClient = (): AxiosInstance => {
 
   // Request interceptor for protected routes
   client.interceptors.request.use(
-    (config: InternalAxiosRequestConfig) => {
-      const token = tokenManager.getToken();
+  async (config: InternalAxiosRequestConfig) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
       
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -187,12 +192,17 @@ const createProtectedApiClient = (): AxiosInstance => {
       
       logRequest(config);
       return config;
-    },
-    (error: AxiosError) => {
-      console.error('Protected API request error:', error);
+    } catch (error) {
+      console.error('Error fetching Supabase session:', error);
       return Promise.reject(error);
     }
-  );
+  },
+  (error: AxiosError) => {
+    console.error('Protected API request error:', error);
+    return Promise.reject(error);
+  }
+);
+
 
   // Response interceptor for protected routes with token refresh logic
   client.interceptors.response.use(

@@ -8,8 +8,7 @@ import {
   useSendLoginOtp,
   useVerifyLoginOtp,
 } from "@/hooks/useAuth";
-import { tokenManager } from "@/lib/api-clients";
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from "@/lib/utils";
 
 interface UserProfile {
   first_name: string;
@@ -28,10 +27,7 @@ interface UserProps {
 }
 
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+
 
 
 const User = ({ onClose }: UserProps) => {
@@ -87,9 +83,9 @@ const User = ({ onClose }: UserProps) => {
   const handleSignOut = async () => {
     setIsLoading(true);
     try {
-      tokenManager.clearTokens();
+      
       setUser(null);
-      localStorage.removeItem("user");
+      supabase.auth.signOut()
       setMode("login");
       setStep("phone");
       setPhone("");
@@ -187,6 +183,8 @@ const User = ({ onClose }: UserProps) => {
         setIsLoading(false);
         return;
       }
+
+      console.log('SUPABASE',data)
 
       // You may want to get user or session info here:
       // const { data: sessionData } = await supabase.auth.getSession();
