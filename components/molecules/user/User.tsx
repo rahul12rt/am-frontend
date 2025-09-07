@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import PhoneInput from "react-phone-number-input";
+import { parsePhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 import styles from "./User.module.scss";
 import {
   useSendSignupOtp,
@@ -30,8 +33,8 @@ const User = ({ onClose }: UserProps) => {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [step, setStep] = useState<"phone" | "otp">("phone");
 
-  const [phone, setPhone] = useState("");
-  const [countryCode, setCountryCode] = useState("91");
+  // Changed from separate phone and countryCode to single phoneValue
+  const [phoneValue, setPhoneValue] = useState<string>("");
   const [otp, setOtp] = useState("");
   const [firstName, setFirstName] = useState("");
 
@@ -52,21 +55,52 @@ const User = ({ onClose }: UserProps) => {
     setTimeout(() => setMessage(null), 5000);
   };
 
-  /** ---- Load user from localStorage ---- */
+  /** ---- Load user from localStorage and check Supabase session ---- */
   useEffect(() => {
     setAuthLoading(true);
-    try {
-      const savedUser = localStorage.getItem("user");
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
-      } else {
+
+    const checkAuthStatus = async () => {
+      try {
+        // First check localStorage
+        const savedUser = localStorage.getItem("user");
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+          setAuthLoading(false);
+          return;
+        }
+
+        // Check Supabase session if no localStorage data
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.user) {
+          // Create user profile from session data
+          const phoneNumber = session.user.phone;
+          let parsedPhone = null;
+
+          if (phoneNumber) {
+            parsedPhone = parsePhoneForApi(phoneNumber);
+          }
+
+          const userProfile: UserProfile = {
+            first_name: session.user.user_metadata?.first_name || "User",
+            phone_country_code: parsedPhone?.countryCode || "",
+            phone_number: parsedPhone?.phone || phoneNumber || "",
+            phone_verified: session.user.phone_confirmed_at ? true : false,
+          };
+
+          saveUser(userProfile);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Error checking auth status:", error);
         setUser(null);
       }
-    } catch (error) {
-      console.error("Error checking auth status:", error);
-      setUser(null);
-    }
-    setAuthLoading(false);
+      setAuthLoading(false);
+    };
+
+    checkAuthStatus();
   }, []);
 
   /** ---- Save user to localStorage when logged in ---- */
@@ -80,10 +114,11 @@ const User = ({ onClose }: UserProps) => {
     setIsLoading(true);
     try {
       setUser(null);
-      supabase.auth.signOut();
+      localStorage.removeItem("user"); // Clear localStorage
+      await supabase.auth.signOut(); // Properly await signOut
       setMode("login");
       setStep("phone");
-      setPhone("");
+      setPhoneValue("");
       setOtp("");
       setFirstName("");
       showMessage("Signed out successfully!", "success");
@@ -96,20 +131,37 @@ const User = ({ onClose }: UserProps) => {
     }
   };
 
+  /** ---- Parse phone number to get country code and national number ---- */
+  const parsePhoneForApi = (phoneValue: string) => {
+    try {
+      const phoneNumber = parsePhoneNumber(phoneValue);
+      if (phoneNumber) {
+        return {
+          countryCode: phoneNumber.countryCallingCode,
+          phone: phoneNumber.nationalNumber,
+        };
+      }
+    } catch (error) {
+      console.error("Error parsing phone number:", error);
+    }
+    return null;
+  };
+
   /** ---- Handle Send OTP ---- */
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null); // Clear previous messages
     setIsLoading(true);
 
-    if (!phone) {
+    if (!phoneValue) {
       showMessage("Phone number is required", "error");
       setIsLoading(false);
       return;
     }
 
-    if (!countryCode) {
-      showMessage("Country code is required", "error");
+    const parsedPhone = parsePhoneForApi(phoneValue);
+    if (!parsedPhone) {
+      showMessage("Please enter a valid phone number", "error");
       setIsLoading(false);
       return;
     }
@@ -122,9 +174,15 @@ const User = ({ onClose }: UserProps) => {
 
     try {
       if (mode === "signup") {
-        await sendSignupOtp.mutateAsync({ phone, countryCode });
+        await sendSignupOtp.mutateAsync({
+          phone: parsedPhone.phone,
+          countryCode: parsedPhone.countryCode,
+        });
       } else {
-        await sendLoginOtp.mutateAsync({ phone, countryCode });
+        await sendLoginOtp.mutateAsync({
+          phone: parsedPhone.phone,
+          countryCode: parsedPhone.countryCode,
+        });
       }
       showMessage("OTP sent successfully", "success");
       setStep("otp");
@@ -161,13 +219,18 @@ const User = ({ onClose }: UserProps) => {
       return;
     }
 
+    const parsedPhone = parsePhoneForApi(phoneValue);
+    if (!parsedPhone) {
+      showMessage("Invalid phone number", "error");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       if (mode === "login") {
         // Use Supabase verifyOtp for login
-        const e164Phone = "+" + countryCode + phone;
-
         const { data, error } = await supabase.auth.verifyOtp({
-          phone: e164Phone, // E.164 format like '+919876543210'
+          phone: phoneValue, // Already in E.164 format
           token: otp,
           type: "sms",
         });
@@ -191,8 +254,8 @@ const User = ({ onClose }: UserProps) => {
       } else {
         // Keep your existing signup flow
         const res = await verifySignupOtp.mutateAsync({
-          phone,
-          countryCode,
+          phone: parsedPhone.phone,
+          countryCode: parsedPhone.countryCode,
           otp,
           first_name: firstName,
         });
@@ -221,10 +284,9 @@ const User = ({ onClose }: UserProps) => {
     setMode(newMode);
     setStep("phone");
     setMessage(null); // Clear messages when switching modes
-    setPhone("");
+    setPhoneValue("");
     setOtp("");
     setFirstName("");
-    setCountryCode("91");
   };
 
   // Loading state while checking authentication
@@ -259,7 +321,7 @@ const User = ({ onClose }: UserProps) => {
               {/* Inline Message Display */}
               {message && (
                 <div
-                  className={`mb-4 p-3 rounded-md text-sm ${
+                  className={`mb-4 p-3 rounded-md text-[12px] ${
                     message.type === "success"
                       ? "bg-green-100 text-green-800 border border-green-300"
                       : message.type === "error"
@@ -273,14 +335,6 @@ const User = ({ onClose }: UserProps) => {
 
               {/* User Profile Info */}
               <div className="flex items-center pb-[10px] mb-[15px]">
-                <div className="mr-[10px] flex items-center">
-                  <Image
-                    src="/icons/sms.svg"
-                    alt="Icon"
-                    width={20}
-                    height={20}
-                  />
-                </div>
                 <div className="flex-1">
                   <p className="text-white-1 text-[1.6rem] font-medium">
                     {user.first_name}
@@ -337,7 +391,7 @@ const User = ({ onClose }: UserProps) => {
             {/* Inline Message Display */}
             {message && (
               <div
-                className={`mb-4 p-3 rounded-md text-sm ${
+                className={`mb-4 p-3 rounded-md text-[12px] ${
                   message.type === "success"
                     ? "bg-green-100 text-green-800 border border-green-300"
                     : message.type === "error"
@@ -351,55 +405,26 @@ const User = ({ onClose }: UserProps) => {
 
             {step === "phone" && (
               <>
-                {/* Country Code Field */}
-                <div className="flex item-center pb-[10px]">
-                  <div className="mr-[10px] flex item-center">
-                    <Image
-                      src="/icons/flag.svg"
-                      alt="Icon"
-                      width={20}
-                      height={20}
+                {/* Phone Number Input with Country Selector */}
+                <div className="flex items-center pb-[10px] mb-[15px]">
+                  <div className="flex-1">
+                    <PhoneInput
+                      placeholder="Enter phone number"
+                      value={phoneValue}
+                      onChange={(value) => setPhoneValue(value || "")}
+                      defaultCountry="IN"
+                      disabled={isLoading}
+                      className="phone-input-custom"
                     />
                   </div>
-                  <input
-                    type="text"
-                    name="countryCode"
-                    placeholder="Country Code (e.g., 91)"
-                    className="bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full placeholder:text-white-1 font-medium"
-                    value={countryCode}
-                    onChange={(e) => setCountryCode(e.target.value)}
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className="border-b-2 border-white-1 mb-[15px]"></div>
-
-                {/* Phone Number Field */}
-                <div className="flex item-center pb-[10px]">
-                  <div className="mr-[10px] flex item-center">
-                    <Image
-                      src="/icons/sms.svg"
-                      alt="Icon"
-                      width={20}
-                      height={20}
-                    />
-                  </div>
-                  <input
-                    type="text"
-                    name="phone"
-                    placeholder="Enter Phone Number"
-                    className="bg-transparent border-none outline-none text-white-1 text-[1.6rem] w-full placeholder:text-white-1 font-medium"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    disabled={isLoading}
-                  />
                 </div>
                 <div className="border-b-2 border-white-1 mb-[15px]"></div>
 
                 {/* First Name Field (Signup only) */}
                 {mode === "signup" && (
                   <>
-                    <div className="flex item-center pb-[10px]">
-                      <div className="mr-[10px] flex item-center">
+                    <div className="flex items-center pb-[10px]">
+                      <div className="mr-[10px] flex items-center">
                         <Image
                           src="/icons/user.svg"
                           alt="Icon"
@@ -441,15 +466,7 @@ const User = ({ onClose }: UserProps) => {
             {step === "otp" && (
               <>
                 {/* OTP Field */}
-                <div className="flex item-center pb-[10px]">
-                  <div className="mr-[10px] flex item-center">
-                    <Image
-                      src="/icons/lock.svg"
-                      alt="Icon"
-                      width={20}
-                      height={20}
-                    />
-                  </div>
+                <div className="flex items-center pb-[10px]">
                   <input
                     type="text"
                     name="otp"
@@ -493,7 +510,7 @@ const User = ({ onClose }: UserProps) => {
             {step === "phone" && (
               <p className="text-[1.2rem] font-medium leading-[21px] text-left mt-[20px]">
                 {mode === "login"
-                  ? "Don&apos;t have an account?"
+                  ? "Don't have an account?"
                   : "Already have an account?"}{" "}
                 <span
                   onClick={() =>
@@ -508,6 +525,49 @@ const User = ({ onClose }: UserProps) => {
           </form>
         </div>
       </div>
+
+      {/* Custom styles for PhoneInput to match your design */}
+      <style jsx global>{`
+        .phone-input-custom {
+          width: 100%;
+        }
+
+        .phone-input-custom input {
+          background: transparent !important;
+          border: none !important;
+          outline: none !important;
+          color: var(--white-1) !important;
+          font-size: 1.6rem !important;
+          font-weight: 500 !important;
+          width: 100% !important;
+        }
+
+        .phone-input-custom input::placeholder {
+          color: var(--white-1) !important;
+          opacity: 0.7;
+        }
+
+        .phone-input-custom .PhoneInputCountry {
+          margin-right: 10px;
+        }
+
+        .phone-input-custom .PhoneInputCountryIcon {
+          width: 20px;
+          height: 15px;
+        }
+
+        .phone-input-custom .PhoneInputCountrySelect {
+          background: transparent !important;
+          border: none !important;
+          color: var(--white-1) !important;
+          margin-right: 5px;
+        }
+
+        .phone-input-custom .PhoneInputCountrySelectArrow {
+          color: var(--white-1) !important;
+          opacity: 0.7;
+        }
+      `}</style>
     </div>
   );
 };
