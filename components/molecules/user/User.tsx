@@ -309,13 +309,36 @@ const User = ({ onClose }: UserProps) => {
 
         console.log("SUPABASE", data);
 
+        // Create and save user profile from login data
+        if (data.user) {
+          const phoneNumber = data.user.phone;
+          let parsedPhone = null;
+
+          if (phoneNumber) {
+            parsedPhone = parsePhoneForApi(phoneNumber);
+          }
+
+          const userProfile: UserProfile = {
+            first_name:
+              data.user.user_metadata?.first_name || firstName || "User",
+            phone_country_code: parsedPhone?.countryCode || "",
+            phone_number: parsedPhone?.phone || phoneNumber || "",
+            phone_verified: data.user.phone_confirmed_at ? true : false,
+          };
+
+          saveUser(userProfile);
+        }
+
         showMessage("Login successful!", "success");
-        onClose?.();
         setStep("phone");
         setOtp("");
         setFirstName("");
         setResendTimer(0);
         setCanResend(false);
+        // Don't close immediately - let the user see their profile
+        setTimeout(() => {
+          onClose?.();
+        }, 1500);
       } else {
         // Keep your existing signup flow
         const res = await verifySignupOtp.mutateAsync({
@@ -416,10 +439,10 @@ const User = ({ onClose }: UserProps) => {
                   <p className="text-white-1 text-[1.6rem] font-medium">
                     {user.first_name}
                   </p>
-                  <p className="text-white-1 text-[1.2rem] opacity-70">
+                  <p className="text-white-1 text-[1.4rem] opacity-70">
                     +{user.phone_country_code} {user.phone_number}
                   </p>
-                  <p className="text-white-1 text-[1.0rem] opacity-60">
+                  <p className="text-white-1 text-[1.4rem] opacity-60">
                     Status: {user.phone_verified ? "Verified" : "Not Verified"}
                   </p>
                 </div>
