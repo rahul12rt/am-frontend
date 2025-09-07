@@ -525,7 +525,7 @@ const User = ({ onClose }: UserProps) => {
             {step === "phone" && (
               <p className="text-[1.2rem] font-medium leading-[21px] text-left mt-[20px]">
                 {mode === "login"
-                  ? "Don&apos;t have an account?"
+                  ? "Don't have an account?"
                   : "Already have an account?"}{" "}
                 <span
                   onClick={() =>
