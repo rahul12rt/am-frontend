@@ -5,7 +5,7 @@ import axios, {
   AxiosError, 
   InternalAxiosRequestConfig 
 } from 'axios';
-import { supabase } from './utils';
+import { createClient } from './supabase';
 
 // Types for API responses
 export interface ApiResponse<T = any> {
@@ -55,50 +55,7 @@ export interface ProductFilters {
   search?: string;
 }
 
-// Token management utilities
-const TOKEN_KEY = `sb-${process.env.NEXT_PUBLIC_SUPABASE_DOMAIN}-auth-token`;
-const REFRESH_TOKEN_KEY = 'refresh_token';
-
-
-
-export const tokenManager = {
-  getToken: (): string | null => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(TOKEN_KEY);
-    }
-    return null;
-  },
-  
-  setToken: (token: string): void => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(TOKEN_KEY, token);
-    }
-  },
-  
-  getRefreshToken: (): string | null => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(REFRESH_TOKEN_KEY);
-    }
-    return null;
-  },
-  
-  setRefreshToken: (token: string): void => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(REFRESH_TOKEN_KEY, token);
-    }
-  },
-  
-  clearTokens: (): void => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
-    }
-  },
-
-  isAuthenticated: (): boolean => {
-    return !!tokenManager.getToken();
-  }
-};
+// No need for custom token management - Supabase handles this
 
 // Base configuration for all API clients
 const baseConfig = {
@@ -183,13 +140,14 @@ const createProtectedApiClient = (): AxiosInstance => {
   client.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     try {
+      const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
-      
+
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
-      
+
       logRequest(config);
       return config;
     } catch (error) {
@@ -204,62 +162,21 @@ const createProtectedApiClient = (): AxiosInstance => {
 );
 
 
-  // Response interceptor for protected routes with token refresh logic
+  // Response interceptor for protected routes
   client.interceptors.response.use(
     (response: AxiosResponse) => {
       logResponse(response);
       return response;
     },
     async (error: AxiosError) => {
-      const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-      
-      // Handle 401 Unauthorized errors with token refresh
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
-        
-        const refreshToken = tokenManager.getRefreshToken();
-        
-        if (refreshToken) {
-          try {
-            // Attempt to refresh the token using unprotected client
-            const refreshResponse = await unprotectedApiClient.post('/auth/refresh', { 
-              refreshToken 
-            });
-            
-            const { token: newToken, refreshToken: newRefreshToken } = refreshResponse.data.data;
-            tokenManager.setToken(newToken);
-            
-            if (newRefreshToken) {
-              tokenManager.setRefreshToken(newRefreshToken);
-            }
-            
-            // Retry the original request with new token
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            }
-            
-            return client(originalRequest);
-          } catch (refreshError) {
-            // Refresh failed, clear tokens and redirect to login
-            tokenManager.clearTokens();
-            
-            if (typeof window !== 'undefined') {
-              window.location.href = '/login';
-            }
-            
-            return Promise.reject(refreshError);
-          }
-        } else {
-          // No refresh token, clear tokens and redirect to login
-          tokenManager.clearTokens();
-          
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
-          }
-        }
-      }
-      
       logError(error);
+
+      // On 401, let Supabase handle token refresh automatically
+      // The middleware will handle session refreshing
+      if (error.response?.status === 401) {
+        console.warn('Unauthorized request - session may have expired');
+      }
+
       return Promise.reject(error);
     }
   );

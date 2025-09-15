@@ -1,19 +1,17 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import Image from 'next/image';
 import styles from './Series.module.css';
-import { fetchWatches, Watch } from '@/data/watches';
+import { useWatches } from '@/hooks/queries/useWatches';
 import Link from 'next/link';
 
 function Series() {
-  const [seriesWatches, setSeriesWatches] = useState<Watch[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchWatches()
-      .then((data) => setSeriesWatches(data.slice(0, 10)))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: allWatches = [], isLoading: loading, error } = useWatches({ limit: 10 });
+  
+  // Get first 10 watches for series display
+  const seriesWatches = useMemo(() => {
+    return allWatches.slice(0, 10);
+  }, [allWatches]);
 
   return (
     <div className='bg-black-1 rounded-bl-[10px] rounded-br-[10px]'>
@@ -23,6 +21,10 @@ function Series() {
         >
           {loading ? (
             <div className='text-white-1 text-center w-full'>Loading...</div>
+          ) : error ? (
+            <div className='text-red-400 text-center w-full'>Error loading series: {error.message}</div>
+          ) : seriesWatches.length === 0 ? (
+            <div className='text-gray-400 text-center w-full'>No series available</div>
           ) : (
             seriesWatches.map((series) => (
               <Link

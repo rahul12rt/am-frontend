@@ -1,0 +1,37 @@
+export interface WatchImage {
+  id: string;
+  watch_id: string;
+  isoview: string;
+  front: string;
+  back: string;
+  side: string;
+  strap: string;
+  closeup: string;
+  dial: string;
+  createdat: string;
+  updatedat: string;
+}
+
+export interface Watch {
+  id: string;
+  name: string;
+  description: string;
+  characteristics: string;
+  actualprice: string;
+  offerprice: string;
+  offerpercentage: string;
+  rating: number;
+  reviewscount: number;
+  category: string;
+  series: string;
+  modelgroup: string;
+  releasedate: string;
+  theme: string;
+  warrantyperiod: string;
+  stockavailability: boolean;
+  isfeatured: boolean;
+  createdat: string;
+  updatedat: string;
+  WatchImages: WatchImage[];
+  WatchColors: { id: string; name: string; hex_code: string; }[];
+}

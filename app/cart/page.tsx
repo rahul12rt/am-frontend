@@ -1,273 +1,44 @@
-// collection/cart/page.tsx
 "use client";
 
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { MdKeyboardArrowRight } from "react-icons/md";
-import { useCreateOrder, useVerifyPayment } from "../../hooks/usePayment";
-
-interface WatchImage {
-  id: string;
-  watch_id: string;
-  isoview: string;
-  front: string;
-  back: string;
-  side: string;
-  strap: string;
-  closeup: string;
-  dial: string;
-  createdat: string;
-  updatedat: string;
-}
-
-interface Watch {
-  id: string;
-  name: string;
-  description: string;
-  characteristics: string;
-  actualprice: string;
-  offerprice: string;
-  offerpercentage: string;
-  rating: number;
-  reviewscount: number;
-  category: string;
-  series: string;
-  modelgroup: string;
-  releasedate: string;
-  theme: string;
-  warrantyperiod: string;
-  stockavailability: boolean;
-  isfeatured: boolean;
-  createdat: string;
-  updatedat: string;
-  WatchImages: WatchImage[];
-}
-
-interface CartItem {
-  id: string;
-  user_id: string;
-  watch_id: string;
-  quantity: number;
-  price_at_time: string;
-  createdat: string;
-  updatedat: string;
-  Watch: Watch;
-}
-
-interface CartSummary {
-  totalItems: number;
-  totalAmount: string;
-}
-
-interface ApiResponse {
-  success: boolean;
-  data: {
-    items: CartItem[];
-    summary: CartSummary;
-  };
-}
+import { Minus, Plus, Trash2, ShoppingBag, X, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/contexts/ToastContext";
+import {
+  useCart,
+  useUpdateCartItem,
+  useRemoveFromCart,
+  useClearCart,
+  useCartTotal,
+  useCartCount,
+} from "@/hooks/queries/useCart";
 
 const CartPage: React.FC = () => {
-  // Static API response data
-  const apiResponse: ApiResponse = {
-    success: true,
-    data: {
-      items: [
-        {
-          id: "70b3e275-7566-45e6-8339-ad80045d1116",
-          user_id: "6c333b09-5851-4fdb-b103-21420230493b",
-          watch_id: "1112a3f1-b199-46b0-b6e0-ad9adb304711",
-          quantity: 1,
-          price_at_time: "7650.00",
-          createdat: "2025-07-23T18:37:29.964Z",
-          updatedat: "2025-07-23T18:37:29.964Z",
-          Watch: {
-            id: "1112a3f1-b199-46b0-b6e0-ad9adb304711",
-            name: "Rolex Submariner Date",
-            description:
-              "Professional diving watch with date display and unidirectional rotating bezel",
-            characteristics:
-              "Water-resistant to 300m, Automatic movement, Ceramic bezel, Luminous hands",
-            actualprice: "8500.00",
-            offerprice: "7650.00",
-            offerpercentage: "10%",
-            rating: 4.8,
-            reviewscount: 127,
-            category: "Luxury",
-            series: "Submariner",
-            modelgroup: "Professional",
-            releasedate: "2023-01-15T12:00:00.000Z",
-            theme: "Sport",
-            warrantyperiod: "24",
-            stockavailability: true,
-            isfeatured: true,
-            createdat: "2025-07-23T15:15:52.616Z",
-            updatedat: "2025-07-23T15:15:52.616Z",
-            WatchImages: [
-              {
-                id: "28f59feb-1c3a-4fee-b384-78cdc01cbf82",
-                watch_id: "1112a3f1-b199-46b0-b6e0-ad9adb304711",
-                isoview:
-                  "https://alban.b-cdn.net/watches/1112a3f1-b199-46b0-b6e0-ad9adb304711_isoview_1753283754713_Watch.jpg",
-                front:
-                  "https://alban.b-cdn.net/watches/1112a3f1-b199-46b0-b6e0-ad9adb304711_front_1753283754713_Watch.jpg",
-                back: "https://alban.b-cdn.net/watches/1112a3f1-b199-46b0-b6e0-ad9adb304711_back_1753283754713_Watch.jpg",
-                side: "https://alban.b-cdn.net/watches/1112a3f1-b199-46b0-b6e0-ad9adb304711_side_1753283754713_Watch.jpg",
-                strap:
-                  "https://alban.b-cdn.net/watches/1112a3f1-b199-46b0-b6e0-ad9adb304711_strap_1753283754713_Watch.jpg",
-                closeup:
-                  "https://alban.b-cdn.net/watches/1112a3f1-b199-46b0-b6e0-ad9adb304711_closeup_1753283754713_Watch.jpg",
-                dial: "https://alban.b-cdn.net/watches/1112a3f1-b199-46b0-b6e0-ad9adb304711_dial_1753283754713_Watch.jpg",
-                createdat: "2025-07-23T15:15:57.557Z",
-                updatedat: "2025-07-23T15:15:57.557Z",
-              },
-            ],
-          },
-        },
-      ],
-      summary: {
-        totalItems: 1,
-        totalAmount: "7650.00",
-      },
-    },
-  };
+  const { profile, loading: authLoading } = useAuth();
+  const { showToast } = useToast();
 
-  const createOrderMutation = useCreateOrder();
-  const verifyPaymentMutation = useVerifyPayment();
+  // Cart hooks
+  const { data: cartData, isLoading: cartLoading, error: cartError } = useCart();
+  const { data: totalData } = useCartTotal();
+  const { data: itemCount } = useCartCount();
 
-  const [cartItems, setCartItems] = useState<CartItem[]>(
-    apiResponse.data.items
-  );
-  const [couponCode, setCouponCode] = useState<string>("");
+  // Mutation hooks
+  const updateCartItem = useUpdateCartItem();
+  const removeFromCart = useRemoveFromCart();
+  const clearCart = useClearCart();
+
+  // Local state
   const [imageError, setImageError] = useState<{ [key: string]: boolean }>({});
+  const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
 
-  // Add payment processing state
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  // Helper function to get the best available image
+  const getProductImage = (watchImages: any[]): string => {
+    if (!watchImages || watchImages.length === 0) return "/placeholder-watch.jpg";
 
-  // Razorpay script loader
-  const loadRazorpayScript = (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      if ((window as any).Razorpay) {
-        resolve(true);
-        return;
-      }
-
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
-
-  const proceedToCheckout = async () => {
-    if (cartItems.length === 0) {
-      alert("Your cart is empty");
-      return;
-    }
-
-    try {
-      setIsProcessingPayment(true);
-
-      // Load Razorpay script
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) {
-        throw new Error("Razorpay script failed to load");
-      }
-
-      // Verify Razorpay is available
-      if (!window.Razorpay) {
-        throw new Error("Razorpay is not available on window object");
-      }
-
-      // Create order with the total amount
-      const orderResponse = await createOrderMutation.mutateAsync({
-        amount: total,
-        currency: "INR",
-        receipt: `cart_${Date.now()}`,
-      });
-
-      if (!orderResponse.success) {
-        throw new Error("Failed to create payment order");
-      }
-
-      const { order_id, key_id, amount: orderAmount } = orderResponse;
-
-      // Verify all required fields
-      if (!order_id || !key_id || !orderAmount) {
-        throw new Error("Missing required order details");
-      }
-
-      // Prepare cart items summary for description
-      const itemsSummary =
-        cartItems.length === 1
-          ? cartItems[0].Watch.name
-          : `${cartItems.length} watches`;
-
-      // Razorpay checkout options
-      const options = {
-        key: key_id,
-        amount: orderAmount,
-        currency: "INR",
-        name: "Alban Marcus",
-        description: `Purchase: ${itemsSummary}`,
-        order_id: order_id,
-        prefill: {
-          name: "Customer",
-          email: "customer@example.com",
-          contact: "9999999999",
-        },
-        theme: {
-          color: "#000000",
-        },
-        handler: async (response: any) => {
-          try {
-            // Verify payment
-            const verificationResponse =
-              await verifyPaymentMutation.mutateAsync({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              });
-
-            if (verificationResponse.success) {
-              // Payment successful
-              alert("Payment successful! Thank you for your purchase.");
-              setCartItems([]);
-            } else {
-              throw new Error("Payment verification failed");
-            }
-          } catch (error) {
-            console.error("Payment verification error:", error);
-            alert("Payment verification failed! Please contact support.");
-          }
-        },
-        modal: {
-          ondismiss: () => {
-            setIsProcessingPayment(false);
-          },
-        },
-      };
-
-      // Create and open Razorpay instance
-      const razorpay = new (window as any).Razorpay(options);
-      razorpay.open();
-    } catch (error) {
-      console.error("Payment initiation error:", error);
-      const errorMessage = error?.message || "Unknown error occurred";
-      alert(`Failed to initiate payment: ${errorMessage}`);
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-
-  // Function to get the best available image from API response
-  const getProductImage = (watch: Watch): string => {
-    const images = watch.WatchImages[0];
-    if (!images) return "/placeholder-watch.jpg";
-
-    // Priority order: front -> isoview -> closeup -> dial -> any other
+    const images = watchImages[0];
     return (
       images.front ||
       images.isoview ||
@@ -281,81 +52,78 @@ const CartPage: React.FC = () => {
   };
 
   // Handle image error
-  const handleImageError = (watchId: string) => {
-    setImageError((prev) => ({ ...prev, [watchId]: true }));
+  const handleImageError = (itemId: string) => {
+    setImageError((prev) => ({ ...prev, [itemId]: true }));
   };
 
-  const updateQuantity = (id: string, newQuantity: number) => {
-    if (newQuantity < 0) return;
+  // Handle quantity update
+  const handleUpdateQuantity = async (cartItemId: string, newQuantity: number) => {
+    if (newQuantity < 1 || newQuantity > 99) return;
 
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
+    setUpdatingItems(prev => new Set(prev).add(cartItemId));
+
+    try {
+      await updateCartItem.mutateAsync({
+        cartItemId,
+        data: { quantity: newQuantity }
+      });
+      showToast("Quantity updated successfully", "success");
+    } catch (error) {
+      showToast("Failed to update quantity", "error");
+    } finally {
+      setUpdatingItems(prev => {
+        const next = new Set(prev);
+        next.delete(cartItemId);
+        return next;
+      });
+    }
   };
 
-  const removeItem = (id: string) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
+  // Handle item removal
+  const handleRemoveItem = async (cartItemId: string, itemName: string) => {
+    try {
+      await removeFromCart.mutateAsync(cartItemId);
+      showToast(`${itemName} removed from cart`, "success");
+    } catch (error) {
+      showToast("Failed to remove item", "error");
+    }
   };
 
-  const calculateSubtotal = (): number => {
-    return cartItems.reduce(
-      (sum, item) => sum + parseFloat(item.price_at_time) * item.quantity,
-      0
-    );
+  // Handle clear cart
+  const handleClearCart = async () => {
+    if (!cartData?.items || cartData.items.length === 0) return;
+
+    const confirmed = window.confirm("Are you sure you want to remove all items from your cart?");
+    if (!confirmed) return;
+
+    try {
+      await clearCart.mutateAsync();
+      showToast("Cart cleared successfully", "success");
+    } catch (error) {
+      showToast("Failed to clear cart", "error");
+    }
   };
 
-  const subtotal = calculateSubtotal();
-  const shipping = 0; // Free shipping
-  const total = subtotal + shipping;
-
-  const applyCoupon = () => {
-    if (!couponCode.trim()) {
-      alert("Please enter a coupon code");
+  // Navigate to checkout
+  const handleCheckout = () => {
+    if (!cartData?.items || cartData.items.length === 0) {
+      showToast("Your cart is empty", "info");
       return;
     }
-    console.log("Applying coupon:", couponCode);
-    // Handle coupon application logic here
+
+    // TODO: Navigate to checkout page
+    showToast("Checkout functionality coming soon!", "info");
   };
 
-  const returnToShop = () => {
-    console.log("Returning to shop");
-    window.location.href = "/collection";
-  };
-
-  // If cart is empty
-  if (cartItems.length === 0) {
+  // Loading state
+  if (authLoading || cartLoading) {
     return (
-      <section className="pt-[90px] pb-[70px] bg-black-1 text-white-1 min-h-screen">
+      <section className="pt-[90px] pb-[70px] bg-black min-h-screen">
         <div className="container mx-auto px-4">
-          {/* Breadcrumb */}
-          <p className="flex items-center text-[16px] pb-[40px] gap-2">
-            <Link href="/" className="opacity-60 hover:opacity-100">
-              Home
-            </Link>
-            <MdKeyboardArrowRight />
-            <Link href="/collection" className="opacity-60 hover:opacity-100">
-              Collection
-            </Link>
-            <MdKeyboardArrowRight />
-            <span>Cart</span>
-          </p>
-
-          <div className="bg-white rounded-lg shadow-sm text-black overflow-hidden">
-            <div className="text-center py-16 px-8">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">
-                Your Cart is Empty
-              </h2>
-              <p className="text-gray-600 mb-8">
-                Looks like you haven't added any watches to your cart yet.
-              </p>
-              <button
-                onClick={returnToShop}
-                className="px-8 py-3 bg-black text-white rounded font-medium"
-              >
-                Continue Shopping
-              </button>
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-white mx-auto mb-4" />
+              <p className="text-white text-lg">Loading your cart...</p>
             </div>
           </div>
         </div>
@@ -363,193 +131,298 @@ const CartPage: React.FC = () => {
     );
   }
 
+  // Error state
+  if (cartError) {
+    return (
+      <section className="pt-[90px] pb-[70px] bg-black min-h-screen">
+        <div className="container mx-auto px-4">
+          <div className="text-center py-16">
+            <X className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold mb-4 text-white">
+              Error Loading Cart
+            </h2>
+            <p className="text-gray-400 mb-8">
+              We couldn't load your cart. Please try refreshing the page.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-gray-100 transition-colors"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Check if user is authenticated
+  if (!profile) {
+    return (
+      <section className="pt-[90px] pb-[70px] bg-black min-h-screen">
+        <div className="container mx-auto px-4">
+          <div className="text-center py-16">
+            <ShoppingBag className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold mb-4 text-white">
+              Please Sign In
+            </h2>
+            <p className="text-gray-400 mb-8">
+              You need to be signed in to view your cart.
+            </p>
+            <Link
+              href="/"
+              className="px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-gray-100 transition-colors"
+            >
+              Go to Home
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Empty cart state
+  if (!cartData?.items || cartData.items.length === 0) {
+    return (
+      <section className="pt-[90px] pb-[70px] bg-black text-white min-h-screen">
+        <div className="container mx-auto px-4">
+          {/* Breadcrumb */}
+          <p className="flex items-center text-[16px] pb-[40px] gap-2">
+            <Link href="/" className="opacity-60 hover:opacity-100 transition-opacity">
+              Home
+            </Link>
+            <MdKeyboardArrowRight />
+            <Link href="/collection" className="opacity-60 hover:opacity-100 transition-opacity">
+              Collection
+            </Link>
+            <MdKeyboardArrowRight />
+            <span>Cart</span>
+          </p>
+
+          <div className="bg-gray-900/30 backdrop-blur-sm rounded-2xl border border-gray-800 overflow-hidden">
+            <div className="text-center py-16 px-8">
+              <ShoppingBag className="w-16 h-16 text-gray-500 mx-auto mb-6" />
+              <h2 className="text-2xl font-semibold mb-4 text-white">
+                Your Cart is Empty
+              </h2>
+              <p className="text-gray-400 mb-8">
+                Looks like you haven't added any watches to your cart yet.
+                Explore our luxury collection and find your perfect timepiece.
+              </p>
+              <Link
+                href="/collection"
+                className="inline-flex items-center px-8 py-4 bg-white text-black rounded-lg font-medium hover:bg-gray-100 transition-colors"
+              >
+                <ShoppingBag className="w-5 h-5 mr-2" />
+                Continue Shopping
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const cartItems = cartData.items;
+  const subtotal = totalData?.subtotal || 0;
+  const shipping = 0; // Free shipping
+  const total = subtotal + shipping;
+
   return (
-    <section className="pt-[90px] pb-[70px] bg-black-1 text-white-1 min-h-screen">
+    <section className="pt-[90px] pb-[70px] bg-black text-white min-h-screen">
       <div className="container mx-auto px-4">
-        {/* Breadcrumb - matching your colleague's style */}
+        {/* Breadcrumb */}
         <p className="flex items-center text-[16px] pb-[40px] gap-2">
-          <Link href="/" className="opacity-60 hover:opacity-100">
+          <Link href="/" className="opacity-60 hover:opacity-100 transition-opacity">
             Home
           </Link>
           <MdKeyboardArrowRight />
-          <Link href="/collection" className="opacity-60 hover:opacity-100">
+          <Link href="/collection" className="opacity-60 hover:opacity-100 transition-opacity">
             Collection
           </Link>
           <MdKeyboardArrowRight />
           <span>Cart</span>
         </p>
 
-        <div className="bg-white rounded-lg shadow-sm text-black overflow-hidden">
-          {/* Header - only show on sm+ */}
-          <div className="hidden sm:grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200 font-medium text-gray-700 bg-gray-50 text-[16px] ">
-            <div>Product</div>
-            <div className="text-center">Price</div>
-            <div className="text-center">Quantity</div>
-            <div className="text-center">Subtotal</div>
+        {/* Cart Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Shopping Cart</h1>
+            <p className="text-gray-400">
+              {itemCount} {itemCount === 1 ? 'item' : 'items'} in your cart
+            </p>
           </div>
 
+          {cartItems.length > 1 && (
+            <button
+              onClick={handleClearCart}
+              disabled={clearCart.isPending}
+              className="flex items-center gap-2 px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all disabled:opacity-50"
+            >
+              {clearCart.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              Clear Cart
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
-          <div className="bg-white divide-y divide-gray-100">
-            {cartItems.map((item) => (
-              <div
-                key={item.id}
-                className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_1fr] gap-4 sm:gap-6 lg:gap-8 px-4 sm:px-6 lg:px-8 py-6 items-center"
-              >
-                {/* Product */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 min-w-0">
-                  <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0 relative mx-auto sm:mx-0">
-                    {!imageError[item.Watch.id] ? (
-                      <Image
-                        src={getProductImage(item.Watch)}
-                        alt={item.Watch.name}
-                        fill
-                        className="object-cover"
-                        sizes="80px"
-                        onError={() => handleImageError(item.Watch.id)}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs text-center p-2">
-                        No Image
+          <div className="lg:col-span-2 space-y-4">
+            {cartItems.map((item) => {
+              const watch = item.watchColor?.Watch;
+              const isUpdating = updatingItems.has(item.id);
+
+              if (!watch) return null;
+
+              return (
+                <div
+                  key={item.id}
+                  className="bg-gray-900/30 backdrop-blur-sm rounded-xl border border-gray-800 p-6 hover:border-gray-700 transition-all"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-6 gap-6 items-center">
+                    {/* Product Image */}
+                    <div className="sm:col-span-2">
+                      <div className="flex items-center gap-4">
+                        <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-800 border border-gray-700 flex-shrink-0 relative">
+                          {!imageError[item.id] ? (
+                            <Image
+                              src={getProductImage(watch.WatchImages)}
+                              alt={watch.name}
+                              fill
+                              className="object-cover"
+                              sizes="80px"
+                              onError={() => handleImageError(item.id)}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs text-center p-2">
+                              No Image
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-white text-lg mb-1 line-clamp-2">
+                            {watch.name}
+                          </h3>
+                          <p className="text-sm text-gray-400 mb-2">
+                            Color: {item.watchColor.name}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            {parseFloat(watch.actualprice.toString()) > parseFloat(watch.offerprice.toString()) && (
+                              <span className="text-sm text-gray-500 line-through">
+                                ₹{parseFloat(watch.actualprice.toString()).toLocaleString()}
+                              </span>
+                            )}
+                            <span className="text-lg font-semibold text-white">
+                              ₹{parseFloat(watch.offerprice.toString()).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1 text-center sm:text-left">
-                    <h3 className="font-semibold text-white text-[14px]  mb-1 leading-tight">
-                      {item.Watch.name}
-                    </h3>
-                    <p className="text-[14px]  text-white line-clamp-2 leading-relaxed">
-                      {item.Watch.description}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Price */}
-                <div className="text-center mt-4 sm:mt-0">
-                  {parseFloat(item.Watch.actualprice) >
-                    parseFloat(item.Watch.offerprice) && (
-                    <div className="text-[16px] text-gray-400 line-through mb-1">
-                      ${parseFloat(item.Watch.actualprice).toLocaleString()}
                     </div>
-                  )}
-                  <div
-                    className={`font-semibold text-[16px]  ${
-                      parseFloat(item.Watch.actualprice) >
-                      parseFloat(item.Watch.offerprice)
-                        ? "text-red-600"
-                        : "text-gray-900"
-                    }`}
-                  >
-                    ${parseFloat(item.price_at_time).toLocaleString()}
+
+                    {/* Quantity Controls */}
+                    <div className="sm:col-span-2">
+                      <div className="flex items-center justify-center gap-3">
+                        <button
+                          onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                          disabled={item.quantity <= 1 || isUpdating}
+                          className="w-10 h-10 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:hover:bg-gray-800 rounded-full flex items-center justify-center transition-colors"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+
+                        <div className="flex items-center justify-center min-w-[60px]">
+                          {isUpdating ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                          ) : (
+                            <span className="text-xl font-semibold text-white">{item.quantity}</span>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                          disabled={item.quantity >= 99 || isUpdating}
+                          className="w-10 h-10 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:hover:bg-gray-800 rounded-full flex items-center justify-center transition-colors"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Price & Remove */}
+                    <div className="sm:col-span-2">
+                      <div className="flex items-center justify-between">
+                        <div className="text-right">
+                          <p className="text-xl font-bold text-white">
+                            ₹{(parseFloat(item.price_at_time) * item.quantity).toLocaleString()}
+                          </p>
+                          {item.quantity > 1 && (
+                            <p className="text-sm text-gray-400">
+                              ₹{parseFloat(item.price_at_time).toLocaleString()} each
+                            </p>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => handleRemoveItem(item.id, watch.name)}
+                          disabled={removeFromCart.isPending}
+                          className="ml-4 p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-full transition-all disabled:opacity-50"
+                        >
+                          {removeFromCart.isPending ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                {/* Quantity */}
-                <div className="flex justify-center mt-4 sm:mt-0">
-                  <div className="relative">
-                    <input
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value) || 0;
-                        if (value >= 0) {
-                          updateQuantity(item.id, value);
-                        }
-                      }}
-                      className="w-20 h-10 text-center border border-gray-300 rounded text-[16px]  font-medium text-gray-900 focus:outline-none focus:border-blue-500 pr-4"
-                      min="0"
-                      max="99"
-                    />
-                    {/* Arrows stay */}
-                  </div>
-                </div>
-
-                {/* Subtotal */}
-                <div className="text-center font-semibold text-[16px]  text-white mt-4 sm:mt-0">
-                  $
-                  {(
-                    parseFloat(item.price_at_time) * item.quantity
-                  ).toLocaleString()}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* Bottom Section */}
-          <div className="px-8 py-8 border-t-2 border-gray-200 bg-gray-50">
-            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
-              {/* Coupon Section */}
-              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                <input
-                  type="text"
-                  placeholder="Coupon Code"
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded text-[16px]  focus:outline-none focus:border-blue-500"
-                  maxLength={20}
-                />
-                {/* FIXED APPLY COUPON BUTTON - SIMPLE BLACK BACKGROUND */}
-                <button
-                  onClick={applyCoupon}
-                  className="w-full sm:w-auto px-6 py-3 bg-black text-white rounded text-[16px]  font-medium disabled:opacity-50"
-                  disabled={!couponCode.trim()}
-                >
-                  Apply Coupon
-                </button>
-              </div>
+          {/* Cart Summary */}
+          <div className="lg:col-span-1">
+            <div className="bg-gray-900/40 backdrop-blur-sm rounded-xl border border-gray-800 p-6 sticky top-24">
+              <h3 className="text-xl font-semibold mb-6 text-white">Order Summary</h3>
 
-              {/* Cart Total - NO TAX OPTION */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6 min-w-[300px] flex-shrink-0">
-                <h3 className="text-[20px] font-semibold mb-4 text-gray-900">
-                  Cart Total
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-[16px]">
-                    <span className="text-gray-600">Subtotal:</span>
-                    <span className="font-medium text-gray-900">
-                      ${subtotal.toLocaleString()}
-                    </span>
-                  </div>
+              <div className="space-y-4 mb-6">
+                <div className="flex justify-between text-base">
+                  <span className="text-gray-400">Subtotal ({itemCount} items):</span>
+                  <span className="text-white font-medium">₹{subtotal.toLocaleString()}</span>
+                </div>
 
-                  <div className="flex justify-between text-[16px]">
-                    <span className="text-gray-600">Shipping:</span>
-                    <span className="font-semibold text-green-600">Free</span>
-                  </div>
+                <div className="flex justify-between text-base">
+                  <span className="text-gray-400">Shipping:</span>
+                  <span className="text-green-400 font-medium">Free</span>
+                </div>
 
-                  {/* Tax option removed as requested */}
-
-                  <div className="border-t pt-3">
-                    <div className="flex justify-between text-[18px] font-semibold text-gray-900">
-                      <span>Total:</span>
-                      <span>${total.toLocaleString()}</span>
-                    </div>
+                <div className="border-t border-gray-700 pt-4">
+                  <div className="flex justify-between text-lg font-semibold">
+                    <span className="text-white">Total:</span>
+                    <span className="text-white">₹{total.toLocaleString()}</span>
                   </div>
                 </div>
-                <button
-                  onClick={proceedToCheckout}
-                  disabled={
-                    isProcessingPayment ||
-                    createOrderMutation.isPending ||
-                    verifyPaymentMutation.isPending
-                  }
-                  className="w-full mt-6 px-6 py-3 !bg-[#000000] !text-[#ffffff] !border-none rounded text-[16px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isProcessingPayment ||
-                  createOrderMutation.isPending ||
-                  verifyPaymentMutation.isPending
-                    ? "Processing..."
-                    : `Proceed to checkout - $${total.toLocaleString()}`}
-                </button>
               </div>
-            </div>
 
-            {/* Return to Shop Button */}
-            <div className="mt-6">
               <button
-                onClick={returnToShop}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors font-medium text-[16px]"
+                onClick={handleCheckout}
+                className="w-full bg-white text-black font-semibold py-4 px-6 rounded-lg hover:bg-gray-100 transition-colors mb-4"
               >
-                Return To Shop
+                Proceed to Checkout
               </button>
+
+              <Link
+                href="/collection"
+                className="block text-center text-gray-400 hover:text-white transition-colors text-sm"
+              >
+                Continue Shopping
+              </Link>
             </div>
           </div>
         </div>

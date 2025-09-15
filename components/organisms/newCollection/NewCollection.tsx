@@ -1,17 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
 import NewCollectionWatch from '@/components/molecules/newCollectionWatch/NewCollectionWatch';
-import { fetchWatches, Watch } from '@/data/watches';
+import { useFeaturedWatches } from '@/hooks/queries/useWatches';
 
 const NewCollection = () => {
-  const [watches, setWatches] = useState<Watch[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchWatches()
-      .then((data) => setWatches(data.filter((w) => w.isfeatured)))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: watches = [], isLoading: loading, error } = useFeaturedWatches();
 
   return (
     <section className='pb-[25px]'>
@@ -32,6 +24,10 @@ const NewCollection = () => {
       <div className='container py-[80px] max-[768px]:pb-[0px]'>
         {loading ? (
           <div className='text-center text-white-1'>Loading...</div>
+        ) : error ? (
+          <div className='text-center text-red-400'>Error loading featured watches: {error.message}</div>
+        ) : watches.length === 0 ? (
+          <div className='text-center text-gray-400'>No featured watches available</div>
         ) : (
           <div className='flex justify-between items-center text-center gap-[30px] max-[768px]:flex-wrap max-[768px]:justify-center max-[768px]:gap-[50px]'>
             {watches.map((item) => (

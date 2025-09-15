@@ -1,5 +1,236 @@
 .submitButton {
+  transition: all 0.3s ease;
+
+  img {
+    transition: filter 0.3s ease;
+  }
+
+    &.outlineButton {
+    border: 1px solid white;
+    background-color: transparent !important;
+    color: white !important;
+
+    img {
+      filter: brightness(0) invert(1);
+    }
+
+    &:hover {
+      background-color: white !important;
+      color: black !important;
+
+      img {
+        filter: brightness(0) invert(0);
+      }
+    }
+  }
+
   &:focus {
     box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+  }
+}
+
+.phoneInputGroup {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  
+  .countryCodeSelect {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    font-size: 1.6rem;
+    font-weight: 500;
+    width: 5rem;
+    margin-right: 0.75rem;
+    cursor: pointer;
+    
+    option {
+      background-color: #000;
+      color: white;
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+  
+  .phoneNumberInput {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    font-size: 1.6rem;
+    font-weight: 500;
+    flex: 1;
+    
+    &::placeholder {
+      color: white;
+      opacity: 0.7;
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.termsAgreement {
+  display: flex;
+  align-items: flex-start;
+  padding-bottom: 15px;
+  margin-top: 10px;
+  
+  .checkbox {
+    margin-right: 12px;
+    margin-top: 4px;
+    accent-color: white;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+  
+  .label {
+    font-size: 1.2rem;
+    color: white;
+    line-height: 1.5;
+    cursor: pointer;
+    user-select: none;
+    
+    a {
+      text-decoration: underline;
+      transition: color 0.2s ease;
+      
+      &:hover {
+        color: #d1d5db;
+      }
+    }
+  }
+}
+
+.messageContainer {
+  animation: slideInDown 0.3s ease-out;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    opacity: 0.6;
+  }
+  
+  .messageIcon {
+    animation: bounceIn 0.4s ease-out 0.1s both;
+  }
+}
+
+.successMessage {
+  &::before {
+    background: linear-gradient(90deg, #10b981, #34d399);
+  }
+  
+  .messageIcon {
+    color: #10b981;
+  }
+}
+
+.errorMessage {
+  &::before {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+  }
+  
+  .messageIcon {
+    color: #ef4444;
+  }
+}
+
+.infoMessage {
+  &::before {
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  }
+  
+  .messageIcon {
+    color: #3b82f6;
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.loginForm, .registerForm {
+  .inputGroup {
+    display: flex;
+    align-items: center;
+    padding-bottom: 10px;
+    
+    .icon {
+      margin-right: 10px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: white;
+      font-size: 1.6rem;
+      font-weight: 500;
+      width: 100%;
+      
+      &::placeholder {
+        color: white;
+        opacity: 0.7;
+      }
+      
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+  
+  .divider {
+    border-bottom: 2px solid white;
+    margin-bottom: 15px;
   }
 }

@@ -5,14 +5,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FaBars } from "react-icons/fa";
 import Series from "@/components/molecules/series/Series";
-import User from "@/components/molecules/user/User";
+import { useIsClient } from "@/hooks/useIsClient";
+import { useUserModal } from "@/contexts/UserModalContext";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const isClient = useIsClient();
 
   // Drawer states
-  const [drawerType, setDrawerType] = useState<"series" | "user" | null>(null);
+  const [drawerType, setDrawerType] = useState<"series" | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const { openModal, closeModal, isOpen: isUserModalOpen } = useUserModal();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuAnimating, setIsMenuAnimating] = useState(false);
@@ -20,17 +23,19 @@ const Header = () => {
   const pathname = usePathname();
 
   useEffect(() => {
+    if (!isClient) return;
+    
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isClient]);
 
   const isHomePage = pathname === "/";
   const isCollectionRoute = pathname === "/collections";
   const isWatchDetailRoute = pathname === "/watchdetail";
 
-  /** ---- Series / User Drawer Handlers ---- */
-  const toggleDrawer = (type: "series" | "user" | null) => {
+  /** ---- Series Drawer Handlers ---- */
+  const toggleDrawer = (type: "series" | null) => {
     if (!isAnimating) {
       setIsAnimating(true);
       setDrawerType(drawerType === type ? null : type);
@@ -46,6 +51,7 @@ const Header = () => {
 
   const isDrawerOpen = drawerType !== null;
 
+
   /** ---- Menu Drawer Handlers ---- */
   const toggleMenu = () => {
     if (!isMenuAnimating) {
@@ -60,6 +66,20 @@ const Header = () => {
       return () => clearTimeout(timer);
     }
   }, [isMenuAnimating]);
+
+  // Close drawers on route change
+  useEffect(() => {
+    if (isDrawerOpen) {
+      toggleDrawer(null);
+    }
+    if (isMenuOpen) {
+      toggleMenu();
+    }
+    if (isUserModalOpen) {
+      closeModal();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   return (
     <>
@@ -155,7 +175,7 @@ const Header = () => {
             {/* User Drawer Button */}
             <button
               className="flex justify-center items-center"
-              onClick={() => toggleDrawer("user")}
+              onClick={openModal}
             >
               <Image
                 src="/icons/user.svg"
@@ -208,7 +228,7 @@ const Header = () => {
         </div>
       )}
 
-      {/* ---- Series / User Drawers ---- */}
+      {/* ---- Series Drawer ---- */}
       <div
         className={`fixed inset-0 bg-black-1 bg-opacity-50 z-[30] ${
           isDrawerOpen || isAnimating ? "block" : "hidden"
@@ -239,24 +259,6 @@ const Header = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <Series />
-          </div>
-        )}
-
-        {/* ---- User Drawer (Right Slide) ---- */}
-        {drawerType === "user" && (
-          <div
-            className="fixed top-0 right-0 h-full w-[300px] bg-black text-white-1 shadow-lg"
-            style={{
-              animation: isDrawerOpen
-                ? "slideInRight 0.5s ease-out"
-                : isAnimating
-                ? "slideOutRight 0.2s ease-in"
-                : "none",
-              transform: isDrawerOpen ? "translateX(0)" : "translateX(100%)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <User />
           </div>
         )}
       </div>

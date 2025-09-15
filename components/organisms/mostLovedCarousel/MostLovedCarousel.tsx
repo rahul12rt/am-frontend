@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { EmblaOptionsType } from 'embla-carousel';
 import {
@@ -7,7 +7,7 @@ import {
   useDotButton,
 } from '../../atoms/CarouselDotButton/CarouselDotButton';
 import NewCollectionWatch from '@/components/molecules/newCollectionWatch/NewCollectionWatch';
-import { fetchWatches, Watch } from '@/data/watches';
+import { useWatches } from '@/hooks/queries/useWatches';
 import styles from './MostLovedCarousel.module.scss';
 
 type PropType = {
@@ -21,14 +21,12 @@ const MostLovedCarousel: React.FC<PropType> = (props) => {
   const { selectedIndex, scrollSnaps, onDotButtonClick } =
     useDotButton(emblaApi);
 
-  const [watches, setWatches] = useState<Watch[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchWatches()
-      .then((data) => setWatches(data.slice(0, 5)))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: allWatches = [], isLoading: loading, error } = useWatches({ limit: 5 });
+  
+  // Get first 5 watches for carousel
+  const watches = useMemo(() => {
+    return allWatches.slice(0, 5);
+  }, [allWatches]);
 
   return (
     <section className={styles.embla}>
@@ -36,6 +34,10 @@ const MostLovedCarousel: React.FC<PropType> = (props) => {
         <div className={`${styles.embla__container} flex`}>
           {loading ? (
             <div className='text-white-1 text-center w-full'>Loading...</div>
+          ) : error ? (
+            <div className='text-red-400 text-center w-full'>Error loading watches: {error.message}</div>
+          ) : watches.length === 0 ? (
+            <div className='text-gray-400 text-center w-full'>No watches available</div>
           ) : (
             watches.map((item, index) => (
               <div className={styles.embla__slide} key={item.id}>

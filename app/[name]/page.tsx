@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Star,
   ShoppingBag,
@@ -14,61 +14,18 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { MdKeyboardArrowRight } from 'react-icons/md';
 import { useParams } from 'next/navigation';
+import { useWatch } from '@/hooks/queries/useWatches';
+import { WatchImage, Review } from '@/lib/api-services';
+import { WatchImage } from '@/lib/api-services';
 
-interface WatchImage {
-  id: string;
-  isoview: string;
-  front: string;
-  back: string;
-  side: string;
-  strap?: string;
-  closeup?: string;
-  dial?: string;
-}
-
-interface Review {
-  id: number;
-  name: string;
-  rating: number;
-  date: string;
-  comment: string;
-  verified?: boolean;
-}
-
-interface Watch {
-  id: string;
-  name: string;
-  description: string;
-  characteristics: string;
-  actualprice: string;
-  offerprice: string;
-  offerpercentage: string;
-  rating: number;
-  reviewscount: number;
-  category: string;
-  series: string;
-  modelgroup: string;
-  releasedate: string;
-  theme: string;
-  warrantyperiod: string;
-  stockavailability: boolean;
-  isfeatured: boolean;
-  WatchImages: WatchImage[];
-  reviews?: Review[];
-}
-
-interface ApiResponse {
-  success: boolean;
-  data: Watch;
-}
 
 export default function Component() {
   const params = useParams();
   const watchId = params.name as string;
 
-  const [watch, setWatch] = useState<Watch | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Use TanStack Query hook for data fetching
+  const { data: watch, isLoading: loading, error } = useWatch(watchId);
+
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState(0);
   const [quantity, setQuantity] = useState(2);
@@ -79,6 +36,15 @@ export default function Component() {
     rating: 0,
     comment: "",
   });
+
+  const formatObjectToString = (value: string | object | undefined): string => {
+    if (typeof value === 'object' && value !== null) {
+      return Object.entries(value)
+        .map(([key, val]) => `${key}: ${val}`)
+        .join(', ');
+    }
+    return (value as string) || '';
+  };
 
 
   const colors = [
@@ -127,38 +93,6 @@ export default function Component() {
       image: '/placeholder.svg?height=200&width=200',
     }));
 
-  useEffect(() => {
-    const fetchWatch = async () => {
-      if (!watchId) return;
-
-      try {
-        setLoading(true);
-        const response = await fetch(
-          `http://localhost:5000/watches/${watchId}`
-        );
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch watch details');
-        }
-
-        const result: ApiResponse = await response.json();
-
-        console.log({ result });
-
-        if (result.success && result.data) {
-          setWatch(result.data);
-        } else {
-          throw new Error('Watch not found');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWatch();
-  }, [watchId]);
 
   if (loading) {
     return (
@@ -173,7 +107,7 @@ export default function Component() {
     );
   }
 
-  if (error || !watch) {
+  if (error || (!loading && !watch)) {
     return (
       <div className='pt-[90px] pb-[70px] text-black-1 bg-white-1'>
         <div className='container'>
@@ -181,7 +115,7 @@ export default function Component() {
             <div>
               <h2 className='text-2xl font-bold mb-4'>Watch Not Found</h2>
               <p className='text-gray-600 mb-4'>
-                {error || 'The requested watch could not be found.'}
+                {error?.message || 'The requested watch could not be found.'}
               </p>
               <Link href='/' className='text-blue-600 hover:underline'>
                 Return to Home
@@ -195,8 +129,8 @@ export default function Component() {
 
   const imageViews = getImageViews(watch.WatchImages);
   const discountPercentage = Math.round(
-    ((parseFloat(watch.actualprice) - parseFloat(watch.offerprice)) /
-      parseFloat(watch.actualprice)) *
+    ((watch.actualprice - watch.offerprice) /
+      watch.actualprice) *
     100
   );
 
@@ -297,7 +231,7 @@ export default function Component() {
                 </div>
 
                 <p className='text-[16px] text-[rgba(0,0,0,0.6)] leading-relaxed line-height-[22px]'>
-                  {watch.description}
+                  {formatObjectToString(watch.description)}
                 </p>
               </div>
 
@@ -420,7 +354,7 @@ export default function Component() {
                 Warranty: {watch.warrantyperiod} months
               </div>
               {watch.characteristics && (
-                <div className='list-item mt-4'>{watch.characteristics}</div>
+                <div className='list-item mt-4'>{formatObjectToString(watch.characteristics)}</div>
               )}
             </div>
           </div>
@@ -456,7 +390,7 @@ export default function Component() {
                 <div className="mb-12">
                   <h4 className="text-[18px] font-semibold text-black-1 mb-2">Description</h4>
                   <p className="text-[16px] text-[rgba(0,0,0,0.6)] leading-relaxed">
-                    {watch.description}
+                    {formatObjectToString(watch.description)}
                   </p>
 
                   {watch.characteristics && (
@@ -465,7 +399,7 @@ export default function Component() {
                         Additional Details
                       </h4>
                       <p className="text-[16px] text-[rgba(0,0,0,0.6)] leading-relaxed">
-                        {watch.characteristics}
+                        {formatObjectToString(watch.characteristics)}
                       </p>
                     </div>
                   )}
@@ -527,7 +461,7 @@ export default function Component() {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {watch.reviews?.map((review) => (
+                    {watch.reviews?.map((review: Review) => (
                       <div key={review.id} className="border-b border-[#d9d9d9] pb-6">
                         <div className="flex items-start justify-between mb-3">
                           <div>

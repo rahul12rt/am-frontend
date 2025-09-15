@@ -3,8 +3,8 @@ import { useMutation } from "@tanstack/react-query";
 import {
   unprotectedApiClient,
   handleApiError,
-  tokenManager,
 } from "@/lib/api-clients";
+import { createClient } from "@/lib/supabase";
 import { AxiosError } from "axios";
 
 // Types
@@ -25,11 +25,10 @@ export interface VerifyOtpLoginPayload extends SendOtpPayload {
 export interface AuthResponse {
   success: boolean;
   message: string;
-  token?: string;
-  refreshToken?: string;
   user?: {
     id: string;
-    phone: string;
+    supabase_id?: string;
+    phone_number: string;
     first_name?: string;
   };
 }
@@ -45,10 +44,26 @@ const sendSignupOtp = async (
 const verifySignupOtp = async (
   payload: VerifyOtpSignupPayload
 ): Promise<AuthResponse> => {
+  const supabase = createClient();
+
+  // First verify OTP with Supabase to establish session
+  const e164Phone = `+${payload.countryCode}${payload.phone}`;
+  const { data: supabaseData, error: supabaseError } = await supabase.auth.verifyOtp({
+    phone: e164Phone,
+    token: payload.otp,
+    type: 'sms'
+  });
+
+  if (supabaseError) {
+    throw new Error(supabaseError.message || 'OTP verification failed');
+  }
+
+  // Then create user record in backend database (without redundant verification)
   const res = await unprotectedApiClient.post(
     "/auth/signup/verify-otp",
     payload
   );
+
   return res.data;
 };
 
@@ -60,10 +75,26 @@ const sendLoginOtp = async (payload: SendOtpPayload): Promise<AuthResponse> => {
 const verifyLoginOtp = async (
   payload: VerifyOtpLoginPayload
 ): Promise<AuthResponse> => {
+  const supabase = createClient();
+
+  // First verify OTP with Supabase to establish session
+  const e164Phone = `+${payload.countryCode}${payload.phone}`;
+  const { data: supabaseData, error: supabaseError } = await supabase.auth.verifyOtp({
+    phone: e164Phone,
+    token: payload.otp,
+    type: 'sms'
+  });
+
+  if (supabaseError) {
+    throw new Error(supabaseError.message || 'OTP verification failed');
+  }
+
+  // Then verify with backend (without redundant Supabase verification)
   const res = await unprotectedApiClient.post(
     "/auth/login/verify-otp",
     payload
   );
+
   return res.data;
 };
 
@@ -79,11 +110,10 @@ export const useSendSignupOtp = () =>
 export const useVerifySignupOtp = () =>
   useMutation({
     mutationFn: verifySignupOtp,
-    onSuccess: (data) => {
-      if (data.token) {
-        tokenManager.setToken(data.token);
-        if (data.refreshToken) tokenManager.setRefreshToken(data.refreshToken);
-      }
+    onSuccess: async (data) => {
+      console.log("Signup successful:", data.message);
+      // Small delay to ensure session is properly established
+      await new Promise(resolve => setTimeout(resolve, 100));
     },
     onError: (error: AxiosError) => {
       console.error("Signup OTP verify failed:", handleApiError(error));
@@ -101,11 +131,10 @@ export const useSendLoginOtp = () =>
 export const useVerifyLoginOtp = () =>
   useMutation({
     mutationFn: verifyLoginOtp,
-    onSuccess: (data) => {
-      if (data.token) {
-        tokenManager.setToken(data.token);
-        if (data.refreshToken) tokenManager.setRefreshToken(data.refreshToken);
-      }
+    onSuccess: async (data) => {
+      console.log("Login successful:", data.message);
+      // Small delay to ensure session is properly established
+      await new Promise(resolve => setTimeout(resolve, 100));
     },
     onError: (error: AxiosError) => {
       console.error("Login OTP verify failed:", handleApiError(error));

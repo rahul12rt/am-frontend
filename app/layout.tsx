@@ -4,6 +4,10 @@ import localFont from "next/font/local";
 import Header from "@/components/organisms/header/Header";
 import "./globals.scss";
 import Footer from "@/components/organisms/footer/Footer";
+import { AuthProvider } from '@/contexts/AuthContext';
+import { ToastProvider } from '@/contexts/ToastContext';
+import { UserModalProvider } from '@/contexts/UserModalContext';
+import UserModalWrapper from '@/components/organisms/user/UserModalWrapper';
 import { Providers } from "./providers";
 
 const centurygothic = localFont({
@@ -42,9 +46,16 @@ export default function RootLayout({
         className={`${centurygothic.className} ${ppneuemontrealNormal.variable} ${ppeditorialnewitalic.variable} ${timesNewRomanNormal.variable} bg-black-1 text-white-1`}
       >
         <Providers>
-          <Header />
-          {children}
-          <Footer />
+          <ToastProvider>
+            <AuthProvider>
+              <UserModalProvider>
+                <Header />
+                {children}
+                <Footer />
+                <UserModalWrapper />
+              </UserModalProvider>
+            </AuthProvider>
+          </ToastProvider>
         </Providers>
       </body>
     </html>

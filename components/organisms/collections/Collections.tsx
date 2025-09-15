@@ -1,9 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Watch } from "@/data/watches";
+import { Watch } from "@/lib/api-services";
 
 const Collections = ({ data }: { data: Watch[] }) => {
-    const truncateText = (text: string, maxLength = 80) => {
+    const formatDescription = (description: string | object, maxLength = 80) => {
+      let text = '';
+      if (typeof description === 'object' && description !== null) {
+        text = Object.entries(description)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(', ');
+      } else {
+        text = description as string;
+      }
+
       if (text.length <= maxLength) return text;
       return text.substring(0, maxLength).trim() + '...';
     };
@@ -25,7 +34,7 @@ const Collections = ({ data }: { data: Watch[] }) => {
           </Link>
 
           <Link
-              href={`/${product.id}`}
+              href={`/collections/${product.id}`}
               className="flex flex-col items-center"
             >
               <div className="px-[15px] py-[8px] rounded-[8px] text-center flex item-center justify-between">
@@ -44,7 +53,7 @@ const Collections = ({ data }: { data: Watch[] }) => {
                 />
               </div>
               <h2 className="text-[14px] text-gray-400 m-2 text-center max-w-[250px] mx-auto leading-relaxed">
-                {truncateText(product.description)}
+                {formatDescription(product.description)}
               </h2>
               <div className="mb-2 text-center">
                 <span className="text-[24px] text-center">

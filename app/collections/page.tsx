@@ -2,18 +2,10 @@
 import Link from 'next/link';
 import { MdKeyboardArrowRight } from 'react-icons/md';
 import Collections from '@/components/organisms/collections/Collections';
-import { fetchWatches, Watch } from '@/data/watches';
-import { useEffect, useState } from 'react';
+import { useWatches } from '@/hooks/queries/useWatches';
 
 const Collection = () => {
-  const [watches, setWatches] = useState<Watch[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchWatches()
-      .then(setWatches)
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: watches = [], isLoading: loading, error } = useWatches();
 
   return (
     <section className='pt-[90px] pb-[70px] bg-black-1 text-white-1'>
@@ -27,6 +19,8 @@ const Collection = () => {
         </p>
         {loading ? (
           <div className='text-center text-white-1'>Loading...</div>
+        ) : error ? (
+          <div className='text-center text-red-400'>Error loading watches: {error.message}</div>
         ) : (
           <Collections data={watches} />
         )}

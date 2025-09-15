@@ -1,3 +1,9 @@
+/**
+ * @deprecated Use types from @/lib/api-services instead
+ * This file is kept for backward compatibility but should not be used for new code.
+ * Use the new standardized TanStack Query hooks from @/hooks/queries/useWatches
+ */
+
 export interface WatchImage {
   id: string;
   isoview: string;
@@ -32,8 +38,20 @@ export interface Watch {
   WatchImages: WatchImage[];
 }
 
+/**
+ * @deprecated Use useWatches hook from @/hooks/queries/useWatches instead
+ * Direct fetch calls have been replaced with TanStack Query hooks for better:
+ * - Caching and performance
+ * - Error handling
+ * - Loading states
+ * - Type safety
+ * 
+ * Example migration:
+ * OLD: const watches = await fetchWatches();
+ * NEW: const { data: watches, isLoading, error } = useWatches();
+ */
 export async function fetchWatches(): Promise<Watch[]> {
-  const res = await fetch("http://localhost:5000/watches");
-  if (!res.ok) throw new Error("Failed to fetch watches");
-  return res.json();
+  throw new Error(
+    'fetchWatches is deprecated. Use useWatches hook from @/hooks/queries/useWatches instead.'
+  );
 }

@@ -1,18 +1,16 @@
 'use client';
 import Image from 'next/image';
-import { fetchWatches, Watch } from '@/data/watches';
-import { useEffect, useState } from 'react';
+import { useWatches } from '@/hooks/queries/useWatches';
 import Link from 'next/link';
+import { useMemo } from 'react';
 
 const Offers = () => {
-  const [watches, setWatches] = useState<Watch[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchWatches()
-      .then((data) => setWatches(data.filter((w) => w.offerpercentage)))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: allWatches = [], isLoading: loading, error } = useWatches();
+  
+  // Filter watches that have offer percentage
+  const watches = useMemo(() => {
+    return allWatches.filter((w) => w.offerpercentage && w.offerpercentage > 0);
+  }, [allWatches]);
 
   return (
     <section className='pt-[40px] pb-[70px] bg-black-1 text-white-1'>
@@ -24,6 +22,10 @@ const Offers = () => {
           <div className='grid grid-cols-1 custom-xsm:grid-cols-1 custom-sm:grid-cols-2 custom-md:grid-cols-4 gap-[80px] pt-[140px] max-[768px]:pt-[75px]'>
             {loading ? (
               <div className='text-center text-white-1 w-full'>Loading...</div>
+            ) : error ? (
+              <div className='text-center text-red-400 w-full'>Error loading offers: {error.message}</div>
+            ) : watches.length === 0 ? (
+              <div className='text-center text-white-1 w-full'>No offers available</div>
             ) : (
               watches.map((product) => (
                 <Link
