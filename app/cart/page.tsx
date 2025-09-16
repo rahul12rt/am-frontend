@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Minus, Plus, Trash2, ShoppingBag, X, Loader2, CreditCard, Shield } from "lucide-react";
 import EmailVerificationModal from "@/components/organisms/checkout/EmailVerificationModal";
+import PaymentIcons from "@/components/atoms/PaymentIcons";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 import {
@@ -95,16 +96,33 @@ const CartPage: React.FC = () => {
     );
   }
 
-  if (!profile || cartData.items.length === 0) {
+  // Handle empty cart states
+  if (cartData.items.length === 0) {
     return (
       <div className="bg-black text-white min-h-screen flex items-center justify-center text-center px-4">
         <div>
           <ShoppingBag className="w-16 h-16 mx-auto text-gray-500 mb-4" />
           <h1 className="text-3xl font-bold mb-2">Your Shopping Bag is Empty</h1>
-          <p className="text-gray-400 mb-8">Sign in to see your cart and start shopping.</p>
-          <Link href="/collections" className={styles['custom-button']}>
-            Continue Shopping
-          </Link>
+          {!profile ? (
+            <>
+              <p className="text-gray-400 mb-8">Sign in to see your cart and start shopping.</p>
+              <div className="space-y-4">
+                <Link href="/collections" className={styles['custom-button']}>
+                  Continue Shopping
+                </Link>
+                <button className={styles['secondary-button']} onClick={() => window.location.href = '/'}>
+                  Sign In
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-gray-400 mb-8">Add some amazing watches to get started.</p>
+              <Link href="/collections" className={styles['custom-button']}>
+                Continue Shopping
+              </Link>
+            </>
+          )}
         </div>
       </div>
     );
@@ -144,10 +162,10 @@ const CartPage: React.FC = () => {
                   </div>
                   <div className="flex-grow flex flex-col justify-between">
                     <div>
-                      <h2 className="font-bold text-lg">{watch.name}</h2>
-                      <p className="text-sm text-gray-400">Art. no. {watch.id.substring(0, 8)}</p>
-                      <p className="text-sm text-gray-400">Color: {item.watchColor.name}</p>
-                      <p className="text-sm text-gray-400">Total: ₹{item.price_at_time}</p>
+                      <h2 className="font-bold text-xl">{watch.name}</h2>
+                      <p className="text-base text-gray-400">Art. no. {watch.id.substring(0, 8)}</p>
+                      <p className="text-base text-gray-400">Color: {item.watchColor.name}</p>
+                      <p className="text-base text-gray-400">Unit Price: ₹{parseFloat(item.price_at_time).toLocaleString()}</p>
                     </div>
                     <div className="flex items-center gap-4 mt-4">
                       <div className="flex items-center border border-gray-600 rounded-md">
@@ -158,7 +176,7 @@ const CartPage: React.FC = () => {
                         >
                           <Minus size={16} />
                         </button>
-                        <span className="px-4 font-bold">
+                        <span className="px-4 font-bold text-base">
                           {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : item.quantity}
                         </span>
                         <button 
@@ -175,7 +193,7 @@ const CartPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-lg">₹{(parseFloat(item.price_at_time) * item.quantity).toLocaleString()}</p>
+                    <p className="font-bold text-xl">₹{(parseFloat(item.price_at_time) * item.quantity).toLocaleString()}</p>
                   </div>
                 </div>
               );
@@ -184,8 +202,8 @@ const CartPage: React.FC = () => {
 
           <div className="lg:col-span-1">
             <div className={`${styles.glassmorphic} rounded-lg p-6`}>
-              <h2 className="font-bold text-xl mb-4">Order Summary</h2>
-              <div className="space-y-3 text-sm">
+              <h2 className="font-bold text-2xl mb-4">Order Summary</h2>
+              <div className="space-y-3 text-base">
                 <div className="flex justify-between">
                   <span>Order value</span>
                   <span>₹{subtotal.toLocaleString()}</span>
@@ -195,7 +213,7 @@ const CartPage: React.FC = () => {
                   <span>{deliveryFee > 0 ? `₹${deliveryFee.toLocaleString()}` : 'Free'}</span>
                 </div>
                 <div className="border-t border-gray-600 my-4"></div>
-                <div className="flex justify-between font-bold text-base">
+                <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
                   <span>₹{total.toLocaleString()}</span>
                 </div>
@@ -205,19 +223,26 @@ const CartPage: React.FC = () => {
                   Continue to Checkout
                 </button>
               </div>
-              <div className="mt-4">
-                <button className={styles['secondary-button']}>
-                  Sign In
-                </button>
-              </div>
-              <div className="text-xs text-gray-400 mt-4 space-y-2">
+              {/* Only show Sign In button if user is not authenticated */}
+              {!profile && (
+                <div className="mt-4">
+                  <button className={styles['secondary-button']} onClick={() => window.location.href = '/'}>
+                    Sign In
+                  </button>
+                </div>
+              )}
+              <div className="text-sm text-gray-400 mt-4 space-y-2">
                 <p>Prices and delivery costs are not confirmed until you've reached the checkout.</p>
                 <p>15 days free returns. Read more about <Link href="/returns" className="underline">returns and refund policy</Link>.</p>
                 <p>Customer would receive an SMS from our delivery partners regarding delivery of order(s) on the registered phone number.</p>
               </div>
+              <div className="mt-6">
+                <p className="text-sm text-gray-400 mb-3">We accept:</p>
+                <PaymentIcons size="small" />
+              </div>
               <div className="flex items-center gap-4 mt-4">
-                <CreditCard size={24} />
-                <Shield size={24} />
+                <Shield size={24} className="text-green-400" />
+                <span className="text-sm text-gray-400">Secure payments powered by Razorpay</span>
               </div>
             </div>
           </div>

@@ -55,16 +55,31 @@ export const queryKeys = {
   },
 
   // =================
+  // ADDRESSES
+  // =================
+  addresses: {
+    all: () => ['addresses'] as const,
+    lists: () => [...queryKeys.addresses.all(), 'list'] as const,
+    list: (filters?: Record<string, any>) =>
+      [...queryKeys.addresses.lists(), ...(filters ? [filters] : [])] as const,
+    details: () => [...queryKeys.addresses.all(), 'detail'] as const,
+    detail: (id: string) => [...queryKeys.addresses.details(), id] as const,
+    billing: () => [...queryKeys.addresses.all(), 'billing'] as const,
+    shipping: () => [...queryKeys.addresses.all(), 'shipping'] as const,
+    default: () => [...queryKeys.addresses.all(), 'default'] as const,
+  },
+
+  // =================
   // ORDERS
   // =================
   orders: {
     all: () => ['orders'] as const,
     lists: () => [...queryKeys.orders.all(), 'list'] as const,
-    list: (filters?: Record<string, any>) => 
+    list: (filters?: Record<string, any>) =>
       [...queryKeys.orders.lists(), ...(filters ? [filters] : [])] as const,
     details: () => [...queryKeys.orders.all(), 'detail'] as const,
     detail: (id: string) => [...queryKeys.orders.details(), id] as const,
-    tracking: (orderId: string) => 
+    tracking: (orderId: string) =>
       [...queryKeys.orders.all(), 'tracking', orderId] as const,
   },
 

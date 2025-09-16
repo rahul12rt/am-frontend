@@ -23,9 +23,10 @@
   background-color: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
   width: 100%;
   color: #fff;
+  font-size: 1rem;
   transition: border-color 0.3s ease;
 
   &:focus {
@@ -61,7 +62,8 @@
   background-color: #fff;
   color: #000;
   font-weight: bold;
-  padding: 0.75rem;
+  font-size: 1.1rem;
+  padding: 1rem;
   border-radius: 0.5rem;
   transition: background-color 0.3s ease;
   width: 100%;

@@ -436,6 +436,103 @@ export const cartServices = {
 };
 
 // =================
+// ADDRESS TYPES & SERVICES
+// =================
+
+export interface Address {
+  id: string;
+  user_id: string;
+  address_type: 'home' | 'work' | 'other';
+  is_billing_address: boolean;
+  is_shipping_address: boolean;
+  full_name: string;
+  phone: string;
+  address_line1: string;
+  address_line2?: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  country_code: string;
+  is_default: boolean;
+  is_verified: boolean;
+  latitude?: number;
+  longitude?: number;
+  delivery_instructions?: string;
+  landmark?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateAddressData {
+  address_type?: 'home' | 'work' | 'other';
+  is_billing_address?: boolean;
+  is_shipping_address?: boolean;
+  full_name: string;
+  phone: string;
+  address_line1: string;
+  address_line2?: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country?: string;
+  country_code?: string;
+  is_default?: boolean;
+  delivery_instructions?: string;
+  landmark?: string;
+}
+
+export interface UpdateAddressData extends CreateAddressData {
+  id: string;
+}
+
+export const addressServices = {
+  /**
+   * Get all addresses for user
+   */
+  getAddresses: async (): Promise<Address[]> => {
+    const response = await protectedApiClient.get<ApiResponse<Address[]>>('/address/all');
+    if (!response.data.success) {
+      throw new Error('Failed to fetch addresses');
+    }
+    return response.data.data;
+  },
+
+  /**
+   * Get single address by ID
+   */
+  getAddress: async (addressId: string): Promise<Address> => {
+    const response = await protectedApiClient.get<ApiResponse<Address>>(`/address/${addressId}`);
+    if (!response.data.success) {
+      throw new Error('Failed to fetch address');
+    }
+    return response.data.data;
+  },
+
+  /**
+   * Create new address
+   */
+  createAddress: async (data: CreateAddressData): Promise<Address> => {
+    const response = await protectedApiClient.post<ApiResponse<Address>>('/address', data);
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to create address');
+    }
+    return response.data.data;
+  },
+
+  /**
+   * Update existing address
+   */
+  updateAddress: async (data: UpdateAddressData): Promise<Address> => {
+    const response = await protectedApiClient.post<ApiResponse<Address>>('/address', data);
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to update address');
+    }
+    return response.data.data;
+  },
+};
+
+// =================
 // USER TYPES & SERVICES
 // =================
 
@@ -471,151 +568,4 @@ export const userServices = {
     
     return response.data.data;
   },
-};
-
-// =================
-// ADDRESS TYPES & SERVICES
-// =================
-
-
-export interface CreateAddressData {
-  address_type: 'home' | 'office' | 'other';
-  full_name: string;
-  phone: string;
-  address_line1: string;
-  address_line2?: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  country: string;
-  is_default?: boolean;
-}
-
-export const addressServices = {
-  /**
-   * Get all addresses for current user
-   */
-  getAddresses: async (): Promise<Address[]> => {
-    const response = await protectedApiClient.get<ApiResponse<Address[]>>('/address');
-    
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to fetch addresses');
-    }
-    
-    return response.data.data;
-  },
-
-  /**
-   * Create new address
-   */
-  createAddress: async (data: CreateAddressData): Promise<Address> => {
-    const response = await protectedApiClient.post<ApiResponse<Address>>('/address', data);
-    
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to create address');
-    }
-    
-    return response.data.data;
-  },
-
-  /**
-   * Update address
-   */
-  updateAddress: async (id: string, data: Partial<CreateAddressData>): Promise<Address> => {
-    const response = await protectedApiClient.put<ApiResponse<Address>>(`/address/${id}`, data);
-    
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to update address');
-    }
-    
-    return response.data.data;
-  },
-
-  /**
-   * Delete address
-   */
-  deleteAddress: async (id: string): Promise<void> => {
-    const response = await protectedApiClient.delete<ApiResponse<void>>(`/address/${id}`);
-    
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to delete address');
-    }
-  },
-};
-
-// =================
-// PAYMENT TYPES & SERVICES  
-// =================
-
-export interface CreateOrderRequest {
-  amount: number;
-  currency?: string;
-  receipt?: string;
-}
-
-export interface CreateOrderResponse {
-  order_id: string;
-  amount: number;
-  currency: string;
-  key_id: string;
-}
-
-export interface VerifyPaymentRequest {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
-}
-
-export interface VerifyPaymentResponse {
-  message: string;
-  payment_id: string;
-  order_id: string;
-}
-
-export const paymentServices = {
-  /**
-   * Create payment order
-   */
-  createOrder: async (data: CreateOrderRequest): Promise<CreateOrderResponse> => {
-    const response = await protectedApiClient.post<ApiResponse<CreateOrderResponse>>('/payment/create-order', data);
-    
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to create payment order');
-    }
-    
-    return response.data.data;
-  },
-
-  /**
-   * Verify payment
-   */
-  verifyPayment: async (data: VerifyPaymentRequest): Promise<VerifyPaymentResponse> => {
-    const response = await protectedApiClient.post<ApiResponse<VerifyPaymentResponse>>('/payment/verify', data);
-    
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to verify payment');
-    }
-    
-    return response.data.data;
-  },
-};
-
-// =================
-// ERROR HANDLING UTILITIES
-// =================
-
-/**
- * Standardized error handler for all API services
- */
-export const apiErrorHandler = (error: unknown): never => {
-  if (error instanceof AxiosError) {
-    const message = handleApiError(error);
-    throw new Error(message);
-  }
-  
-  if (error instanceof Error) {
-    throw error;
-  }
-  
-  throw new Error('An unexpected error occurred');
 };
