@@ -46,9 +46,29 @@ export const useCart = () => {
 };
 
 /**
- * Get cart items count (derived from cart data)
+ * Get cart items count (optimized - direct API call)
  */
 export const useCartCount = () => {
+  return useQuery({
+    queryKey: queryKeys.cart.count(),
+    queryFn: cartServices.getCartCount,
+    staleTime: 60 * 1000, // 1 minute (count can be slightly stale)
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error) => {
+      // Don't retry on authentication errors
+      if (error instanceof AxiosError && error.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+    refetchOnWindowFocus: true,
+  });
+};
+
+/**
+ * Get cart items count (fallback - derived from cart data)
+ */
+export const useCartCountFromCache = () => {
   const { data: cartData, ...rest } = useCart();
 
   const count = useMemo(() => {

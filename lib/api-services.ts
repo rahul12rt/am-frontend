@@ -409,6 +409,19 @@ export const cartServices = {
   },
 
   /**
+   * Get cart items count only (optimized for header badge)
+   */
+  getCartCount: async (): Promise<number> => {
+    const response = await protectedApiClient.get<ApiResponse<{ count: number }>>('/cart/count');
+
+    if (!response.data.success) {
+      throw new Error('Failed to fetch cart count');
+    }
+
+    return response.data.data.count;
+  },
+
+  /**
    * Get cart summary only
    */
   getCartSummary: async (): Promise<CartSummary> => {

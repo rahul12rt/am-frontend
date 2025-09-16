@@ -7,10 +7,16 @@ import { FaBars } from "react-icons/fa";
 import Series from "@/components/molecules/series/Series";
 import { useIsClient } from "@/hooks/useIsClient";
 import { useUserModal } from "@/contexts/UserModalContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCartCount } from "@/hooks/queries/useCart";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const isClient = useIsClient();
+
+  // Auth and cart
+  const { user } = useAuth();
+  const { data: cartCount = 0, isLoading: cartCountLoading } = useCartCount();
 
   // Drawer states
   const [drawerType, setDrawerType] = useState<"series" | null>(null);
@@ -165,9 +171,12 @@ const Header = () => {
             {/* Bag */}
             <Link href='/cart'>
               <button className="flex justify-center items-center relative hidden custom-xmd:block">
-                <span className="flex justify-center items-center rounded-full bg-red-1 min-w-[16px] min-h-[16px] absolute top-[-1px] right-[-2px]">
-                  4
-                </span>
+                {/* Show cart count badge only if user is logged in and cart has items */}
+                {user && cartCount > 0 && (
+                  <span className="flex justify-center items-center rounded-full bg-red-1 min-w-[16px] min-h-[16px] absolute top-[-1px] right-[-2px] text-white-1 text-[10px] font-bold px-[4px]">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
                 <Image src="/icons/bag.svg" alt="menu" width={27} height={27} />
               </button>
             </Link>
