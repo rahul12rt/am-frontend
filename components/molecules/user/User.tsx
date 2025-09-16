@@ -180,9 +180,15 @@ const User = ({ onClose }: UserProps) => {
 
     try {
       if (mode === "signup") {
-        await sendSignupOtp.mutateAsync({ phone, countryCode });
+        await sendSignupOtp.mutateAsync({
+          phone: parsedPhone.phone,
+          countryCode: parsedPhone.countryCode,
+        });
       } else {
-        await sendLoginOtp.mutateAsync({ phone, countryCode });
+        await sendLoginOtp.mutateAsync({
+          phone: parsedPhone.phone,
+          countryCode: parsedPhone.countryCode,
+        });
       }
       showMessage("OTP sent successfully", "success");
       setStep("otp");
@@ -209,12 +215,52 @@ const User = ({ onClose }: UserProps) => {
     }
   };
 
+  /** ---- Handle Resend OTP ---- */
+  const handleResendOtp = async () => {
+    if (!canResend || isLoading) return;
+
+    setMessage(null);
+    setIsLoading(true);
+
+    const parsedPhone = parsePhoneForApi(phoneValue);
+    if (!parsedPhone) {
+      showMessage("Invalid phone number", "error");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      if (mode === "signup") {
+        await sendSignupOtp.mutateAsync({
+          phone: parsedPhone.phone,
+          countryCode: parsedPhone.countryCode,
+        });
+      } else {
+        await sendLoginOtp.mutateAsync({
+          phone: parsedPhone.phone,
+          countryCode: parsedPhone.countryCode,
+        });
+      }
+      showMessage("OTP resent successfully", "success");
+      startResendTimer(); // Restart the timer
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.error ||
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to resend OTP";
+      showMessage(errorMessage, "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   /** ---- Handle Verify OTP ---- */
   const handleVerifyOtp = async (e: React.FormEvent) => {
-    
-  e.preventDefault();
-  setMessage(null);
-  setIsLoading(true);
+    e.preventDefault();
+    setMessage(null);
+    setIsLoading(true);
 
   if (!otp) {
     showMessage("OTP is required", "error");
@@ -293,7 +339,7 @@ const User = ({ onClose }: UserProps) => {
     setMode(newMode);
     setStep("phone");
     setMessage(null); // Clear messages when switching modes
-    setPhone("");
+    setPhoneValue("");
     setOtp("");
     setFirstName("");
     // Country code is now fixed at 91
@@ -718,6 +764,24 @@ const User = ({ onClose }: UserProps) => {
                     className="md:w-6 md:h-6"
                   />
                 </button>
+
+                {/* Resend OTP Section */}
+                <div className="flex flex-col items-center mt-[15px] mb-[10px]">
+                  {resendTimer > 0 ? (
+                    <p className="text-[1.2rem] text-white-1 opacity-70">
+                      Resend OTP in {resendTimer}s
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={!canResend || isLoading}
+                      className="text-[1.2rem] font-medium text-white-1 hover:underline cursor-pointer bg-transparent border-none p-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? "Sending..." : "Resend OTP"}
+                    </button>
+                  )}
+                </div>
 
                 {/* Back to Phone Button - Responsive */}
                 <div className="flex justify-between items-center mt-4">
