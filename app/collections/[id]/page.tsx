@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Star,
   ShoppingBag,
@@ -19,7 +19,7 @@ import { useWatch } from '@/hooks/queries/useWatches';
 import { WatchImage, Review } from '@/lib/api-services';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { useAddToCart, useIsInCart } from '@/hooks/queries/useCart';
+import { useAddToCart, useIsInCart, useUpdateCartItem } from '@/hooks/queries/useCart';
 
 export default function Component() {
   const params = useParams();
@@ -39,18 +39,49 @@ export default function Component() {
   const [activeTab, setActiveTab] = useState("information");
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Cart hooks (after state is declared)
   const addToCart = useAddToCart();
+  const { mutate: updateCartItem, isPending: isUpdatingCart } = useUpdateCartItem();
 
   // Check if current watch color combination is in cart
   const watchColorId = watch?.WatchColors?.[selectedColor]?.id || '';
-  const { isInCart } = useIsInCart(watchColorId);
+  const { isInCart, cartItem } = useIsInCart(watchColorId);
   const [reviewData, setReviewData] = useState({
     name: "",
     rating: 0,
     comment: "",
   });
+
+  // Sync local quantity with cart quantity
+  useEffect(() => {
+    if (cartItem) {
+      setQuantity(cartItem.quantity);
+    } else {
+      setQuantity(1); // Reset to 1 if item not in cart or color changes
+    }
+  }, [cartItem]);
+
+  const handleQuantityChange = (newQuantity: number) => {
+    if (!cartItem) return;
+
+    const finalQuantity = Math.max(1, newQuantity);
+    setQuantity(finalQuantity); // Optimistic update
+
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+
+    const timer = setTimeout(() => {
+      updateCartItem({
+        cartItemId: cartItem.id,
+        data: { quantity: finalQuantity },
+      });
+    }, 500); // 500ms delay
+
+    setDebounceTimer(timer);
+  };
 
   const formatObjectToString = (value: string | object | undefined): string => {
     if (typeof value === 'object' && value !== null) {
@@ -279,9 +310,23 @@ export default function Component() {
 
               <div className='flex items-stretch py-[18px] gap-[13px] border-b border-[#d9d9d9]'>
                 <div className='flex items-center gap-[30px] rounded px-[19px] py-[12px] bg-[#F8F8FB]'>
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className='hover:bg-[#f8f8fb] text-[16px]'>&minus;</button>
-                  <span className='text-center text-[16px]'>{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)} className='hover:bg-[#f8f8fb] text-[16px]'>&#43;</button>
+                  <button
+                    onClick={() => (isInCart ? handleQuantityChange(quantity - 1) : setQuantity(Math.max(1, quantity - 1)))}
+                    className='hover:bg-[#f8f8fb] text-[16px] disabled:opacity-50'
+                    disabled={isUpdatingCart}
+                  >
+                    &minus;
+                  </button>
+                  <span className='text-center text-[16px] w-8 flex items-center justify-center'>
+                    {isUpdatingCart ? <Loader2 className='w-4 h-4 animate-spin' /> : quantity}
+                  </span>
+                  <button
+                    onClick={() => (isInCart ? handleQuantityChange(quantity + 1) : setQuantity(quantity + 1))}
+                    className='hover:bg-[#f8f8fb] text-[16px] disabled:opacity-50'
+                    disabled={isUpdatingCart}
+                  >
+                    &#43;
+                  </button>
                 </div>
                 <button
                   onClick={handleAddToCart}
@@ -292,7 +337,7 @@ export default function Component() {
                       ? 'bg-green-600 text-white hover:bg-green-700'
                       : 'bg-[#000000] text-white-1 hover:bg-[#262626] hover:scale-105 active:scale-95'
                   }`}
-                  disabled={!watch.stockavailability || isAddingToCart}
+                  disabled={!watch.stockavailability || isAddingToCart || isInCart}
                 >
                   {isAddingToCart ? (
                     <Loader2 className='w-6 h-6 animate-spin' />
