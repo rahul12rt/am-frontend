@@ -1,0 +1,81 @@
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalContent {
+  background: rgba(30, 30, 30, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 400px;
+  color: #fff;
+}
+
+.input {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  color: #fff;
+  transition: border-color 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #fff;
+  }
+}
+
+.otpInputContainer {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.otpInput {
+  width: 3rem;
+  height: 3.5rem;
+  text-align: center;
+  font-size: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  color: #fff;
+  transition: border-color 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #fff;
+  }
+}
+
+.button {
+  background-color: #fff;
+  color: #000;
+  font-weight: bold;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.3s ease;
+  width: 100%;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #e0e0e0;
+  }
+
+  &:disabled {
+    background-color: #555;
+    color: #999;
+    cursor: not-allowed;
+  }
+}

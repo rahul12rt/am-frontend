@@ -47,7 +47,7 @@ const UserModalWrapper = () => {
         onClick={closeModal}
       >
         <div
-          className="fixed top-0 right-0 h-full bg-black text-white-1 shadow-lg w-full max-w-md"
+          className="fixed top-0 right-0 h-full bg-black text-white-1 shadow-lg w-full max-w-[32rem]"
           style={{
             animation: isOpen ? 'slideInRight 0.5s ease-out forwards' : 'slideOutRight 0.5s ease-in forwards',
           }}

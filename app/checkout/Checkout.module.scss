@@ -1,0 +1,61 @@
+.glassmorphic {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.input {
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  color: #fff;
+  transition: border-color 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #fff;
+  }
+}
+
+.button {
+  background-color: #fff;
+  color: #000;
+  font-weight: bold;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.3s ease;
+  width: 100%;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #e0e0e0;
+  }
+
+  &:disabled {
+    background-color: #555;
+    color: #999;
+    cursor: not-allowed;
+  }
+}
+
+.addressCard {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+
+  &.selected {
+    border-color: #fff;
+  }
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+}
