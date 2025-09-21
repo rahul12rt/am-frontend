@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { useUserModal } from '@/contexts/UserModalContext';
+import { useUser } from '@/contexts/UserContext';
 import User from '@/components/molecules/user/User';
 
 const UserModalWrapper = () => {
   const { isOpen, closeModal } = useUserModal();
+  const { isAuthenticated } = useUser();
+  const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -16,6 +20,14 @@ const UserModalWrapper = () => {
 
   useEffect(() => {
     if (isOpen) {
+      // If user is not authenticated, redirect to login page instead of showing modal
+      if (!isAuthenticated) {
+        closeModal();
+        const currentUrl = encodeURIComponent(window.location.pathname);
+        router.push(`/login?redirect=${currentUrl}`);
+        return;
+      }
+      
       setIsMounted(true);
       document.body.style.overflow = 'hidden';
     } else {
@@ -30,7 +42,7 @@ const UserModalWrapper = () => {
     return () => {
       document.body.style.overflow = 'auto';
     };
-  }, [isOpen]);
+  }, [isOpen, isAuthenticated, closeModal, router]);
 
   if (!isClient || !isMounted) {
     return null;

@@ -11,7 +11,7 @@ import {
   useVerifyLoginOtp,
 } from "@/hooks/useAuth";
 import { supabase } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUser } from "@/contexts/UserContext";
 import { useToast } from '@/contexts/ToastContext';
 import { UserProfile, Address } from "@/types/user";
 import Accordion from '../accordion/Accordion';
@@ -30,7 +30,15 @@ interface UserProps {
 
 const User = ({ onClose }: UserProps) => {
   const { showToast } = useToast();
-  const { profile, loading: authLoading, logout, refetchProfile } = useAuth();
+  const { 
+    profile, 
+    isInitializing, 
+    isLoadingProfile, 
+    isAuthenticated, 
+    isReady, 
+    logout, 
+    refetchProfile 
+  } = useUser();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [step, setStep] = useState<"phone" | "otp">("phone");
 
@@ -233,12 +241,12 @@ const User = ({ onClose }: UserProps) => {
 
       console.log('Login response:', res);
 
-      // Small delay to ensure session is synchronized, then refresh profile
+      // Refetch profile after successful login
       setTimeout(async () => {
         setIsRefetchingProfile(true);
         try {
           await refetchProfile();
-          showToast("Login successful! 🎉", 'success');
+          showToast("Login successful! ", 'success');
         } catch (error) {
           console.error('Failed to refetch profile:', error);
           showToast("Login successful, but failed to load profile", 'info');
@@ -289,33 +297,7 @@ const User = ({ onClose }: UserProps) => {
 
 
   /** ---- Handle mode switch ---- */
-  const handleModeSwitch = (newMode: "login" | "signup") => {
-    setMode(newMode);
-    setStep("phone");
-    setMessage(null); // Clear messages when switching modes
-    setPhone("");
-    setOtp("");
-    setFirstName("");
-    // Country code is now fixed at 91
-    setAgreedToTerms(false);
-  };
-
-  // Loading state while checking authentication
-  if (authLoading) {
-    return (
-      <div className="rounded-bl-[10px] rounded-br-[10px]">
-        <div className="container pt-[90px] pb-[30px]">
-          <div className="flex flex-col items-end">
-            <div className="max-w-[400px] w-full h-auto flex justify-center items-center py-[40px]">
-              <p className="text-white-1 text-[1.6rem]">Loading...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show authenticated user interface
+  // All useEffect hooks must be at the top level, before any conditional returns
   useEffect(() => {
     if (profile) {
       getOrders().then(setOrders);
@@ -339,10 +321,54 @@ const User = ({ onClose }: UserProps) => {
     return () => clearInterval(timer);
   }, [step, isResendDisabled]);
 
-  // Show glassmorphism skeleton loader while auth is loading
-  if (authLoading) {
-    return <SkeletonLoader />;
+  const handleModeSwitch = (newMode: "login" | "signup") => {
+    setMode(newMode);
+    setStep("phone");
+    setMessage(null); // Clear messages when switching modes
+    setPhone("");
+    setOtp("");
+    setFirstName("");
+    // Country code is now fixed at 91
+    setAgreedToTerms(false);
+  };
+
+  // Show loading state while initializing or loading profile
+  if (isInitializing || (isAuthenticated && isLoadingProfile && !profile)) {
+    return (
+      <div className="h-full flex flex-col bg-black overflow-hidden relative">
+        {/* Header */}
+        <div className="flex justify-between items-center p-4 md:p-6 border-b border-gray-800 shrink-0">
+          <h2 className="text-lg md:text-xl font-semibold text-white flex items-center gap-3">
+            <UserIcon className="w-6 h-6 text-gray-400" />
+            Account
+          </h2>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 p-2 rounded-full"
+              aria-label="Close"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          )}
+        </div>
+        
+        {/* Loading Content */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-white text-lg mb-2">
+              {isInitializing ? 'Initializing...' : 'Loading your profile...'}
+            </p>
+            <p className="text-gray-400 text-sm">
+              {isInitializing ? 'Checking authentication status' : 'Fetching your account details'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
+
 
   if (profile) {
     return (

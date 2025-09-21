@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Minus, Plus, Trash2, ShoppingBag, X, Loader2, CreditCard, Shield } from "lucide-react";
 import EmailVerificationModal from "@/components/organisms/checkout/EmailVerificationModal";
 import PaymentIcons from "@/components/atoms/PaymentIcons";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
 import {
   useCart, 
@@ -18,9 +18,10 @@ import {
 import styles from './Cart.module.scss';
 
 const CartPage: React.FC = () => {
-  const { profile, loading: authLoading } = useAuth();
+  const { profile, loading } = useAuth();
   const { showToast } = useToast();
 
+  // Only fetch cart data if user is authenticated
   const { data: cartData, isLoading: cartLoading, error: cartError } = useCart();
   const { data: totalData } = useCartTotal();
   const { data: itemCount } = useCartCount();
@@ -76,7 +77,7 @@ const CartPage: React.FC = () => {
     window.location.href = '/checkout';
   };
 
-  if (authLoading || cartLoading) {
+  if (loading || cartLoading) {
     return (
       <div className="bg-black text-white min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin" />

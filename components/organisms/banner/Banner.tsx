@@ -15,39 +15,49 @@ const Banner = () => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Create timeline for smooth sequence
-    const tl = gsap.timeline();
+    let tl: gsap.core.Timeline | null = null;
 
-    // Select and animate all title characters
-    const titleSpans = container.querySelectorAll(".title-span");
-    tl.to(titleSpans, {
-      y: 0,
-      opacity: 1,
-      duration: 1,
-      stagger: 0.05,
-      ease: "power4.out",
-    });
+    const initAnimation = () => {
+      // Create timeline for smooth sequence
+      tl = gsap.timeline();
 
-    // Select and animate all text words
-    const textSpans = container.querySelectorAll(".text-span");
-    tl.to(
-      textSpans,
-      {
-        y: 0,
-        opacity: 1,
-        duration: 0.8,
-        stagger: 0.02,
-        ease: "power3.out",
-      },
-      "-=0.5"
-    );
+      // Select and animate all title characters
+      const titleSpans = container.querySelectorAll(".title-span");
+      if (titleSpans.length > 0) {
+        tl.to(titleSpans, {
+          y: 0,
+          opacity: 1,
+          duration: 1,
+          stagger: 0.05,
+          ease: "power4.out",
+        });
+      }
 
-    // Cleanup function needs to return void
+      // Select and animate all text words
+      const textSpans = container.querySelectorAll(".text-span");
+      if (textSpans.length > 0) {
+        tl.to(
+          textSpans,
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            stagger: 0.02,
+            ease: "power3.out",
+          },
+          "-=0.5"
+        );
+      }
+    };
+
+    initAnimation();
+
+    // Proper cleanup function
     return () => {
-      // Kill the timeline
-      tl.kill();
-      // Explicitly return void
-      return undefined;
+      if (tl) {
+        tl.kill();
+        tl = null;
+      }
     };
   }, []); // Empty dependency array
 
@@ -55,7 +65,7 @@ const Banner = () => {
     <section
       ref={containerRef}
       className="relative h-screen overflow-hidden bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: 'url("/images/banner.png")' }}
+      style={{ backgroundImage: 'url("/images/hero_image.jpg")' }}
     >
       <div className="container h-full">
         <div className="h-full flex flex-col justify-end items-start py-16">

@@ -3,6 +3,10 @@
     --slide-spacing: 2rem;
     --slide-size: 33%;
 
+    .scale145{
+        scale: 1.45;
+    }
+
     .embla__container {
         touch-action: pan-y pinch-zoom;
         margin-left: calc(var(--slide-spacing) * -1);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 
 interface ImageModalProps {
@@ -8,17 +8,36 @@ interface ImageModalProps {
 
 const ImageModal = ({ selectedImage, onClose }: ImageModalProps) => {
   const [isVisible, setIsVisible] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
     setIsVisible(true); // Trigger the fade-in animation
+    
+    return () => {
+      mountedRef.current = false;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, []);
+
+  const handleClose = () => {
+    if (!mountedRef.current) return;
+    
+    setIsVisible(false); // Start fade-out animation
+    timeoutRef.current = setTimeout(() => {
+      if (mountedRef.current) {
+        onClose();
+      }
+    }, 300); // Delay close until fade-out finishes
+  };
 
   const handleModalClick = (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
     if (e.target === e.currentTarget) {
-      setIsVisible(false); // Start fade-out animation
-      setTimeout(onClose, 300); // Delay close until fade-out finishes
+      handleClose();
     }
   };
 
@@ -36,10 +55,7 @@ const ImageModal = ({ selectedImage, onClose }: ImageModalProps) => {
         `}
       >
         <button
-          onClick={() => {
-            setIsVisible(false); // Trigger fade-out for close button
-            setTimeout(onClose, 300); // Delay close until animation completes
-          }}
+          onClick={handleClose}
           className="absolute top-[-10px] right-[-10px] bg-gray-700 text-white rounded-full flex items-center justify-center z-[1] w-[28px] h-[28px] text-[1.2rem] border border-gray-500 shadow-lg hover:bg-red-600 hover:border-red-500 transition-all duration-300 max-[768px]:right-[15px] max-[768px]:top-[8px]"
         >
           ✕

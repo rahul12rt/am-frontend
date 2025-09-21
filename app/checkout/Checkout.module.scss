@@ -1,62 +1,243 @@
+// Luxury Glass Morphism Design - Black & White Theme
 .glassmorphic {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
-  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 2rem;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.01) 100%);
+    pointer-events: none;
+  }
 }
 
+// Clean Input Styling
 .input {
-  background-color: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 1rem 1.25rem;
   width: 100%;
-  color: #fff;
-  transition: border-color 0.3s ease;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:focus {
     outline: none;
-    border-color: #fff;
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 300;
   }
 }
 
+// Luxury Button Design
 .button {
-  background-color: #fff;
-  color: #000;
-  font-weight: bold;
-  font-size: 1.1rem;
-  padding: 1.2rem;
-  border-radius: 0.5rem;
-  transition: background-color 0.3s ease;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
+  color: #000000;
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 1.25rem 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
   text-align: center;
-  border: none;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
 
   &:hover {
-    background-color: #e0e0e0;
+    background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.1);
+    
+    &::before {
+      left: 100%;
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 
   &:disabled {
-    background-color: #555;
-    color: #999;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.3);
     cursor: not-allowed;
+    transform: none;
+    
+    &:hover {
+      transform: none;
+      box-shadow: none;
+    }
   }
 }
 
+// Address Card Styling
 .addressCard {
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 0.5rem;
-  padding: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
   cursor: pointer;
-  transition: border-color 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0.005) 100%);
+    pointer-events: none;
+  }
 
   &.selected {
-    border-color: #fff;
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.05);
   }
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.6);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.03);
+    transform: translateY(-2px);
+  }
+}
+
+// Typography Enhancements
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 300;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+}
+
+.pageTitle {
+  font-size: 3rem;
+  font-weight: 100;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 3rem;
+  color: #ffffff;
+}
+
+// Checkbox Styling
+.checkbox {
+  appearance: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+
+  &:checked {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+
+    &::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+  }
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+}
+
+// Order Summary Enhancements
+.orderSummary {
+  position: sticky;
+  top: 2rem;
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+}
+
+.summaryTotal {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1rem;
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  font-weight: 400;
+  letter-spacing: 1px;
+}
+
+// Product Item in Summary
+.productItem {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+}
+
+// Add New Address Button
+.addAddressButton {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  padding: 1.5rem;
+  width: 100%;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.9);
   }
 }

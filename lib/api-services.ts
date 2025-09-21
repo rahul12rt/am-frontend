@@ -13,7 +13,7 @@
 
 import { protectedApiClient, unprotectedApiClient, handleApiError } from './api-clients';
 import { AxiosError } from 'axios';
-import { UserProfile, Address } from '../types/user';
+import { UserProfile, Address as UserAddress } from '../types/user';
 
 // =================
 // SHARED TYPES
@@ -291,12 +291,20 @@ export const watchServices = {
 
 export interface WatchColor {
   id: string;
+  watch_id: string;
+  watch_name: string;
   name: string;
   hex_code: string;
+  actualprice: string;
+  offerprice: string;
+  offerpercentage: number;
   quantity: number;
   is_active: boolean;
   sort_order: number;
-  Watch: Watch;
+  created_at: string;
+  updated_at: string;
+  WatchImage: WatchImage[];
+  Watch?: Watch;
 }
 
 export interface CartItem {

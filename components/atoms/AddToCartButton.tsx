@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ShoppingBag, Loader2, Check } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useAddToCart, useIsInCart } from "@/hooks/queries/useCart";
 

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { X, Loader2, MapPin } from 'lucide-react';
 import { useCreateAddress, useUpdateAddress } from '@/hooks/queries/useAddress';
 import { type CreateAddressData, type Address } from '@/lib/api-services';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/UserContext';
 import { useToast } from '@/contexts/ToastContext';
 import styles from './AddressForm.module.scss';
 
@@ -104,7 +104,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
         // Update existing address
         result = await updateAddress.mutateAsync({
           ...formData,
-          id: editAddress.id,
+          id: editAddress.id.toString(),
         });
         showToast('Address updated successfully!', 'success');
       } else {
@@ -145,7 +145,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
           {/* Address Type and Options */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Address Type</label>
+              <label className={`${styles.label} block mb-2`}>Address Type</label>
               <select
                 name="address_type"
                 value={formData.address_type}
@@ -158,7 +158,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
               </select>
             </div>
             <div className="space-y-2">
-              <label className="flex items-center gap-2">
+              <label className={`${styles.label} flex items-center gap-2`}>
                 <input
                   type="checkbox"
                   name="is_billing_address"
@@ -168,7 +168,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
                 />
                 <span className="text-sm">Use for billing</span>
               </label>
-              <label className="flex items-center gap-2">
+              <label className={`${styles.label} flex items-center gap-2`}>
                 <input
                   type="checkbox"
                   name="is_shipping_address"
@@ -178,7 +178,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
                 />
                 <span className="text-sm">Use for shipping</span>
               </label>
-              <label className="flex items-center gap-2">
+              <label className={`${styles.label} flex items-center gap-2`}>
                 <input
                   type="checkbox"
                   name="is_default"
@@ -194,7 +194,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
           {/* Personal Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Full Name *</label>
+              <label className={`${styles.label} block mb-2`}>Full Name *</label>
               <input
                 type="text"
                 name="full_name"
@@ -206,7 +206,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
               {errors.full_name && <p className={styles.errorText}>{errors.full_name}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Phone Number *</label>
+              <label className={`${styles.label} block mb-2`}>Phone Number *</label>
               <input
                 type="tel"
                 name="phone"
@@ -222,7 +222,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
 
           {/* Address Lines */}
           <div>
-            <label className="block text-sm font-medium mb-2">Address Line 1 *</label>
+            <label className={`${styles.label} block mb-2`}>Address Line 1 *</label>
             <input
               type="text"
               name="address_line1"
@@ -235,7 +235,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Address Line 2 (Optional)</label>
+            <label className={`${styles.label} block mb-2`}>Address Line 2 (Optional)</label>
             <input
               type="text"
               name="address_line2"
@@ -249,7 +249,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
           {/* Location Details */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">City *</label>
+              <label className={`${styles.label} block mb-2`}>City *</label>
               <input
                 type="text"
                 name="city"
@@ -261,7 +261,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
               {errors.city && <p className={styles.errorText}>{errors.city}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">State *</label>
+              <label className={`${styles.label} block mb-2`}>State *</label>
               <select
                 name="state"
                 value={formData.state}
@@ -276,7 +276,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
               {errors.state && <p className={styles.errorText}>{errors.state}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">PIN Code *</label>
+              <label className={`${styles.label} block mb-2`}>PIN Code *</label>
               <input
                 type="text"
                 name="postal_code"
@@ -292,7 +292,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
 
           {/* Additional Information */}
           <div>
-            <label className="block text-sm font-medium mb-2">Landmark (Optional)</label>
+            <label className={`${styles.label} block mb-2`}>Landmark (Optional)</label>
             <input
               type="text"
               name="landmark"
@@ -304,7 +304,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Delivery Instructions (Optional)</label>
+            <label className={`${styles.label} block mb-2`}>Delivery Instructions (Optional)</label>
             <textarea
               name="delivery_instructions"
               value={formData.delivery_instructions}

@@ -1,6 +1,6 @@
 import React, { useState, useRef, ChangeEvent, KeyboardEvent } from 'react';
 import { Loader2, X } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/UserContext';
 import { unprotectedApiClient } from '@/lib/api-clients';
 import { useToast } from '@/contexts/ToastContext';
 import styles from './EmailVerificationModal.module.scss';

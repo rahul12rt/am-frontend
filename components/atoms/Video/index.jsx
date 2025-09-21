@@ -17,7 +17,7 @@ const VideoDisplay = () => {
           >
             <div className='relative w-full h-full'>
               <Image
-                src='/images/banner.png'
+                src='/images/hero_image.jpg'
                 alt='Luxury Watch Video Thumbnail'
                 fill
                 className='object-cover'

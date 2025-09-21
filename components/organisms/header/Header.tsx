@@ -6,27 +6,35 @@ import { usePathname } from "next/navigation";
 import { FaBars } from "react-icons/fa";
 import Series from "@/components/molecules/series/Series";
 import { useIsClient } from "@/hooks/useIsClient";
+import { useRouter } from "next/navigation";
 import { useUserModal } from "@/contexts/UserModalContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUser } from "@/contexts/UserContext";
 import { useCartCount } from "@/hooks/queries/useCart";
+import { useNavigationGuard } from "@/hooks/useNavigationGuard";
+import UserAccountPanel from "@/components/organisms/userAccountPanel/UserAccountPanel";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const isClient = useIsClient();
+  const router = useRouter();
 
   // Auth and cart
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useUser();
   const { data: cartCount = 0, isLoading: cartCountLoading } = useCartCount();
 
   // Drawer states
   const [drawerType, setDrawerType] = useState<"series" | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const { openModal, closeModal, isOpen: isUserModalOpen } = useUserModal();
+  
+  // Account panel state
+  const [isAccountPanelOpen, setIsAccountPanelOpen] = useState(false);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuAnimating, setIsMenuAnimating] = useState(false);
 
   const pathname = usePathname();
+  const { isNavigating } = useNavigationGuard();
 
   useEffect(() => {
     if (!isClient) return;
@@ -50,13 +58,28 @@ const Header = () => {
 
   useEffect(() => {
     if (isAnimating) {
-      const timer = setTimeout(() => setIsAnimating(false), 500);
+      const timer = setTimeout(() => {
+        if (drawerType !== null) { // Only clear if still mounted
+          setIsAnimating(false);
+        }
+      }, 500);
       return () => clearTimeout(timer);
     }
-  }, [isAnimating]);
+  }, [isAnimating, drawerType]);
 
   const isDrawerOpen = drawerType !== null;
 
+  /** ---- User Account Handlers ---- */
+  const handleUserButtonClick = () => {
+    if (isAuthenticated) {
+      // Show account panel for logged-in users
+      setIsAccountPanelOpen(true);
+    } else {
+      // Redirect to login page for non-logged-in users
+      const currentUrl = encodeURIComponent(pathname);
+      router.push(`/login?redirect=${currentUrl}`);
+    }
+  };
 
   /** ---- Menu Drawer Handlers ---- */
   const toggleMenu = () => {
@@ -68,24 +91,52 @@ const Header = () => {
 
   useEffect(() => {
     if (isMenuAnimating) {
-      const timer = setTimeout(() => setIsMenuAnimating(false), 400);
+      const timer = setTimeout(() => {
+        setIsMenuAnimating(false);
+      }, 400);
       return () => clearTimeout(timer);
     }
   }, [isMenuAnimating]);
 
-  // Close drawers on route change
+  // Close drawers on route change - immediate cleanup without animations
   useEffect(() => {
-    if (isDrawerOpen) {
-      toggleDrawer(null);
-    }
-    if (isMenuOpen) {
-      toggleMenu();
-    }
-    if (isUserModalOpen) {
-      closeModal();
+    // Only cleanup if not currently navigating to prevent conflicts
+    if (!isNavigating) {
+      // Immediately close all drawers without animations to prevent DOM conflicts
+      if (isDrawerOpen) {
+        setDrawerType(null);
+        setIsAnimating(false);
+      }
+      if (isMenuOpen) {
+        setIsMenuOpen(false);
+        setIsMenuAnimating(false);
+      }
+      if (isUserModalOpen) {
+        closeModal();
+      }
+      if (isAccountPanelOpen) {
+        setIsAccountPanelOpen(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, [pathname, isNavigating]);
+
+  // Cleanup on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      // Clean up any pending states on unmount
+      setDrawerType(null);
+      setIsAnimating(false);
+      setIsMenuOpen(false);
+      setIsMenuAnimating(false);
+      
+      // Force close any open modals
+      if (isUserModalOpen) {
+        closeModal();
+      }
+      setIsAccountPanelOpen(false);
+    };
+  }, [isUserModalOpen, closeModal]);
 
   return (
     <>
@@ -181,10 +232,10 @@ const Header = () => {
               </button>
             </Link>
 
-            {/* User Drawer Button */}
+            {/* User Account Button */}
             <button
               className="flex justify-center items-center"
-              onClick={openModal}
+              onClick={handleUserButtonClick}
             >
               <Image
                 src="/icons/user.svg"
@@ -306,6 +357,12 @@ const Header = () => {
           }
         }
       `}</style>
+
+      {/* User Account Panel */}
+      <UserAccountPanel 
+        isOpen={isAccountPanelOpen} 
+        onClose={() => setIsAccountPanelOpen(false)} 
+      />
     </>
   );
 };

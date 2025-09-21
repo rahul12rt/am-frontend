@@ -58,6 +58,26 @@ html {
   font-family: var(--font-ppeditorialnewitalic);
 }
 
+.scale145{
+  scale: 1.45;
+}
+
+.text_color_black{
+  color: black;
+}
+
+
+.text_color_white{
+  color: white;
+}
+.backgroundBlack{
+  background-color: black;
+}
+
+.backgroundWhite{
+  background-color: white !important;
+}
+
 .bg-custom {
   background-image: url("/images/bgNet.webp");
   background-size: cover;
