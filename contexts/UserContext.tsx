@@ -5,6 +5,7 @@ import { userServices } from "@/lib/api-services";
 import { UserProfile } from "@/types/user";
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface UserContextType {
   // Auth state
@@ -43,6 +44,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
   const supabase = createClient();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // Computed states
   const isAuthenticated = !!user;
@@ -82,9 +84,13 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(null);
       setProfile(null);
 
+      // Clear React Query cache
+      queryClient.clear();
+
       // Clear any localStorage tokens if they exist
       if (typeof window !== 'undefined') {
         localStorage.clear();
+        sessionStorage.clear();
       }
 
       console.log('Sign out successful');
@@ -96,12 +102,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       // Even if logout fails, clear local state
       setUser(null);
       setProfile(null);
+      // Clear React Query cache
+      queryClient.clear();
       if (typeof window !== 'undefined') {
         localStorage.clear();
+        sessionStorage.clear();
       }
       router.push('/');
     }
-  }, [supabase.auth, router]);
+  }, [supabase, router, queryClient]);
 
   useEffect(() => {
     let mounted = true;

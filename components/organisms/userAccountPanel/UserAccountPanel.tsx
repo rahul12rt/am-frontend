@@ -74,21 +74,21 @@ const UserAccountPanel: React.FC<UserAccountPanelProps> = ({ isOpen, onClose }) 
       
       {/* Slide Panel */}
       <div
-        className="fixed top-0 right-0 h-full bg-black text-white shadow-2xl z-[61] w-full max-w-md border-l border-gray-800 transition-transform duration-300 ease-out"
+        className="fixed top-0 right-0 h-full backgroundWhite shadow-2xl z-[61] w-full md:w-[40%] transition-transform duration-300 ease-out"
         style={{
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-800">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <UserIcon className="w-6 h-6 text-gray-400" />
-            <h2 className="text-xl font-bold text-white">Account</h2>
+            <UserIcon className="w-7 h-7 text-gray-600" />
+            <h2 className="font-bold text-gray-900" style={{ fontSize: '2.2rem' }}>Account</h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-800"
+            className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100"
           >
             <X className="w-6 h-6" />
           </button>
@@ -98,102 +98,111 @@ const UserAccountPanel: React.FC<UserAccountPanelProps> = ({ isOpen, onClose }) 
         <div className="flex-1 overflow-y-auto">
           <div className="p-6">
             {/* User Greeting */}
-            <div className="mb-8">
-              <h3 className="text-2xl font-bold text-white mb-1">
-                Hello, {profile.first_name}!
+            <div className="mb-8 bg-gray-50 rounded-3xl p-6">
+              <h3 className="font-bold text-gray-900 mb-3" style={{ fontSize: '2rem' }}>
+                Hello, {profile.first_name} {profile.last_name || ''}!
               </h3>
-              <p className="text-gray-400">
-                +{profile.phone_country_code} {profile.phone_number}
-              </p>
+              <div className="space-y-2">
+                <p className="text-gray-700 flex items-center gap-2" style={{ fontSize: '1.5rem' }}>
+                  <span className="font-medium">Phone:</span>
+                  +{profile.phone_country_code} {profile.phone_number}
+                </p>
+                {profile.email && (
+                  <p className="text-gray-700 flex items-center gap-2" style={{ fontSize: '1.5rem' }}>
+                    <span className="font-medium">Email:</span>
+                    {profile.email}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="space-y-4 mb-8">
+            <div className="space-y-6 mb-8">
               {/* Addresses */}
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 overflow-hidden">
+              <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
                 <Accordion 
                   title="Addresses" 
-                  icon={<MapPin className="w-5 h-5 text-gray-400" />}
+                  icon={<MapPin className="w-6 h-6 text-gray-600" />}
                 >
                   {profile.addresses && profile.addresses.length > 0 ? (
-                    <div className="space-y-4 p-4">
+                    <div className="space-y-4 p-6">
                       {profile.addresses.map((addr: Address) => (
-                        <div key={addr.id} className="p-4 bg-gray-800/60 rounded-lg border border-gray-700">
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <p className="font-bold text-white text-base">{addr.full_name}</p>
+                        <div key={addr.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <p className="font-bold text-gray-900" style={{ fontSize: '1.5rem' }}>{addr.full_name}</p>
                               {addr.is_default && (
-                                <span className="px-2 py-1 text-xs bg-green-500/20 text-green-300 rounded-full border border-green-500/30">
+                                <span className="px-3 py-1 text-xs bg-gray-900 text-white rounded-full font-bold uppercase">
                                   Default
                                 </span>
                               )}
                             </div>
                           </div>
-                          <div className="space-y-1 text-gray-300 text-sm">
-                            <p>{addr.address_line1}</p>
-                            {addr.address_line2 && <p>{addr.address_line2}</p>}
-                            <p className="font-medium">{addr.city}, {addr.state} - {addr.postal_code}</p>
+                          <div className="space-y-1 text-gray-700">
+                            <p style={{ fontSize: '1.3rem' }}>{addr.address_line1}</p>
+                            {addr.address_line2 && <p style={{ fontSize: '1.3rem' }}>{addr.address_line2}</p>}
+                            <p className="font-medium" style={{ fontSize: '1.3rem' }}>{addr.city}, {addr.state} - {addr.postal_code}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-8 text-gray-400 p-4">
-                      <MapPin className="w-12 h-12 mb-3 text-gray-500" strokeWidth={1.5} />
-                      <p className="text-base">No addresses found</p>
-                      <p className="text-sm text-gray-500 mt-1">Add your first address during checkout</p>
+                    <div className="flex flex-col items-center justify-center py-12 text-gray-600 p-6">
+                      <MapPin className="w-16 h-16 mb-4 text-gray-400" strokeWidth={1.5} />
+                      <p style={{ fontSize: '1.5rem' }} className="font-medium">No addresses found</p>
+                      <p style={{ fontSize: '1.3rem' }} className="text-gray-500 mt-2">Add your first address during checkout</p>
                     </div>
                   )}
                 </Accordion>
               </div>
 
               {/* Orders */}
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 overflow-hidden">
+              <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
                 <Accordion 
                   title="Orders" 
-                  icon={<ShoppingBag className="w-5 h-5 text-gray-400" />}
+                  icon={<ShoppingBag className="w-6 h-6 text-gray-600" />}
                 >
                   {orders.length > 0 ? (
-                    <div className="space-y-4 p-4">
+                    <div className="space-y-4 p-6">
                       {orders.slice(0, 3).map(order => (
-                        <div key={order.id} className="p-4 bg-gray-800/60 rounded-lg border border-gray-700">
+                        <div key={order.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
                           <div className="flex items-center justify-between mb-3">
                             <div>
-                              <p className="text-white font-semibold text-base">Order #{order.id}</p>
-                              <p className="text-sm text-gray-400">
+                              <p className="text-gray-900 font-bold" style={{ fontSize: '1.5rem' }}>Order #{order.id}</p>
+                              <p className="text-gray-600" style={{ fontSize: '1.3rem' }}>
                                 {new Date(order.created_at || Date.now()).toLocaleDateString()}
                               </p>
                             </div>
-                            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              order.status === 'completed' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
-                              order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
-                              order.status === 'processing' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
-                              'bg-gray-500/20 text-gray-300 border border-gray-500/30'
-                            }`}>
+                            <div className={`px-3 py-1 rounded-full font-medium ${
+                              order.status === 'completed' ? 'bg-green-100 text-green-800 border border-green-200' :
+                              order.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
+                              order.status === 'processing' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                              'bg-gray-100 text-gray-800 border border-gray-200'
+                            }`} style={{ fontSize: '1.3rem' }}>
                               {order.status?.charAt(0)?.toUpperCase() + order.status?.slice(1) || 'Unknown'}
                             </div>
                           </div>
                           {order.total_amount && (
-                            <div className="flex justify-between items-center pt-2 border-t border-gray-700">
-                              <span className="text-gray-400 text-sm">Total Amount</span>
-                              <span className="text-white font-semibold">₹{order.total_amount}</span>
+                            <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                              <span className="text-gray-600" style={{ fontSize: '1.3rem' }}>Total Amount</span>
+                              <span className="text-gray-900 font-bold" style={{ fontSize: '1.5rem' }}>₹{order.total_amount}</span>
                             </div>
                           )}
                         </div>
                       ))}
                       {orders.length > 3 && (
-                        <div className="text-center pt-2">
-                          <p className="text-sm text-gray-400">
+                        <div className="text-center pt-4">
+                          <p className="text-gray-600" style={{ fontSize: '1.3rem' }}>
                             +{orders.length - 3} more orders
                           </p>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-8 text-gray-400 p-4">
-                      <ShoppingBag className="w-12 h-12 mb-3 text-gray-500" strokeWidth={1.5} />
-                      <p className="text-base">No orders yet</p>
-                      <p className="text-sm text-gray-500 mt-1">Start shopping to see your orders here</p>
+                    <div className="flex flex-col items-center justify-center py-12 text-gray-600 p-6">
+                      <ShoppingBag className="w-16 h-16 mb-4 text-gray-400" strokeWidth={1.5} />
+                      <p style={{ fontSize: '1.5rem' }} className="font-medium">No orders yet</p>
+                      <p style={{ fontSize: '1.3rem' }} className="text-gray-500 mt-2">Start shopping to see your orders here</p>
                     </div>
                   )}
                 </Accordion>
@@ -204,10 +213,11 @@ const UserAccountPanel: React.FC<UserAccountPanelProps> = ({ isOpen, onClose }) 
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="w-full flex justify-between items-center p-4 rounded-lg font-bold text-lg bg-transparent border border-gray-700 text-white hover:bg-gray-800/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex justify-between items-center p-4 rounded-2xl font-bold bg-gray-900 text-white hover:bg-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ fontSize: '1.6rem' }}
             >
               <div className="flex items-center gap-3">
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-6 h-6" />
                 <span>{isLoggingOut ? "Signing out..." : "Sign Out"}</span>
               </div>
               <ChevronRight className="w-6 h-6" />

@@ -1,22 +1,23 @@
 "use client";
 
 import React, { useState } from 'react';
-import { CheckCircle, Edit, Plus, CreditCard, Shield, Loader2 } from 'lucide-react';
-import styles from './Checkout.module.scss';
-import { useCart, useCartTotal } from '@/hooks/queries/useCart';
-import { useAuth } from '@/contexts/UserContext';
-import { useAddresses, useCreateAddress, useUpdateAddress } from '@/hooks/queries/useAddress';
+import { CheckCircle, Edit, Plus, CreditCard, Shield, Loader2, User, Mail, Phone } from 'lucide-react';
+import { useUser } from '@/contexts/UserContext';
+import { useToast } from '@/contexts/ToastContext';
+import { useCart } from '@/hooks/queries/useCart';
 import AddressForm from '@/components/organisms/checkout/AddressForm';
 import PaymentIcons from '@/components/atoms/PaymentIcons';
-import { useToast } from '@/contexts/ToastContext';
+import { useRazorpayCheckout } from '@/hooks/useRazorpayCheckout';
 import { type Address } from '@/lib/api-services';
 import Image from 'next/image';
+import Link from 'next/link';
+import { MdKeyboardArrowRight } from 'react-icons/md';
 
 const CheckoutPage = () => {
   const { data: cartData, isLoading: cartLoading } = useCart();
-  const { data: totalData } = useCartTotal();
-  const { user, profile, loading } = useAuth();
-  const { data: addresses, isLoading: addressesLoading } = useAddresses();
+  const { profile } = useUser();
+  const { showToast } = useToast();
+  const { payNow, isProcessing } = useRazorpayCheckout();
 
   const [selectedBillingAddress, setSelectedBillingAddress] = useState<string>('');
   const [selectedShippingAddress, setSelectedShippingAddress] = useState<string>('');
@@ -24,11 +25,48 @@ const CheckoutPage = () => {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [addressType, setAddressType] = useState<'billing' | 'shipping'>('billing');
-  const { showToast } = useToast();
 
-  const subtotal = totalData?.subtotal || 0;
+  // Mock data for now - replace with actual address data
+  const addresses: any[] = profile?.addresses || [];
   const deliveryFee = 0;
+  const subtotal = cartData?.summary?.totalAmount ? parseFloat(cartData.summary.totalAmount) : 0;
   const total = subtotal + deliveryFee;
+
+  // Handle payment with Razorpay
+  const handleCompletePayment = async () => {
+    if (!cartData?.items || cartData.items.length === 0) {
+      showToast('Your cart is empty', 'error');
+      return;
+    }
+
+    if (!profile) {
+      showToast('Please login to complete purchase', 'error');
+      return;
+    }
+
+    // Create items summary
+    const itemsSummary = cartData.items.length === 1 
+      ? `${cartData.items[0].watchColor?.Watch?.name || 'Watch'}` 
+      : `${cartData.items.length} watches`;
+
+    // Get user details for prefill
+    const prefillData = {
+      name: `${profile.first_name} ${profile.last_name || ''}`.trim(),
+      email: profile.email || 'customer@example.com',
+      contact: `${profile.phone_country_code}${profile.phone_number}` || '9999999999'
+    };
+
+    try {
+      await payNow({
+        totalAmountInRupees: total,
+        itemsSummary: itemsSummary,
+        prefill: prefillData
+      });
+    } catch (error) {
+      console.error('Payment error:', error);
+      showToast('Payment failed. Please try again.', 'error');
+    }
+  };
 
   // Set default addresses when addresses are loaded
   React.useEffect(() => {
@@ -75,30 +113,31 @@ const CheckoutPage = () => {
   };
 
   // Show loading state
-  if (loading || cartLoading) {
+  if (cartLoading) {
     return (
-      <div className="bg-black text-white min-h-screen flex items-center justify-center">
+      <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin" />
-          <span className="text-lg">Loading Checkout...</span>
+          <Loader2 className="w-8 h-8 animate-spin text-gray-900" />
+          <span className="text-gray-900" style={{ fontSize: '1.5rem' }}>Loading Checkout...</span>
         </div>
       </div>
     );
   }
 
   // Redirect if not authenticated
-  if (!user || !profile) {
+  if (!profile) {
     return (
-      <div className="bg-black text-white min-h-screen flex items-center justify-center text-center">
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
-          <p className="text-gray-400 mb-6">Please sign in to access checkout.</p>
-          <button
-            onClick={() => window.location.href = '/'}
-            className={styles.button}
+      <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center text-center">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-auto">
+          <h2 className="font-bold mb-4 text-gray-900" style={{ fontSize: '2.2rem' }}>Authentication Required</h2>
+          <p className="text-gray-600 mb-6" style={{ fontSize: '1.5rem' }}>Please sign in to access checkout.</p>
+          <Link
+            href="/"
+            className="block w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+            style={{ fontSize: '1.5rem' }}
           >
             Sign In
-          </button>
+          </Link>
         </div>
       </div>
     );
@@ -107,60 +146,80 @@ const CheckoutPage = () => {
   // Show empty cart message
   if (!cartData?.items || cartData.items.length === 0) {
     return (
-      <div className="bg-black text-white min-h-screen flex items-center justify-center text-center">
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Your Cart is Empty</h2>
-          <p className="text-gray-400 mb-6">Add some items to your cart before checkout.</p>
-          <button
-            onClick={() => window.location.href = '/collections'}
-            className={styles.button}
+      <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center text-center">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-auto">
+          <h2 className="font-bold mb-4 text-gray-900" style={{ fontSize: '2.2rem' }}>Your Cart is Empty</h2>
+          <p className="text-gray-600 mb-6" style={{ fontSize: '1.5rem' }}>Add some items to your cart before checkout.</p>
+          <Link
+            href="/collections"
+            className="block w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+            style={{ fontSize: '1.5rem' }}
           >
             Continue Shopping
-          </button>
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-black text-white min-h-screen pt-24 pb-12">
-      <div className="container mx-auto px-4">
-        <h1 className={styles.pageTitle}>CHECKOUT</h1>
+    <div className="pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+      <div className="container">
+        {/* Breadcrumb */}
+        <div className="flex items-center pb-[40px] gap-2 text-gray-700" style={{ fontSize: '1.5rem' }}>
+          <Link href="/" className="opacity-60 hover:opacity-100 hover:text-black transition-colors">
+            Home
+          </Link>
+          <MdKeyboardArrowRight className="opacity-60" />
+          <Link href="/cart" className="opacity-60 hover:opacity-100 hover:text-black transition-colors">
+            Cart
+          </Link>
+          <MdKeyboardArrowRight className="opacity-60" />
+          <span className="text-black font-medium">Checkout</span>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            {/* My Information */}
-            <div className={styles.glassmorphic}>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className={styles.sectionTitle}>MY INFORMATION</h2>
-                <button className="text-sm flex items-center gap-2 hover:text-gray-300 transition-colors font-light tracking-wide uppercase">
-                  <Edit size={16} /> EDIT
-                </button>
+          <div className="lg:col-span-2 space-y-6">
+            {/* Profile Information */}
+            <div className="bg-white rounded-3xl shadow-sm p-6">
+              <div className="mb-6">
+                <h2 className="font-bold text-gray-900" style={{ fontSize: '2.2rem' }}>Profile Information</h2>
               </div>
-              <div className="space-y-3">
-                <p className="text-lg font-light tracking-wide">
-                  {profile.first_name} {profile.last_name || ''}
-                </p>
-                <p className="text-sm text-gray-400 flex items-center gap-2 font-light">
-                  {profile.email || 'No email provided'}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <User className="text-gray-600" size={20} />
+                  <span className="text-gray-900" style={{ fontSize: '1.5rem' }}>
+                    {profile.first_name} {profile.last_name || ''}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Mail className="text-gray-600" size={20} />
+                  <span className="text-gray-900" style={{ fontSize: '1.5rem' }}>
+                    {profile.email || 'No email provided'}
+                  </span>
                   {profile.email_verified ? (
-                    <CheckCircle size={16} className="text-white" />
+                    <CheckCircle size={20} className="text-green-500" />
                   ) : (
-                    <span className="text-xs text-gray-500 uppercase tracking-wide">Unverified</span>
+                    <span className="text-red-500 font-medium" style={{ fontSize: '1.3rem' }}>Unverified</span>
                   )}
-                </p>
-                <p className="text-sm text-gray-400 font-light">
-                  {profile.phone_number} {profile.phone_verified && <CheckCircle size={14} className="text-white inline ml-1" />}
-                </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Phone className="text-gray-600" size={20} />
+                  <span className="text-gray-900" style={{ fontSize: '1.5rem' }}>
+                    {profile.phone_number || 'No phone provided'}
+                  </span>
+                  {profile.phone_verified && <CheckCircle size={20} className="text-green-500" />}
+                </div>
               </div>
             </div>
 
             {/* Billing Address */}
-            <div className={styles.glassmorphic}>
-              <h2 className={styles.sectionTitle}>BILLING ADDRESS</h2>
-              {addressesLoading ? (
+            <div className="bg-white rounded-3xl shadow-sm p-6">
+              <h2 className="font-bold text-gray-900 mb-6" style={{ fontSize: '2.2rem' }}>Billing Address</h2>
+              {false ? (
                 <div className="flex items-center gap-2 py-4">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Loading addresses...</span>
+                  <Loader2 className="w-5 h-5 animate-spin text-gray-900" />
+                  <span className="text-gray-900" style={{ fontSize: '1.5rem' }}>Loading addresses...</span>
                 </div>
               ) : addresses && addresses.length > 0 ? (
                 <div className="space-y-4">
@@ -170,42 +229,54 @@ const CheckoutPage = () => {
                       <div
                         key={address.id}
                         onClick={() => setSelectedBillingAddress(address.id.toString())}
-                        className={`${styles.addressCard} ${selectedBillingAddress === address.id.toString() ? styles.selected : ''}`}
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all relative ${
+                          selectedBillingAddress === address.id.toString() 
+                            ? 'border-gray-900 bg-gray-50' 
+                            : 'border-gray-300 hover:border-gray-500'
+                        }`}
                       >
                         <div className="space-y-2">
-                          <p className="font-light text-base tracking-wide">
+                          <p className="text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>
                             {address.full_name}
                             {address.is_default && (
-                              <span className="text-xs bg-white text-black px-2 py-1 ml-2 uppercase tracking-wider">Default</span>
+                              <span className="text-xs bg-gray-900 text-white px-2 py-1 ml-2 rounded uppercase font-bold">Default</span>
                             )}
                           </p>
-                          <p className="text-sm text-gray-300 font-light">
+                          <p className="text-gray-700" style={{ fontSize: '1.3rem' }}>
                             {address.address_line1}
                             {address.address_line2 && `, ${address.address_line2}`}
                           </p>
-                          <p className="text-sm text-gray-300 font-light">
+                          <p className="text-gray-700" style={{ fontSize: '1.3rem' }}>
                             {address.city}, {address.state} {address.postal_code}
                           </p>
-                          <p className="text-sm text-gray-300 font-light">{address.country}</p>
+                          <p className="text-gray-700" style={{ fontSize: '1.3rem' }}>{address.country}</p>
                           {address.landmark && (
-                            <p className="text-xs text-gray-500 font-light">Landmark: {address.landmark}</p>
+                            <p className="text-gray-600" style={{ fontSize: '1.3rem' }}>Landmark: {address.landmark}</p>
                           )}
                         </div>
+                        {/* Selection indicator */}
+                        {selectedBillingAddress === address.id.toString() && (
+                          <div className="absolute top-4 right-4 w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center">
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   <button
                     onClick={() => handleAddNewAddress('billing')}
-                    className={styles.addAddressButton}
+                    className="w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-900 hover:text-gray-900 transition-colors flex items-center justify-center gap-2"
+                    style={{ fontSize: '1.5rem' }}
                   >
                     <Plus size={20} /> Add New Address
                   </button>
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-400 mb-4">No billing addresses found</p>
+                  <p className="text-gray-600 mb-4" style={{ fontSize: '1.5rem' }}>No billing addresses found</p>
                   <button
                     onClick={() => handleAddNewAddress('billing')}
-                    className={styles.button}
+                    className="w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                    style={{ fontSize: '1.5rem' }}
                   >
                     Add Your First Address
                   </button>
@@ -213,21 +284,21 @@ const CheckoutPage = () => {
               )}
             </div>
 
-            {/* Delivery */}
-            <div className={styles.glassmorphic}>
-              <h2 className={styles.sectionTitle}>DELIVERY</h2>
+            {/* Shipping Address */}
+            <div className="bg-white rounded-3xl shadow-sm p-6">
+              <h2 className="font-bold text-gray-900 mb-6" style={{ fontSize: '2.2rem' }}>Shipping Address</h2>
               <label className="flex items-center gap-4 mb-6">
                 <input 
                   type="checkbox" 
                   checked={useSameAddress} 
                   onChange={() => setUseSameAddress(!useSameAddress)} 
-                  className={styles.checkbox}
+                  className="w-5 h-5 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
                 />
-                <span className="text-sm font-light tracking-wide">Same as my billing address</span>
+                <span className="text-gray-900" style={{ fontSize: '1.5rem' }}>Same as my billing address</span>
               </label>
               {!useSameAddress && (
                 <div className="space-y-4">
-                  <p className="text-sm text-gray-400 font-light mb-4">Select a different shipping address:</p>
+                  <p className="text-gray-600 mb-4" style={{ fontSize: '1.3rem' }}>Select a different shipping address:</p>
                   {addresses && addresses.filter(addr => addr.is_shipping_address).length > 0 ? (
                     <div className="space-y-3">
                       {addresses
@@ -236,42 +307,54 @@ const CheckoutPage = () => {
                           <div
                             key={address.id}
                             onClick={() => setSelectedShippingAddress(address.id.toString())}
-                            className={`${styles.addressCard} ${selectedShippingAddress === address.id.toString() ? styles.selected : ''}`}
+                            className={`p-4 border-2 rounded-lg cursor-pointer transition-all relative ${
+                              selectedShippingAddress === address.id.toString() 
+                                ? 'border-gray-900 bg-gray-50' 
+                                : 'border-gray-300 hover:border-gray-500'
+                            }`}
                           >
                             <div className="space-y-2">
-                              <p className="font-light text-base tracking-wide">
+                              <p className="text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>
                                 {address.full_name}
                                 {address.is_default && (
-                                  <span className="text-xs bg-white text-black px-2 py-1 ml-2 uppercase tracking-wider">Default</span>
+                                  <span className="text-xs bg-gray-900 text-white px-2 py-1 ml-2 rounded uppercase font-bold">Default</span>
                                 )}
                               </p>
-                              <p className="text-sm text-gray-300 font-light">
+                              <p className="text-gray-700" style={{ fontSize: '1.3rem' }}>
                                 {address.address_line1}
                                 {address.address_line2 && `, ${address.address_line2}`}
                               </p>
-                              <p className="text-sm text-gray-300 font-light">
+                              <p className="text-gray-700" style={{ fontSize: '1.3rem' }}>
                                 {address.city}, {address.state} {address.postal_code}
                               </p>
-                              <p className="text-sm text-gray-300 font-light">{address.country}</p>
+                              <p className="text-gray-700" style={{ fontSize: '1.3rem' }}>{address.country}</p>
                               {address.landmark && (
-                                <p className="text-xs text-gray-500 font-light">Landmark: {address.landmark}</p>
+                                <p className="text-gray-600" style={{ fontSize: '1.3rem' }}>Landmark: {address.landmark}</p>
                               )}
                             </div>
+                            {/* Selection indicator */}
+                            {selectedShippingAddress === address.id.toString() && (
+                              <div className="absolute top-4 right-4 w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center">
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
+                              </div>
+                            )}
                           </div>
                         ))}
                       <button
                         onClick={() => handleAddNewAddress('shipping')}
-                        className={styles.addAddressButton}
+                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-900 hover:text-gray-900 transition-colors flex items-center justify-center gap-2"
+                        style={{ fontSize: '1.5rem' }}
                       >
                         <Plus size={20} /> Add New Shipping Address
                       </button>
                     </div>
                   ) : (
                     <div className="text-center py-6">
-                      <p className="text-gray-400 mb-4 font-light">No shipping addresses found</p>
+                      <p className="text-gray-600 mb-4" style={{ fontSize: '1.5rem' }}>No shipping addresses found</p>
                       <button
                         onClick={() => handleAddNewAddress('shipping')}
-                        className={styles.button}
+                        className="w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                        style={{ fontSize: '1.5rem' }}
                       >
                         Add Shipping Address
                       </button>
@@ -280,67 +363,90 @@ const CheckoutPage = () => {
                 </div>
               )}
             </div>
-            
-            {/* Payment Methods */}
-            <div className={styles.glassmorphic}>
-              <h2 className={styles.sectionTitle}>PAYMENT METHODS</h2>
-              <div className="space-y-6">
-                <p className="text-sm text-gray-300 font-light tracking-wide">Choose from multiple secure payment options:</p>
-                <PaymentIcons size="medium" />
-                <div className="flex items-center gap-4 pt-4">
-                  <Shield size={20} className="text-white" />
-                  <div className="text-xs text-gray-400">
-                    <p className="font-light tracking-wide uppercase">100% Secure Payments</p>
-                    <p className="font-light">Powered by Razorpay with 256-bit SSL encryption</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* Order Summary */}
+          {/* Right Sidebar */}
           <div className="lg:col-span-1">
-            <div className={`${styles.glassmorphic} ${styles.orderSummary}`}>
-              <h2 className={styles.sectionTitle}>ORDER SUMMARY</h2>
-              <div className="space-y-3 mb-6">
-                {cartData?.items.map(item => (
-                  <div key={item.id} className={styles.productItem}>
-                    <div className="flex gap-3 items-center">
-                      <div className="w-14 h-16 bg-black border border-gray-800 overflow-hidden">
+            <div className="sticky space-y-6" style={{ top: '85px' }}>
+              {/* Order Summary */}
+              <div className="bg-white rounded-3xl shadow-sm p-6">
+                <h2 className="font-bold text-gray-900 mb-6" style={{ fontSize: '2.2rem' }}>Order Summary</h2>
+                <div className="space-y-4 mb-6">
+                  {cartData?.items.map((item: any) => (
+                    <div key={item.id} className="flex gap-4 items-center">
+                      <div className="w-16 h-20 bg-gray-100 border border-gray-300 rounded-lg overflow-hidden">
                         <Image 
-                          src={item.watchColor?.Watch?.WatchImages?.[0]?.front || '/placeholder.png'} 
-                          alt={item.watchColor?.Watch?.name || ''} 
-                          width={56} 
-                          height={64} 
-                          className="w-full h-full object-cover" 
+                          src={item.imageURL || '/images/alban-marcus-watch.png'} 
+                          alt={item.name || ''} 
+                          width={64} 
+                          height={80} 
+                          className="w-full h-full object-contain p-1" 
+                          onError={(e) => {
+                            e.currentTarget.src = '/images/alban-marcus-watch.png';
+                          }}
                         />
                       </div>
                       <div className="flex-grow">
-                        <p className="font-light text-sm tracking-wide">{item.watchColor?.Watch?.name}</p>
-                        <p className="text-xs text-gray-500 font-light">Qty: {item.quantity}</p>
+                        <p className="text-gray-900 font-medium" style={{ fontSize: '1.4rem' }}>{item.name}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-gray-600" style={{ fontSize: '1.3rem' }}>Qty: {item.quantity}</p>
+                          <p className="text-gray-900 font-bold" style={{ fontSize: '1.4rem' }}>₹{item.price ? (parseFloat(item.price) * item.quantity).toLocaleString('en-IN') : '0'}</p>
+                        </div>
                       </div>
-                      <p className="text-sm font-light tracking-wide">₹{(parseFloat(item.price_at_time) * item.quantity).toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-3 border-t border-gray-200 pt-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700" style={{ fontSize: '1.5rem' }}>Order value</span>
+                    <span className="text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>₹{cartData?.summary?.totalAmount ? parseFloat(cartData.summary.totalAmount).toLocaleString() : '0'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700" style={{ fontSize: '1.5rem' }}>Delivery</span>
+                    <span className="text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>{deliveryFee > 0 ? `₹${deliveryFee.toLocaleString()}` : 'Free'}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                    <span className="text-gray-900 font-bold" style={{ fontSize: '1.8rem' }}>Total</span>
+                    <span className="text-gray-900 font-bold" style={{ fontSize: '1.8rem' }}>₹{cartData?.summary?.totalAmount ? (parseFloat(cartData.summary.totalAmount) + deliveryFee).toLocaleString() : '0'}</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={handleCompletePayment}
+                  disabled={isProcessing || !cartData?.items?.length}
+                  className={`w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors mt-6 flex items-center justify-center gap-2 ${
+                    isProcessing || !cartData?.items?.length ? 'opacity-50 cursor-not-allowed' : ''
+                  }`} 
+                  style={{ fontSize: '1.6rem' }}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-5 h-5" />
+                      Complete Purchase
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Payment Methods */}
+              <div className="bg-white rounded-3xl shadow-sm p-6">
+                <h2 className="font-bold text-gray-900 mb-6" style={{ fontSize: '2.2rem' }}>Payment Methods</h2>
+                <div className="space-y-6">
+                  <p className="text-gray-600" style={{ fontSize: '1.5rem' }}>Choose from multiple secure payment options:</p>
+                  <PaymentIcons size="medium" />
+                  <div className="flex items-center gap-4 pt-4">
+                    <Shield size={20} className="text-gray-900" />
+                    <div className="text-gray-700">
+                      <p className="font-bold" style={{ fontSize: '1.3rem' }}>100% Secure Payments</p>
+                      <p style={{ fontSize: '1.3rem' }}>Powered by Razorpay with 256-bit SSL encryption</p>
                     </div>
                   </div>
-                ))}
-              </div>
-              <div className="space-y-1">
-                <div className={styles.summaryItem}>
-                  <span>Order value</span>
-                  <span>₹{subtotal.toLocaleString()}</span>
-                </div>
-                <div className={styles.summaryItem}>
-                  <span>Delivery</span>
-                  <span>{deliveryFee > 0 ? `₹${deliveryFee.toLocaleString()}` : 'Free'}</span>
-                </div>
-                <div className={styles.summaryTotal}>
-                  <div className="flex justify-between">
-                    <span>Total</span>
-                    <span>₹{total.toLocaleString()}</span>
-                  </div>
                 </div>
               </div>
-              <button className={`${styles.button} mt-8`}>COMPLETE PURCHASE</button>
             </div>
           </div>
         </div>

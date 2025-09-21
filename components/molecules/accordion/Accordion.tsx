@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
-import styles from './Accordion.module.scss';
+import { ChevronDown } from 'lucide-react';
 
 interface AccordionProps {
   title: string;
@@ -19,16 +19,25 @@ const Accordion = ({ title, children, icon }: AccordionProps) => {
   }, [isOpen]);
 
   return (
-    <div className={styles.accordion}>
-      <button className={styles.accordionHeader} onClick={() => setIsOpen(!isOpen)}>
+    <div className="w-full">
+      <button 
+        className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+        onClick={() => setIsOpen(!isOpen)}
+      >
         <div className="flex items-center gap-3">
           {icon}
-          <span>{title}</span>
+          <span className="font-bold text-gray-900" style={{ fontSize: '1.8rem' }}>{title}</span>
         </div>
-        <span className={`${styles.icon} ${isOpen ? styles.open : ''}`}>&#9660;</span>
+        <ChevronDown 
+          className={`w-6 h-6 text-gray-600 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
       </button>
-      <div ref={contentRef} className={styles.accordionContent}>
-        <div className={styles.contentPadding}>{children}</div>
+      <div 
+        ref={contentRef} 
+        className="overflow-hidden transition-all duration-300 ease-in-out"
+        style={{ maxHeight: '0px' }}
+      >
+        <div>{children}</div>
       </div>
     </div>
   );

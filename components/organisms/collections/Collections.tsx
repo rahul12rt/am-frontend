@@ -148,16 +148,16 @@ const Collections = ({ data }: { data: Watch[] }) => {
             )}
 
             {/* Featured Badge */}
-            {product.isfeatured && (
+            {/* {product.isfeatured && (
               <div className="absolute top-16 left-4 z-20">
                 <span className="px-3 py-1.5 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black text-xs font-bold rounded-full shadow-lg border border-yellow-300">
                   ⭐ FEATURED
                 </span>
               </div>
-            )}
+            )} */}
 
             {/* Edit Button (Admin) */}
-            <Link
+            {/* <Link
               prefetch={false}
               href={`/product?id=${product.id}`}
               className="absolute top-4 right-16 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
@@ -165,7 +165,7 @@ const Collections = ({ data }: { data: Watch[] }) => {
               <button className="p-2 bg-blue-600/90 hover:bg-blue-700 text-white rounded-lg text-xs backdrop-blur-sm">
                 ✏️
               </button>
-            </Link>
+            </Link> */}
 
             <Link href={`/collections/${product.id}`} className="block">
               {/* Image Section - 70% of card height */}
@@ -235,11 +235,11 @@ const Collections = ({ data }: { data: Watch[] }) => {
                   </p>
                   {firstColor?.name && (
                     <div className="flex justify-between items-center mt-1">
-                      <p className="text-sm text-gray-500 font-medium">
+                      <p className="text-xl text-gray-500 font-medium">
                         {firstColor.name}
                       </p>
                       {product.WatchColors && product.WatchColors.length > 1 && (
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xl text-gray-400">
                           +{product.WatchColors.length - 1} more color{product.WatchColors.length > 2 ? 's' : ''}
                         </p>
                       )}
@@ -248,11 +248,11 @@ const Collections = ({ data }: { data: Watch[] }) => {
                 </div>
 
                 {/* Description */}
-                {product.description && product.description !== 'undefined' && (
+                {/* {product.description && product.description !== 'undefined' && (
                   <p className="text-base text-gray-700 text-left leading-relaxed min-h-[40px]">
                     {formatDescription(product.description)}
                   </p>
-                )}
+                )} */}
 
                 {/* Key Features */}
                 <div className="flex justify-start flex-wrap gap-2 text-gray-600" style={{ fontSize: '12px' }}>
@@ -284,13 +284,13 @@ const Collections = ({ data }: { data: Watch[] }) => {
                 )}
 
                 {/* Warranty */}
-                {product.warrantyperiod && (
+                {/* {product.warrantyperiod && (
                   <div className="text-left">
                     <span className="inline-flex items-center text-sm text-gray-600 bg-gray-100 px-4 py-2 rounded-full font-medium">
                       🛡️ {product.warrantyperiod}
                     </span>
                   </div>
-                )}
+                )} */}
               </div>
             </Link>
           </div>

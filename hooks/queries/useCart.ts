@@ -129,12 +129,12 @@ export const useIsInCart = (watchColorId: string) => {
 
   const isInCart = useMemo(() => {
     if (!cartData?.items || !watchColorId) return false;
-    return cartData.items.some(item => item.watch_color_id === watchColorId);
+    return cartData.items.some((item: any) => item.watch_color_id === watchColorId);
   }, [cartData, watchColorId]);
 
   const cartItem = useMemo(() => {
     if (!cartData?.items || !watchColorId) return null;
-    return cartData.items.find(item => item.watch_color_id === watchColorId) || null;
+    return cartData.items.find((item: any) => item.watch_color_id === watchColorId) || null;
   }, [cartData, watchColorId]);
 
   return { isInCart, cartItem };

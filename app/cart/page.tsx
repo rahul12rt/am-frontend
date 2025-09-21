@@ -1,25 +1,35 @@
 "use client";
 
-import React, { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { Minus, Plus, Trash2, ShoppingBag, X, Loader2, CreditCard, Shield } from "lucide-react";
-import EmailVerificationModal from "@/components/organisms/checkout/EmailVerificationModal";
-import PaymentIcons from "@/components/atoms/PaymentIcons";
-import { useAuth } from "@/contexts/UserContext";
-import { useToast } from "@/contexts/ToastContext";
+import React, { useState, useEffect } from 'react';
+import { Minus, Plus, Trash2, ShoppingBag, Loader2, Shield } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { MdKeyboardArrowRight } from 'react-icons/md';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/UserContext';
+import { useToast } from '@/contexts/ToastContext';
+import PaymentIcons from '@/components/atoms/PaymentIcons';
+import EmailVerificationModal from '@/components/organisms/checkout/EmailVerificationModal';
 import {
   useCart, 
   useUpdateCartItem, 
   useRemoveFromCart, 
   useCartTotal, 
-  useCartCount 
+  useCartCount,
+  useClearCart
 } from "@/hooks/queries/useCart";
-import styles from './Cart.module.scss';
 
 const CartPage: React.FC = () => {
   const { profile, loading } = useAuth();
   const { showToast } = useToast();
+  const router = useRouter();
+
+  // Store redirect path for login
+  useEffect(() => {
+    if (!loading && !profile) {
+      sessionStorage.setItem('redirectAfterLogin', '/cart');
+    }
+  }, [loading, profile]);
 
   // Only fetch cart data if user is authenticated
   const { data: cartData, isLoading: cartLoading, error: cartError } = useCart();
@@ -28,14 +38,14 @@ const CartPage: React.FC = () => {
 
   const updateCartItem = useUpdateCartItem();
   const removeFromCart = useRemoveFromCart();
+  const clearCart = useClearCart();
 
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [isClearingCart, setIsClearingCart] = useState(false);
 
-  const getProductImage = (watchImages: any[]): string => {
-    if (!watchImages || watchImages.length === 0) return "/placeholder-watch.jpg";
-    const images = watchImages[0];
-    return images.front || images.isoview || "/placeholder-watch.jpg";
+  const getProductImage = (imageURL: string): string => {
+    return imageURL || "/images/alban-marcus-watch.png";
   };
 
   const handleUpdateQuantity = async (cartItemId: string, newQuantity: number) => {
@@ -63,6 +73,18 @@ const CartPage: React.FC = () => {
     }
   };
 
+  const handleClearCart = async () => {
+    setIsClearingCart(true);
+    try {
+      await clearCart.mutateAsync();
+      showToast("Cart cleared successfully", "success");
+    } catch (error) {
+      showToast("Failed to clear cart", "error");
+    } finally {
+      setIsClearingCart(false);
+    }
+  };
+
   const handleCheckout = () => {
     if (!profile?.email) {
       setIsVerificationModalOpen(true);
@@ -79,19 +101,32 @@ const CartPage: React.FC = () => {
 
   if (loading || cartLoading) {
     return (
-      <div className="bg-black text-white min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin" />
-        <span className="ml-2">Loading Cart...</span>
+      <div className="pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+        <div className="container">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="inline-flex items-center space-x-3">
+              <Loader2 className="w-8 h-8 animate-spin text-gray-900" />
+              <span className="text-lg font-medium text-gray-900">Loading your cart...</span>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (cartError || !cartData) {
     return (
-      <div className="bg-black text-white min-h-screen flex items-center justify-center text-center">
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Error loading cart</h2>
-          <p className="text-gray-400">Please try refreshing the page.</p>
+      <div className="pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+        <div className="container">
+          <div className="text-center min-h-[400px] flex items-center justify-center">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-auto">
+              <h2 className="text-2xl font-bold mb-4 text-gray-900">Pleaase Log in to see your cart</h2>
+              <p className="text-gray-600 mb-6">Please try refreshing the page.</p>
+              <Link href="/collections" className="bg-gray-900 text-white px-6 py-5 rounded-lg hover:bg-gray-800 transition-colors inline-block">
+                Continue Shopping
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -100,150 +135,237 @@ const CartPage: React.FC = () => {
   // Handle empty cart states
   if (cartData.items.length === 0) {
     return (
-      <div className="bg-black text-white min-h-screen flex items-center justify-center text-center px-4">
-        <div>
-          <ShoppingBag className="w-16 h-16 mx-auto text-gray-500 mb-4" />
-          <h1 className="text-3xl font-bold mb-2">Your Shopping Bag is Empty</h1>
-          {!profile ? (
-            <>
-              <p className="text-gray-400 mb-8">Sign in to see your cart and start shopping.</p>
-              <div className="space-y-4">
-                <Link href="/collections" className={styles['custom-button']}>
-                  Continue Shopping
-                </Link>
-                <button className={styles['secondary-button']} onClick={() => window.location.href = '/'}>
-                  Sign In
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="text-gray-400 mb-8">Add some amazing watches to get started.</p>
-              <Link href="/collections" className={styles['custom-button']}>
-                Continue Shopping
-              </Link>
-            </>
-          )}
+      <div className="pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+        <div className="container">
+          <div className="flex flex-col items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-auto">
+              <ShoppingBag className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+              {!profile ? (
+                <>
+                  <h1 className="font-bold mb-2 text-gray-900" style={{ fontSize: '2.2rem' }}>You Must Be Logged In</h1>
+                  <p className="text-gray-600 mb-8" style={{ fontSize: '1.5rem' }}>Sign in to see your cart and start shopping.</p>
+                  <div className="space-y-4">
+                    <Link href="/" className="block w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors" style={{ fontSize: '1.5rem' }}>
+                      Sign In
+                    </Link>
+                    <Link href="/collections" className="block w-full py-4 border border-gray-900 text-gray-900 font-medium rounded-lg hover:bg-gray-200 transition-colors" style={{ fontSize: '1.5rem' }}>
+                      Continue Shopping
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h1 className="font-bold mb-2 text-gray-900" style={{ fontSize: '2.2rem' }}>Your Shopping Bag is Empty</h1>
+                  <p className="text-gray-600 mb-8" style={{ fontSize: '1.5rem' }}>Looks like you haven't added anything to your cart yet.</p>
+                  <Link href="/collections" className="block w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors" style={{ fontSize: '1.5rem' }}>
+                    Start Shopping
+                  </Link>
+                </>
+              )}
+            </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   const { items } = cartData;
-  const subtotal = totalData?.subtotal || 0;
+  const subtotal = cartData?.summary?.totalAmount ? parseFloat(cartData.summary.totalAmount) : 0;
   const deliveryFee = 0; // Assuming free delivery
   const total = subtotal + deliveryFee;
 
   return (
-    <div className="bg-black text-white min-h-screen pt-24 pb-12">
+    <div className="pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
       <EmailVerificationModal
         isOpen={isVerificationModalOpen}
         onClose={() => setIsVerificationModalOpen(false)}
         onSuccess={handleVerificationSuccess}
       />
-      <div className="container mx-auto px-4">
-        <h1 className="text-4xl font-bold mb-8">SHOPPING BAG</h1>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            {items.map(item => {
-              const watch = item.watchColor?.Watch;
-              if (!watch) return null;
-              const isUpdating = updatingItems.has(item.id);
+      <div className="container">
+        {/* Breadcrumb */}
+        <div className="flex items-center pb-[40px] gap-2 text-gray-700" style={{ fontSize: '1.5rem' }}>
+          <Link href="/" className="opacity-60 hover:opacity-100 hover:text-black transition-colors">
+            Home
+          </Link>
+          <MdKeyboardArrowRight className="text-gray-400" />
+          <span className="font-medium text-black">Shopping Cart</span>
+        </div>
 
-              return (
-                <div key={item.id} className="flex gap-6">
-                  <div className="w-32 h-40 bg-gray-800 rounded-lg overflow-hidden flex-shrink-0">
-                    <Image
-                      src={getProductImage(watch.WatchImages)}
-                      alt={watch.name}
-                      width={128}
-                      height={160}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-grow flex flex-col justify-between">
-                    <div>
-                      <h2 className="font-bold text-xl">{watch.name}</h2>
-                      <p className="text-base text-gray-400">Art. no. {watch.id.substring(0, 8)}</p>
-                      <p className="text-base text-gray-400">Color: {item.watchColor.name}</p>
-                      <p className="text-base text-gray-400">Unit Price: ₹{parseFloat(item.price_at_time).toLocaleString()}</p>
-                    </div>
-                    <div className="flex items-center gap-4 mt-4">
-                      <div className="flex items-center border border-gray-600 rounded-md">
-                        <button 
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                          className="px-3 py-2 disabled:opacity-50"
-                          disabled={isUpdating || item.quantity <= 1}
-                        >
-                          <Minus size={16} />
-                        </button>
-                        <span className="px-4 font-bold text-base">
-                          {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : item.quantity}
-                        </span>
-                        <button 
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                          className="px-3 py-2 disabled:opacity-50"
-                          disabled={isUpdating}
-                        >
-                          <Plus size={16} />
-                        </button>
+        {/* Header with Clear Cart */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="font-bold text-gray-900" style={{ fontSize: '2.2rem' }}>Shopping Cart ({items.length} {items.length === 1 ? 'item' : 'items'})</h1>
+          {items.length > 0 && (
+            <button
+              onClick={handleClearCart}
+              disabled={isClearingCart}
+              className="flex items-center gap-2 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+              style={{ fontSize: '1.5rem' }}
+            >
+              {isClearingCart ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <Trash2 className="w-6 h-6" />
+              )}
+              Clear All
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Cart Items */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+              <div className="space-y-0">
+                {items.map((item: any, index) => {
+                  const isUpdating = updatingItems.has(item.id);
+
+                  return (
+                    <div key={item.id} className={`p-6 ${index !== items.length - 1 ? 'border-b border-gray-200' : ''}`}>
+                      <div className="flex gap-6">
+                        {/* Watch Image */}
+                        <div className="w-40 h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden flex-shrink-0 border border-gray-200">
+                          <Image
+                            src={getProductImage(item.imageURL)}
+                            alt={item.name}
+                            width={160}
+                            height={192}
+                            className="w-full h-full object-contain p-4"
+                            onError={(e) => {
+                              e.currentTarget.src = '/images/alban-marcus-watch.png';
+                            }}
+                          />
+                        </div>
+
+                        {/* Watch Details */}
+                        <div className="flex-grow flex flex-col justify-between">
+                          <div>
+                            <h2 className="font-bold text-gray-900 mb-2" style={{ fontSize: '2.2rem' }}>{item.name}</h2>
+                            <p className="text-gray-600 mb-1" style={{ fontSize: '1.5rem' }}>Category: {item.category}</p>
+                            <p className="text-gray-600 mb-1" style={{ fontSize: '1.5rem' }}>Model Group: {item.modelGroup}</p>
+                            <p className="text-gray-600 mb-1" style={{ fontSize: '1.5rem' }}>Variant: {item.color}</p>
+                            <p className="text-gray-600 mb-3" style={{ fontSize: '1.5rem' }}>Unit Price: ₹{parseFloat(item.price).toLocaleString()}</p>
+                          </div>
+
+                          {/* Quantity Controls */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                                <button 
+                                  onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                                  className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                  disabled={isUpdating || item.quantity <= 1}
+                                >
+                                  <Minus size={16} className="text-gray-600" />
+                                </button>
+                                <span className="px-4 py-2 font-bold text-gray-900 min-w-[3rem] text-center" style={{ fontSize: '1.5rem' }}>
+                                  {isUpdating ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : item.quantity}
+                                </span>
+                                <button 
+                                  onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                                  className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                  disabled={isUpdating}
+                                >
+                                  <Plus size={20} className="text-gray-600" />
+                                </button>
+                              </div>
+
+                              <button 
+                                onClick={() => handleRemoveItem(item.id, item.name)} 
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Remove item"
+                              >
+                                <Trash2 size={22} />
+                              </button>
+                            </div>
+
+                            {/* Line Total */}
+                            <div className="text-right">
+                              <p className="font-bold text-gray-900" style={{ fontSize: '2.2rem' }}>
+                                ₹{parseFloat(item.inlinePrice).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <button onClick={() => handleRemoveItem(item.id, watch.name)} className="text-gray-400 hover:text-white">
-                        <Trash2 size={20} />
-                      </button>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-xl">₹{(parseFloat(item.price_at_time) * item.quantity).toLocaleString()}</p>
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
+          {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className={`${styles.glassmorphic} rounded-lg p-6`}>
-              <h2 className="font-bold text-2xl mb-4">Order Summary</h2>
-              <div className="space-y-3 text-base">
-                <div className="flex justify-between">
-                  <span>Order value</span>
-                  <span>₹{subtotal.toLocaleString()}</span>
+            <div className="bg-white rounded-3xl shadow-2xl p-6">
+              <h2 className="font-bold text-gray-900 mb-6" style={{ fontSize: '2.2rem' }}>Order Summary</h2>
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600" style={{ fontSize: '1.5rem' }}>Subtotal ({items.length} {items.length === 1 ? 'item' : 'items'})</span>
+                  <span className="font-medium text-gray-900" style={{ fontSize: '1.5rem' }}>₹{subtotal.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Delivery</span>
-                  <span>{deliveryFee > 0 ? `₹${deliveryFee.toLocaleString()}` : 'Free'}</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600" style={{ fontSize: '1.5rem' }}>Shipping</span>
+                  <span className="font-medium text-green-600" style={{ fontSize: '1.5rem' }}>Free</span>
                 </div>
-                <div className="border-t border-gray-600 my-4"></div>
-                <div className="flex justify-between font-bold text-lg">
-                  <span>Total</span>
-                  <span>₹{total.toLocaleString()}</span>
+                <div className="border-t border-gray-200 my-4"></div>
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-gray-900" style={{ fontSize: '2.2rem' }}>Total</span>
+                  <span className="font-bold text-gray-900" style={{ fontSize: '2.2rem' }}>₹{total.toLocaleString()}</span>
                 </div>
               </div>
+
+              {/* Checkout Button */}
               <div className="mt-6">
-                <button onClick={handleCheckout} className={styles['custom-button']}>
+                <button 
+                  onClick={handleCheckout} 
+                  className="w-full py-4 bg-gray-900 text-white font-medium rounded-lg transition-colors hover:bg-gray-800"
+                  style={{ fontSize: '1.5rem' }}
+                >
                   Continue to Checkout
                 </button>
               </div>
-              {/* Only show Sign In button if user is not authenticated */}
+
+              {/* Sign In Button for non-authenticated users */}
               {!profile && (
                 <div className="mt-4">
-                  <button className={styles['secondary-button']} onClick={() => window.location.href = '/'}>
+                  <button 
+                    className="w-full py-4 border border-gray-900 text-gray-900 font-medium rounded-lg transition-colors hover:bg-gray-200"
+                    onClick={() => window.location.href = '/'}
+                    style={{ fontSize: '1.5rem' }}
+                  >
                     Sign In
                   </button>
                 </div>
               )}
-              <div className="text-sm text-gray-400 mt-4 space-y-2">
-                <p>Prices and delivery costs are not confirmed until you've reached the checkout.</p>
-                <p>15 days free returns. Read more about <Link href="/returns" className="underline">returns and refund policy</Link>.</p>
-                <p>Customer would receive an SMS from our delivery partners regarding delivery of order(s) on the registered phone number.</p>
+
+              {/* Additional Info */}
+              <div className="mt-6 space-y-3">
+                <p className="text-gray-600" style={{ fontSize: '1.5rem' }}>
+                  Prices and delivery costs are not confirmed until you've reached the checkout.
+                </p>
+                <p className="text-gray-600" style={{ fontSize: '1.5rem' }}>
+                  15 days free returns. Read more about{' '}
+                  <Link href="/returns" className="text-gray-900 underline hover:text-gray-700">
+                    returns and refund policy
+                  </Link>.
+                </p>
               </div>
+
+              {/* Payment Icons */}
               <div className="mt-6">
-                <p className="text-sm text-gray-400 mb-3">We accept:</p>
+                <p className="text-gray-600 mb-3" style={{ fontSize: '1.5rem' }}>We accept:</p>
                 <PaymentIcons size="small" />
               </div>
-              <div className="flex items-center gap-4 mt-4">
-                <Shield size={24} className="text-green-400" />
-                <span className="text-sm text-gray-400">Secure payments powered by Razorpay</span>
+
+              {/* Security Badge */}
+              <div className="flex items-center gap-3 mt-6 p-3 bg-green-50 rounded-lg border border-green-200">
+                <Shield size={24} className="text-green-600" />
+                <span className="text-green-700 font-medium" style={{ fontSize: '1.5rem' }}>
+                  Secure payments powered by Razorpay
+                </span>
               </div>
             </div>
           </div>

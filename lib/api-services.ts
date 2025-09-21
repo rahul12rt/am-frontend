@@ -576,4 +576,37 @@ export const userServices = {
     
     return response.data.data;
   },
+
+  /**
+   * Send OTP to email for verification
+   */
+  sendEmailOTP: async (email: string): Promise<{ success: boolean; message: string }> => {
+    const response = await protectedApiClient.post<ApiResponse<any>>('/user/email/send-otp', { email });
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to send OTP');
+    }
+    
+    return {
+      success: response.data.success,
+      message: response.data.message || 'OTP sent successfully'
+    };
+  },
+
+  /**
+   * Verify email OTP
+   */
+  verifyEmailOTP: async (email: string, otp: string): Promise<{ success: boolean; verified: boolean; user?: any }> => {
+    const response = await protectedApiClient.post<any>('/user/email/verify-otp', { email, otp });
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to verify OTP');
+    }
+    
+    return {
+      success: response.data.success,
+      verified: response.data.verified || false,
+      user: response.data.user
+    };
+  },
 };

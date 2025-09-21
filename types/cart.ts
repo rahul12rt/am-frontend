@@ -1,20 +1,14 @@
-import  Watch  from "./watch/watch";
 export interface CartItem {
   id: string;
-  user_id: string;
-  watch_color_id: string;
+  watch_color_id: string; // Keep for compatibility with useIsInCart hook
+  name: string;
+  category: string;
+  modelGroup: string;
+  price: string;
   quantity: number;
-  price_at_time: string;
-  createdat: string;
-  updatedat: string;
-  watchColor: {
-    id: string;
-    name: string;
-    hex_code: string;
-    quantity: number;
-    is_active: boolean;
-    Watch: Watch;
-  };
+  imageURL: string;
+  color: string;
+  inlinePrice: string;
 }
 
 export interface CartSummary {

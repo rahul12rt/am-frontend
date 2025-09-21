@@ -24,6 +24,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { useAddToCart, useIsInCart, useUpdateCartItem } from '@/hooks/queries/useCart';
 import PincodeChecker from '@/components/molecules/pincodeChecker/PincodeChecker';
 import LoginModal from '@/components/molecules/loginModal/LoginModal';
+import EmailVerificationModal from '@/components/organisms/checkout/EmailVerificationModal';
 import { useRouter } from 'next/navigation';
 import { unprotectedApiClient } from '@/lib/api-clients';
 
@@ -70,6 +71,7 @@ export default function Component() {
     estimatedDays?: number;
     deliveryDate?: string;
   } | null>(null);
+  const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false);
 
   // Cart hooks (after state is declared)
   const addToCart = useAddToCart();
@@ -122,7 +124,7 @@ export default function Component() {
         cartItemId: cartItem.id,
         data: { quantity: finalQuantity },
       });
-    }, 500); // 500ms delay
+    }, 1500); // 500ms delay
 
     setDebounceTimer(timer);
   };
@@ -223,6 +225,8 @@ export default function Component() {
   const handleAddToCart = async () => {
     // Check authentication
     if (!profile) {
+      // Store current path for redirect after login
+      sessionStorage.setItem('redirectAfterLogin', `/collections/${watchId}`);
       setLoginAction('add_to_cart');
       setShowLoginModal(true);
       return;
@@ -275,8 +279,16 @@ export default function Component() {
   const handleBuyNow = async () => {
     // Check authentication first
     if (!profile) {
+      // Store current path for redirect after login
+      sessionStorage.setItem('redirectAfterLogin', `/collections/${watchId}`);
       setLoginAction('buy_now');
       setShowLoginModal(true);
+      return;
+    }
+
+    // Check email verification before proceeding to checkout
+    if (!profile?.email) {
+      setShowEmailVerificationModal(true);
       return;
     }
 
@@ -305,9 +317,15 @@ export default function Component() {
             },
           ],
         });
+        
+        // Show success message
+        showToast(`${watch.name} added to cart successfully!`, "success");
+        
+        // Wait a moment for cart state to update before navigation
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      // Navigate to checkout
+      // Navigate to checkout only after cart operation is complete
       router.push('/checkout');
     } catch (error: any) {
       console.error("Buy now error:", error);
@@ -990,13 +1008,13 @@ export default function Component() {
                     </div>
                     <div className='flex items-start justify-between bg-white rounded-lg px-4 py-3 border border-gray-200'>
                       <div>
-                        <h3 className='text-gray-900 text-base font-medium truncate'>{product.name}</h3>
+                        <h3 className='text-gray-900 text-base text-xl font-bold truncate'>{product.name}</h3>
                         <div className='flex items-center gap-2'>
-                          <span className='text-gray-900 text-sm font-bold'>
+                          <span className='text-gray-900 text-xl font-bold'>
                             ₹{product.price.toLocaleString('en-IN')}
                           </span>
                           {product.originalPrice > product.price && (
-                            <span className='text-gray-500 line-through text-sm'>
+                            <span className='text-gray-500 line-through text-xl'>
                               ₹{product.originalPrice.toLocaleString('en-IN')}
                             </span>
                           )}
@@ -1027,6 +1045,20 @@ export default function Component() {
           ? "Please sign in to continue with your purchase" 
           : "Please sign in to add items to your cart"
         }
+      />
+
+      {/* Email Verification Modal */}
+      <EmailVerificationModal
+        isOpen={showEmailVerificationModal}
+        onClose={() => setShowEmailVerificationModal(false)}
+        onSuccess={() => {
+          setShowEmailVerificationModal(false);
+          showToast("Email verified successfully! Proceeding to checkout...", "success");
+          // Continue with buy now flow after email verification
+          setTimeout(() => {
+            router.push('/checkout');
+          }, 1000);
+        }}
       />
 
       {/* Pincode Modal */}

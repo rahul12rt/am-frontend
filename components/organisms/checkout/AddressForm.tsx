@@ -6,7 +6,6 @@ import { useCreateAddress, useUpdateAddress } from '@/hooks/queries/useAddress';
 import { type CreateAddressData, type Address } from '@/lib/api-services';
 import { useAuth } from '@/contexts/UserContext';
 import { useToast } from '@/contexts/ToastContext';
-import styles from './AddressForm.module.scss';
 
 interface AddressFormProps {
   isOpen: boolean;
@@ -126,16 +125,16 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
   if (!isOpen) return null;
 
   return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <MapPin size={24} />
+          <h2 className="font-bold text-gray-900 flex items-center gap-3" style={{ fontSize: '2.2rem' }}>
+            <MapPin size={28} className="text-gray-600" />
             {editAddress ? 'Edit Address' : 'Add New Address'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <X size={24} />
           </button>
@@ -143,196 +142,208 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Address Type and Options */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className={`${styles.label} block mb-2`}>Address Type</label>
+              <label className="block mb-2 text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>Address Type</label>
               <select
                 name="address_type"
                 value={formData.address_type}
                 onChange={handleInputChange}
-                className={styles.input}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900"
+                style={{ fontSize: '1.3rem' }}
               >
                 <option value="home">Home</option>
                 <option value="work">Work</option>
                 <option value="other">Other</option>
               </select>
             </div>
-            <div className="space-y-2">
-              <label className={`${styles.label} flex items-center gap-2`}>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   name="is_billing_address"
                   checked={formData.is_billing_address}
                   onChange={handleInputChange}
-                  className={styles.checkbox}
+                  className="w-5 h-5 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
                 />
-                <span className="text-sm">Use for billing</span>
+                <span className="text-gray-900" style={{ fontSize: '1.3rem' }}>Use for billing</span>
               </label>
-              <label className={`${styles.label} flex items-center gap-2`}>
+              <label className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   name="is_shipping_address"
                   checked={formData.is_shipping_address}
                   onChange={handleInputChange}
-                  className={styles.checkbox}
+                  className="w-5 h-5 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
                 />
-                <span className="text-sm">Use for shipping</span>
+                <span className="text-gray-900" style={{ fontSize: '1.3rem' }}>Use for shipping</span>
               </label>
-              <label className={`${styles.label} flex items-center gap-2`}>
+              <label className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   name="is_default"
                   checked={formData.is_default}
                   onChange={handleInputChange}
-                  className={styles.checkbox}
+                  className="w-5 h-5 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
                 />
-                <span className="text-sm">Make default address</span>
+                <span className="text-gray-900" style={{ fontSize: '1.3rem' }}>Make default address</span>
               </label>
             </div>
           </div>
 
           {/* Personal Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className={`${styles.label} block mb-2`}>Full Name *</label>
+              <label className="block mb-2 text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>Full Name *</label>
               <input
                 type="text"
                 name="full_name"
                 value={formData.full_name}
                 onChange={handleInputChange}
-                className={`${styles.input} ${errors.full_name ? styles.error : ''}`}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900 ${errors.full_name ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="Enter full name"
+                style={{ fontSize: '1.3rem' }}
               />
-              {errors.full_name && <p className={styles.errorText}>{errors.full_name}</p>}
+              {errors.full_name && <p className="text-red-500 text-sm mt-1">{errors.full_name}</p>}
             </div>
             <div>
-              <label className={`${styles.label} block mb-2`}>Phone Number *</label>
+              <label className="block mb-2 text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>Phone Number *</label>
               <input
                 type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                className={`${styles.input} ${errors.phone ? styles.error : ''}`}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900 ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="Enter 10-digit mobile number"
                 maxLength={10}
+                style={{ fontSize: '1.3rem' }}
               />
-              {errors.phone && <p className={styles.errorText}>{errors.phone}</p>}
+              {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
             </div>
           </div>
 
           {/* Address Lines */}
           <div>
-            <label className={`${styles.label} block mb-2`}>Address Line 1 *</label>
+            <label className="block mb-2 text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>Address Line 1 *</label>
             <input
               type="text"
               name="address_line1"
               value={formData.address_line1}
               onChange={handleInputChange}
-              className={`${styles.input} ${errors.address_line1 ? styles.error : ''}`}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900 ${errors.address_line1 ? 'border-red-500' : 'border-gray-300'}`}
               placeholder="House/Flat No., Building, Street"
+              style={{ fontSize: '1.3rem' }}
             />
-            {errors.address_line1 && <p className={styles.errorText}>{errors.address_line1}</p>}
+            {errors.address_line1 && <p className="text-red-500 text-sm mt-1">{errors.address_line1}</p>}
           </div>
 
           <div>
-            <label className={`${styles.label} block mb-2`}>Address Line 2 (Optional)</label>
+            <label className="block mb-2 text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>Address Line 2 (Optional)</label>
             <input
               type="text"
               name="address_line2"
               value={formData.address_line2}
               onChange={handleInputChange}
-              className={styles.input}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900"
               placeholder="Area, Colony, Sector (Optional)"
+              style={{ fontSize: '1.3rem' }}
             />
           </div>
 
           {/* Location Details */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className={`${styles.label} block mb-2`}>City *</label>
+              <label className="block mb-2 text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>City *</label>
               <input
                 type="text"
                 name="city"
                 value={formData.city}
                 onChange={handleInputChange}
-                className={`${styles.input} ${errors.city ? styles.error : ''}`}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900 ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="Enter city"
+                style={{ fontSize: '1.3rem' }}
               />
-              {errors.city && <p className={styles.errorText}>{errors.city}</p>}
+              {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
             </div>
             <div>
-              <label className={`${styles.label} block mb-2`}>State *</label>
+              <label className="block mb-2 text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>State *</label>
               <select
                 name="state"
                 value={formData.state}
                 onChange={handleInputChange}
-                className={`${styles.input} ${errors.state ? styles.error : ''}`}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900 ${errors.state ? 'border-red-500' : 'border-gray-300'}`}
+                style={{ fontSize: '1.3rem' }}
               >
                 <option value="">Select State</option>
                 {INDIAN_STATES.map(state => (
                   <option key={state} value={state}>{state}</option>
                 ))}
               </select>
-              {errors.state && <p className={styles.errorText}>{errors.state}</p>}
+              {errors.state && <p className="text-red-500 text-sm mt-1">{errors.state}</p>}
             </div>
             <div>
-              <label className={`${styles.label} block mb-2`}>PIN Code *</label>
+              <label className="block mb-2 text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>PIN Code *</label>
               <input
                 type="text"
                 name="postal_code"
                 value={formData.postal_code}
                 onChange={handleInputChange}
-                className={`${styles.input} ${errors.postal_code ? styles.error : ''}`}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900 ${errors.postal_code ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="000000"
                 maxLength={6}
+                style={{ fontSize: '1.3rem' }}
               />
-              {errors.postal_code && <p className={styles.errorText}>{errors.postal_code}</p>}
+              {errors.postal_code && <p className="text-red-500 text-sm mt-1">{errors.postal_code}</p>}
             </div>
           </div>
 
           {/* Additional Information */}
           <div>
-            <label className={`${styles.label} block mb-2`}>Landmark (Optional)</label>
+            <label className="block mb-2 text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>Landmark (Optional)</label>
             <input
               type="text"
               name="landmark"
               value={formData.landmark}
               onChange={handleInputChange}
-              className={styles.input}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900"
               placeholder="Nearby landmark for easy identification"
+              style={{ fontSize: '1.3rem' }}
             />
           </div>
 
           <div>
-            <label className={`${styles.label} block mb-2`}>Delivery Instructions (Optional)</label>
+            <label className="block mb-2 text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>Delivery Instructions (Optional)</label>
             <textarea
               name="delivery_instructions"
               value={formData.delivery_instructions}
               onChange={handleInputChange}
-              className={styles.textarea}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900 resize-none"
               placeholder="Any special delivery instructions..."
               rows={3}
+              style={{ fontSize: '1.3rem' }}
             />
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex gap-4 pt-4">
+          <div className="flex gap-4 pt-6">
             <button
               type="button"
               onClick={onClose}
-              className={styles.secondaryButton}
+              className="flex-1 py-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
               disabled={isSubmitting}
+              style={{ fontSize: '1.5rem' }}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className={styles.primaryButton}
+              className="flex-1 py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
               disabled={isSubmitting}
+              style={{ fontSize: '1.5rem' }}
             >
               {isSubmitting ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
                   {editAddress ? 'Updating...' : 'Adding...'}
                 </div>
               ) : (

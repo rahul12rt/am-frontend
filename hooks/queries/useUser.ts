@@ -339,6 +339,49 @@ export const useUserOperations = () => {
 };
 
 /**
+ * Send email OTP for verification
+ */
+export const useSendEmailOTP = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (email: string) => userServices.sendEmailOTP(email),
+    
+    onSuccess: (response) => {
+      console.log('OTP sent successfully:', response.message);
+    },
+    
+    onError: (error: AxiosError) => {
+      const errorMessage = handleApiError(error);
+      console.error('Failed to send OTP:', errorMessage);
+    },
+  });
+};
+
+/**
+ * Verify email OTP
+ */
+export const useVerifyEmailOTP = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ email, otp }: { email: string; otp: string }) => 
+      userServices.verifyEmailOTP(email, otp),
+    
+    onSuccess: (response) => {
+      // Invalidate profile to refresh email verification status
+      queryClient.invalidateQueries({ queryKey: queryKeys.user.profile() });
+      console.log('Email verified successfully:', response);
+    },
+    
+    onError: (error: AxiosError) => {
+      const errorMessage = handleApiError(error);
+      console.error('Failed to verify email:', errorMessage);
+    },
+  });
+};
+
+/**
  * User authentication status and profile data combined
  */
 export const useAuth = () => {
@@ -350,8 +393,10 @@ export const useAuth = () => {
 
   return {
     user: profile,
+    profile, // Add profile alias for backward compatibility
     isAuthenticated,
     isLoading,
+    loading: isLoading, // Add loading alias for backward compatibility
     error,
     isReady: !isLoading && isAuthenticated,
   };
