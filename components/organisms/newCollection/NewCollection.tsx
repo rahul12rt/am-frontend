@@ -1,10 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
 import NewCollectionWatch from '@/components/molecules/newCollectionWatch/NewCollectionWatch';
-import { useFeaturedWatches } from '@/hooks/queries/useWatches';
+import { useWatchCache } from '@/contexts/WatchCacheContext';
 
 const NewCollection = () => {
-  const { data: watches = [], isLoading: loading, error } = useFeaturedWatches();
+  const { getFeaturedWatches, isLoading: loading, error, isCacheReady } = useWatchCache();
+  const watches = getFeaturedWatches();
   const [scrollY, setScrollY] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 

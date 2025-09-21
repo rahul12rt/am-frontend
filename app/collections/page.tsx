@@ -2,10 +2,10 @@
 import Link from 'next/link';
 import { MdKeyboardArrowRight } from 'react-icons/md';
 import Collections from '@/components/organisms/collections/Collections';
-import { useWatches } from '@/hooks/queries/useWatches';
+import { useWatchCache } from '@/contexts/WatchCacheContext';
 
 const Collection = () => {
-  const { data: watches = [], isLoading: loading, error } = useWatches();
+  const { allWatches: watches, isLoading: loading, error, isCacheReady } = useWatchCache();
 
   return (
     <section className='pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen'>
@@ -17,11 +17,13 @@ const Collection = () => {
           <MdKeyboardArrowRight className="text-gray-400" />
           <span className="font-medium text-black">Collection</span>
         </div>
-        {loading ? (
+        {(loading || !isCacheReady) ? (
           <div className='text-center text-gray-600 py-20'>
             <div className="inline-flex items-center space-x-3">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-              <span className="text-lg font-medium">Loading luxury watches...</span>
+              <span className="text-lg font-medium">
+                {isCacheReady ? 'Loading luxury watches...' : 'Loading from cache...'}
+              </span>
             </div>
           </div>
         ) : error ? (

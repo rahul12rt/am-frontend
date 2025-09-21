@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { MdKeyboardArrowRight } from 'react-icons/md';
 import { useParams } from 'next/navigation';
 import { useWatch } from '@/hooks/queries/useWatches';
+import { useWatchFromCache, useRandomRecommendations, useWatchImagePreloader } from '@/contexts/WatchCacheContext';
 import { WatchImage, Review } from '@/lib/api-services';
 import { useAuth } from '@/contexts/UserContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -30,8 +31,19 @@ export default function Component() {
   const params = useParams();
   const watchId = params.id as string; // Corrected from 'name' to 'id'
 
-  // Data hooks
-  const { data: watch, isLoading: loading, error } = useWatch(watchId);
+  // Data hooks - use cache first, fallback to API
+  const { watch: cachedWatch, isReady: cacheReady } = useWatchFromCache(watchId);
+  const { data: apiWatch, isLoading: apiLoading, error } = useWatch(watchId, !cacheReady);
+  
+  // Use cached data if available, otherwise use API data
+  const watch = cachedWatch || apiWatch;
+  const loading = !cacheReady && apiLoading;
+  
+  // Get random recommendations (excluding current watch)
+  const { recommendations } = useRandomRecommendations(4, watchId);
+  
+  // Image preloader hook
+  const preloadImages = useWatchImagePreloader();
 
   // Auth and toast hooks
   const { profile } = useAuth();
@@ -85,6 +97,15 @@ export default function Component() {
   useEffect(() => {
     setSelectedImage(0);
   }, [selectedColor]);
+
+  // Preload images when watch data is available
+  useEffect(() => {
+    if (watch && watchId) {
+      // Preload images for all color variants of this watch
+      preloadImages(watchId);
+      console.log(`🖼️ Preloading images for watch: ${watch.name}`);
+    }
+  }, [watch, watchId, preloadImages]);
 
   const handleQuantityChange = (newQuantity: number) => {
     if (!cartItem) return;
@@ -347,13 +368,34 @@ export default function Component() {
     return views;
   };
 
-  const relatedProducts = Array(4).fill(null).map((_, i) => ({
-    id: i,
-    name: 'Alban 0S1',
-    price: 240,
-    originalPrice: 260,
-    image: '/placeholder.svg?height=200&width=200',
-  }));
+  // Use cached recommendations instead of static data
+  const relatedProducts = recommendations.map(watch => {
+    const firstColor = watch.WatchColors?.[0];
+    const actualprice = firstColor ? parseFloat(firstColor.actualprice || '0') : 0;
+    const offerprice = firstColor ? parseFloat(firstColor.offerprice || '0') : 0;
+    
+    // Get the first available image
+    const imageData = firstColor?.WatchImage?.[0];
+    let imageUrl = '/images/alban-marcus-watch.png';
+    
+    if (imageData) {
+      imageUrl = imageData.front || imageData.isoview || imageData.side || imageData.closeup || '/images/alban-marcus-watch.png';
+      if (imageUrl && imageUrl !== 'undefined' && imageUrl !== 'null') {
+        imageUrl = imageUrl.startsWith('http') ? imageUrl : `https://${imageUrl}`;
+      } else {
+        imageUrl = '/images/alban-marcus-watch.png';
+      }
+    }
+    
+    return {
+      id: watch.id,
+      name: watch.name,
+      price: offerprice > 0 ? offerprice : actualprice,
+      originalPrice: actualprice,
+      image: imageUrl,
+      watchId: watch.id
+    };
+  });
 
   if (loading) {
     return (
@@ -920,27 +962,56 @@ export default function Component() {
           </div>
 
           <div className='bg-white rounded-3xl shadow-lg p-6 md:p-8'>
-            <h2 className='text-2xl text-gray-900 pb-6 font-bold'>Most Liked</h2>
+            <h2 className='text-2xl text-gray-900 pb-6 font-bold'>
+              Recommended for You
+              <span className='text-sm font-normal text-gray-500 ml-2'>
+                (Refreshed daily)
+              </span>
+            </h2>
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-              {relatedProducts.map((product) => (
-                <div key={product.id} className='group cursor-pointer hover:shadow-xl transition-all duration-300 bg-gray-50 hover:bg-gray-100 rounded-2xl border border-gray-200'>
+              {relatedProducts.length > 0 ? relatedProducts.map((product) => (
+                <Link 
+                  key={product.id} 
+                  href={`/collections/${product.watchId}`}
+                  className='group cursor-pointer hover:shadow-xl transition-all duration-300 bg-gray-50 hover:bg-gray-100 rounded-2xl border border-gray-200 block'
+                >
                   <div className='p-4'>
                     <div className='aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-4 overflow-hidden border border-gray-200'>
-                      <Image src={imageViews[0]?.url || '/images/alban-marcus-watch.png'} alt={product.name} width={200} height={200} className='w-full h-full object-contain p-4' />
+                      <Image 
+                        src={product.image} 
+                        alt={product.name} 
+                        width={200} 
+                        height={200} 
+                        className='w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300' 
+                        onError={(e) => {
+                          e.currentTarget.src = '/images/alban-marcus-watch.png';
+                        }}
+                      />
                     </div>
                     <div className='flex items-start justify-between bg-white rounded-lg px-4 py-3 border border-gray-200'>
                       <div>
-                        <h3 className='text-gray-900 text-base font-medium'>{product.name}</h3>
+                        <h3 className='text-gray-900 text-base font-medium truncate'>{product.name}</h3>
                         <div className='flex items-center gap-2'>
-                          <span className='text-gray-900 text-sm font-bold'>₹{product.price.toLocaleString('en-IN')}</span>
-                          <span className='text-gray-500 line-through text-sm'>₹{product.originalPrice.toLocaleString('en-IN')}</span>
+                          <span className='text-gray-900 text-sm font-bold'>
+                            ₹{product.price.toLocaleString('en-IN')}
+                          </span>
+                          {product.originalPrice > product.price && (
+                            <span className='text-gray-500 line-through text-sm'>
+                              ₹{product.originalPrice.toLocaleString('en-IN')}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <ArrowRight className='w-6 h-6 text-gray-400 group-hover:text-gray-900 transition-colors' />
                     </div>
                   </div>
+                </Link>
+              )) : (
+                // Fallback if no recommendations available
+                <div className='col-span-full text-center py-8'>
+                  <p className='text-gray-500'>Loading recommendations...</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ import UserModalWrapper from '@/components/organisms/user/UserModalWrapper';
 import { Providers } from "./providers";
 import ErrorBoundary from '@/components/ErrorBoundary';
 import NavigationBoundary from '@/components/NavigationBoundary';
+import CacheMonitor from '@/components/molecules/cacheMonitor/CacheMonitor';
 
 const centurygothic = localFont({
   src: "../public/fonts/gothic/centurygothic.ttf",
@@ -56,6 +57,7 @@ export default function RootLayout({
                 </NavigationBoundary>
                 <Footer />
                 <UserModalWrapper />
+                <CacheMonitor />
               </UserModalProvider>
             </ToastProvider>
           </Providers>

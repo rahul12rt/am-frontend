@@ -7,7 +7,7 @@ import {
   useDotButton,
 } from '../../atoms/CarouselDotButton/CarouselDotButton';
 import NewCollectionWatch from '@/components/molecules/newCollectionWatch/NewCollectionWatch';
-import { useWatches } from '@/hooks/queries/useWatches';
+import { useWatchCache } from '@/contexts/WatchCacheContext';
 import styles from './MostLovedCarousel.module.scss';
 
 type PropType = {
@@ -21,7 +21,7 @@ const MostLovedCarousel: React.FC<PropType> = (props) => {
   const { selectedIndex, scrollSnaps, onDotButtonClick } =
     useDotButton(emblaApi);
 
-  const { data: allWatches = [], isLoading: loading, error } = useWatches({ limit: 5 });
+  const { allWatches, isLoading: loading, error, isCacheReady } = useWatchCache();
   
   // Get first 5 watches for carousel
   const watches = useMemo(() => {
@@ -32,8 +32,8 @@ const MostLovedCarousel: React.FC<PropType> = (props) => {
     <section className={styles.embla}>
       <div className='overflow-hidden' ref={emblaRef}>
         <div className={`${styles.embla__container} flex`}>
-          {loading ? (
-            <div className='text-white-1 text-center w-full'>Loading...</div>
+          {(loading || !isCacheReady) ? (
+            <div className='text-white-1 text-center w-full'>Loading from cache...</div>
           ) : error ? (
             <div className='text-red-400 text-center w-full'>Error loading watches: {error.message}</div>
           ) : watches.length === 0 ? (
