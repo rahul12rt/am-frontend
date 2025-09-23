@@ -123,7 +123,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.5 }}
-                className="text-white/80 text-center text-[18px] lg:text-[28px]"
+                className="text-white/80 text-center text-[18px] lg:text-[24px]"
                 style={{ 
                   fontFamily: 'var(--font-ppneuemontrealNormal), -apple-system, BlinkMacSystemFont, sans-serif',
                   letterSpacing: '0.1em'
@@ -146,7 +146,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
 
           {/* Progress percentage */}
           <motion.p
-            className="text-white/60 mt-4 text-2xl lg:text-3xl tracking-wider"
+            className="text-white/60 mt-4 text-xl lg:text-xl tracking-wider"
             style={{ 
               fontFamily: 'var(--font-ppneuemontrealNormal), -apple-system, BlinkMacSystemFont, sans-serif'
             }}
