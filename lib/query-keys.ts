@@ -84,16 +84,6 @@ export const queryKeys = {
   },
 
   // =================
-  // ADDRESSES
-  // =================
-  addresses: {
-    all: () => ['addresses'] as const,
-    lists: () => [...queryKeys.addresses.all(), 'list'] as const,
-    details: () => [...queryKeys.addresses.all(), 'detail'] as const,
-    detail: (id: string) => [...queryKeys.addresses.details(), id] as const,
-  },
-
-  // =================
   // PAYMENTS
   // =================
   payments: {

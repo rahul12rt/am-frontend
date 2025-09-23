@@ -448,15 +448,15 @@ export const cartServices = {
 // =================
 
 export interface Address {
-  id: string;
-  user_id: string;
-  address_type: 'home' | 'work' | 'other';
+  id: number;
+  user_id: number;
+  address_type: string;
   is_billing_address: boolean;
   is_shipping_address: boolean;
   full_name: string;
   phone: string;
   address_line1: string;
-  address_line2?: string;
+  address_line2: string;
   city: string;
   state: string;
   postal_code: string;
@@ -464,16 +464,16 @@ export interface Address {
   country_code: string;
   is_default: boolean;
   is_verified: boolean;
-  latitude?: number;
-  longitude?: number;
-  delivery_instructions?: string;
-  landmark?: string;
+  latitude: number;
+  longitude: number;
+  delivery_instructions: string;
+  landmark: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateAddressData {
-  address_type?: 'home' | 'work' | 'other';
+  address_type?: string;
   is_billing_address?: boolean;
   is_shipping_address?: boolean;
   full_name: string;
@@ -491,7 +491,7 @@ export interface CreateAddressData {
 }
 
 export interface UpdateAddressData extends CreateAddressData {
-  id: string;
+  id: number;
 }
 
 export const addressServices = {
@@ -509,7 +509,7 @@ export const addressServices = {
   /**
    * Get single address by ID
    */
-  getAddress: async (addressId: string): Promise<Address> => {
+  getAddress: async (addressId: number | string): Promise<Address> => {
     const response = await protectedApiClient.get<ApiResponse<Address>>(`/address/${addressId}`);
     if (!response.data.success) {
       throw new Error('Failed to fetch address');
@@ -531,12 +531,22 @@ export const addressServices = {
   /**
    * Update existing address
    */
-  updateAddress: async (data: UpdateAddressData): Promise<Address> => {
-    const response = await protectedApiClient.post<ApiResponse<Address>>('/address', data);
+  updateAddress: async (id: number | string, data: Partial<CreateAddressData>): Promise<Address> => {
+    const response = await protectedApiClient.put<ApiResponse<Address>>(`/address/${id}`, data);
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to update address');
     }
     return response.data.data;
+  },
+
+  /**
+   * Delete address
+   */
+  deleteAddress: async (id: number | string): Promise<void> => {
+    const response = await protectedApiClient.delete<ApiResponse<void>>(`/address/${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to delete address');
+    }
   },
 };
 
@@ -548,6 +558,7 @@ export interface UpdateProfileData {
   first_name?: string;
   last_name?: string;
   email?: string;
+  phone_number?: string;
 }
 
 export const userServices = {

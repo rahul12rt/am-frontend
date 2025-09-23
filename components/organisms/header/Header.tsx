@@ -9,7 +9,6 @@ import { useIsClient } from "@/hooks/useIsClient";
 import { useRouter } from "next/navigation";
 import { useUserModal } from "@/contexts/UserModalContext";
 import { useUser } from "@/contexts/UserContext";
-import { useCartCount } from "@/hooks/queries/useCart";
 import { useNavigationGuard } from "@/hooks/useNavigationGuard";
 import UserAccountPanel from "@/components/organisms/userAccountPanel/UserAccountPanel";
 
@@ -19,8 +18,9 @@ const Header = () => {
   const router = useRouter();
 
   // Auth and cart
-  const { user, isAuthenticated } = useUser();
-  const { data: cartCount = 0, isLoading: cartCountLoading } = useCartCount();
+  const { user, isAuthenticated, profile } = useUser();
+  // Use cart count from user profile instead of separate API call
+  const cartCount = profile?.cartCount || 0;
 
   // Drawer states
   const [drawerType, setDrawerType] = useState<"series" | null>(null);
@@ -71,7 +71,16 @@ const Header = () => {
 
   /** ---- User Account Handlers ---- */
   const handleUserButtonClick = () => {
-    if (isAuthenticated) {
+    console.log('User button clicked - Auth state:', { 
+      isAuthenticated, 
+      hasUser: !!user, 
+      hasProfile: !!profile,
+      userId: user?.id,
+      profileId: profile?.id 
+    });
+    
+    // Check both user and profile to ensure proper authentication state
+    if (isAuthenticated && (profile || user)) {
       // Show account panel for logged-in users
       setIsAccountPanelOpen(true);
     } else {
@@ -161,7 +170,7 @@ const Header = () => {
             </button>
 
             {/* Series Drawer Button */}
-            <button
+            {/* <button
               onClick={() => toggleDrawer("series")}
               className={`flex justify-center items-center gap-[10px] hidden custom-xmd:block transition-all duration-300
                 ${
@@ -171,19 +180,24 @@ const Header = () => {
                 }
                 hover:border-white-1`}
             >
-              <span className="text-[16px] bebas-neue-regular tracking-widest">
-                SERIES
-              </span>
-            </button>
+              <Image
+                src="/images/Am_logo_small_transparentpng.png"
+                alt="Alban Marcus Logo"
+                width={31}
+                height={31}
+                className="object-contain"
+              />
+            </button> */}
 
             {/* Offers Button */}
-            <Link href="/offers" className="text-[16px] zen-dots-regular">
+            <Link href="/" className="text-[16px] zen-dots-regular">
               <button className="flex justify-center items-center transition-transform duration-300 hover:rotate-[360deg] hidden custom-xmd:block">
                 <Image
-                  src="/icons/offers.svg"
-                  alt="menu"
+                  src="/images/Am_logo_small_transparentpng.png"
+                  alt="Alban Marcus Logo"
                   width={31}
                   height={31}
+                  className="object-contain"
                 />
               </button>
             </Link>

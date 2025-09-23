@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
-import { CheckCircle, Edit, Plus, CreditCard, Shield, Loader2, User, Mail, Phone } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CheckCircle, Edit, Plus, CreditCard, Shield, Loader2, User, Mail, Phone, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useCart } from '@/hooks/queries/useCart';
@@ -12,19 +12,29 @@ import { type Address } from '@/lib/api-services';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MdKeyboardArrowRight } from 'react-icons/md';
+import { 
+  validatePaymentReadiness, 
+  validateUserProfile, 
+  formatValidationErrors, 
+  formatValidationWarnings 
+} from '@/services/checkoutValidation';
 
 const CheckoutPage = () => {
   const { data: cartData, isLoading: cartLoading } = useCart();
-  const { profile } = useUser();
+  const { profile, refetchProfile } = useUser();
   const { showToast } = useToast();
   const { payNow, isProcessing } = useRazorpayCheckout();
 
   const [selectedBillingAddress, setSelectedBillingAddress] = useState<string>('');
   const [selectedShippingAddress, setSelectedShippingAddress] = useState<string>('');
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
+  const [isValidatingPayment, setIsValidatingPayment] = useState(false);
   const [useSameAddress, setUseSameAddress] = useState(true);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [addressType, setAddressType] = useState<'billing' | 'shipping'>('billing');
+  const [isRefreshingProfile, setIsRefreshingProfile] = useState(false);
 
   // Mock data for now - replace with actual address data
   const addresses: any[] = profile?.addresses || [];
@@ -32,8 +42,56 @@ const CheckoutPage = () => {
   const subtotal = cartData?.summary?.totalAmount ? parseFloat(cartData.summary.totalAmount) : 0;
   const total = subtotal + deliveryFee;
 
+  // Validate checkout readiness
+  const validateCheckout = async () => {
+    setIsValidatingPayment(true);
+    setValidationErrors([]);
+    setValidationWarnings([]);
+
+    try {
+      // Get selected addresses
+      const billingAddress = addresses.find(addr => addr.id.toString() === selectedBillingAddress) || null;
+      const shippingAddress = addresses.find(addr => addr.id.toString() === selectedShippingAddress) || null;
+
+      // Comprehensive validation
+      const validation = await validatePaymentReadiness(
+        profile,
+        billingAddress,
+        shippingAddress,
+        cartData?.items || [],
+        total
+      );
+
+      setValidationErrors(validation.errors);
+      setValidationWarnings(validation.warnings);
+
+      return validation.isValid;
+    } catch (error) {
+      console.error('Validation error:', error);
+      setValidationErrors(['Failed to validate checkout. Please try again.']);
+      return false;
+    } finally {
+      setIsValidatingPayment(false);
+    }
+  };
+
   // Handle payment with Razorpay
   const handleCompletePayment = async () => {
+    // Run comprehensive validation
+    const isValid = await validateCheckout();
+    
+    if (!isValid) {
+      const errorMessage = formatValidationErrors(validationErrors);
+      showToast(errorMessage, 'error');
+      return;
+    }
+
+    // Show warnings if any
+    if (validationWarnings.length > 0) {
+      const warningMessage = formatValidationWarnings(validationWarnings);
+      showToast(warningMessage, 'info');
+    }
+
     if (!cartData?.items || cartData.items.length === 0) {
       showToast('Your cart is empty', 'error');
       return;
@@ -53,7 +111,7 @@ const CheckoutPage = () => {
     const prefillData = {
       name: `${profile.first_name} ${profile.last_name || ''}`.trim(),
       email: profile.email || 'customer@example.com',
-      contact: `${profile.phone_country_code}${profile.phone_number}` || '9999999999'
+      contact: `${profile.phone_country_code || '+91'}${profile.phone_number}` || '9999999999'
     };
 
     try {
@@ -87,15 +145,32 @@ const CheckoutPage = () => {
     }
   }, [addresses, selectedBillingAddress, selectedShippingAddress]);
 
+  // Refresh profile when checkout page loads (in case user just came from email verification)
+  React.useEffect(() => {
+    const refreshProfileOnLoad = async () => {
+      try {
+        console.log('Refreshing profile on checkout page load...');
+        await refetchProfile();
+        console.log('Profile refreshed on checkout page');
+      } catch (error) {
+        console.error('Failed to refresh profile on checkout page:', error);
+      }
+    };
+
+    if (profile) {
+      refreshProfileOnLoad();
+    }
+  }, []); // Only run once when component mounts
+
   const handleAddressSuccess = (address: Address) => {
     setShowAddressForm(false);
     setEditingAddress(null);
     
     if (address.is_billing_address && addressType === 'billing') {
-      setSelectedBillingAddress(address.id);
+      setSelectedBillingAddress(address.id.toString());
     }
     if (address.is_shipping_address && (addressType === 'shipping' || useSameAddress)) {
-      setSelectedShippingAddress(address.id);
+      setSelectedShippingAddress(address.id.toString());
     }
     
     showToast(`Address ${editingAddress ? 'updated' : 'added'} successfully!`, 'success');
@@ -111,6 +186,19 @@ const CheckoutPage = () => {
     setAddressType(type);
     setShowAddressForm(true);
   };
+
+  // Validate profile on load
+  useEffect(() => {
+    if (profile) {
+      const profileValidation = validateUserProfile(profile);
+      if (!profileValidation.isValid) {
+        setValidationErrors(profileValidation.errors);
+      }
+      if (profileValidation.warnings.length > 0) {
+        setValidationWarnings(profileValidation.warnings);
+      }
+    }
+  }, [profile]);
 
   // Show loading state
   if (cartLoading) {
@@ -182,8 +270,31 @@ const CheckoutPage = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Profile Information */}
             <div className="bg-white rounded-3xl shadow-sm p-6">
-              <div className="mb-6">
+              <div className="mb-6 flex items-center justify-between">
                 <h2 className="font-bold text-gray-900" style={{ fontSize: '2.2rem' }}>Profile Information</h2>
+                <button
+                  onClick={async () => {
+                    try {
+                      setIsRefreshingProfile(true);
+                      showToast('Refreshing profile...', 'info');
+                      await refetchProfile();
+                      showToast('Profile refreshed successfully!', 'success');
+                    } catch (error) {
+                      showToast('Failed to refresh profile', 'error');
+                    } finally {
+                      setIsRefreshingProfile(false);
+                    }
+                  }}
+                  disabled={isRefreshingProfile}
+                  className="text-gray-600 hover:text-gray-900 transition-colors p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Refresh profile information"
+                >
+                  {isRefreshingProfile ? (
+                    <Loader2 size={20} className="animate-spin" />
+                  ) : (
+                    <RefreshCw size={20} />
+                  )}
+                </button>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -410,18 +521,56 @@ const CheckoutPage = () => {
                     <span className="text-gray-900 font-bold" style={{ fontSize: '1.8rem' }}>₹{cartData?.summary?.totalAmount ? (parseFloat(cartData.summary.totalAmount) + deliveryFee).toLocaleString() : '0'}</span>
                   </div>
                 </div>
+                {/* Validation Status */}
+                {validationErrors.length > 0 && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-red-800 font-medium mb-2" style={{ fontSize: '1.4rem' }}>Please fix the following issues:</h4>
+                        <ul className="text-red-700 space-y-1" style={{ fontSize: '1.3rem' }}>
+                          {validationErrors.map((error, index) => (
+                            <li key={index}>• {error}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {validationWarnings.length > 0 && validationErrors.length === 0 && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-yellow-800 font-medium mb-2" style={{ fontSize: '1.4rem' }}>Please note:</h4>
+                        <ul className="text-yellow-700 space-y-1" style={{ fontSize: '1.3rem' }}>
+                          {validationWarnings.map((warning, index) => (
+                            <li key={index}>• {warning}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <button 
                   onClick={handleCompletePayment}
-                  disabled={isProcessing || !cartData?.items?.length}
+                  disabled={isProcessing || isValidatingPayment || !cartData?.items?.length}
                   className={`w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors mt-6 flex items-center justify-center gap-2 ${
-                    isProcessing || !cartData?.items?.length ? 'opacity-50 cursor-not-allowed' : ''
+                    isProcessing || isValidatingPayment || !cartData?.items?.length ? 'opacity-50 cursor-not-allowed' : ''
                   }`} 
                   style={{ fontSize: '1.6rem' }}
                 >
                   {isProcessing ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Processing...
+                      Processing Payment...
+                    </>
+                  ) : isValidatingPayment ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Validating...
                     </>
                   ) : (
                     <>

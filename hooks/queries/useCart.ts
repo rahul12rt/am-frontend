@@ -28,12 +28,13 @@ import { useMemo } from 'react';
 /**
  * Get cart with items and summary
  */
-export const useCart = () => {
+export const useCart = (enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.cart.items(),
     queryFn: cartServices.getCart,
     staleTime: 30 * 1000, // 30 seconds (cart data should be fresh)
     gcTime: 5 * 60 * 1000, // 5 minutes
+    enabled: enabled, // Only run query when enabled (user is authenticated)
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
       if (error instanceof AxiosError && error.response?.status === 401) {
@@ -41,19 +42,20 @@ export const useCart = () => {
       }
       return failureCount < 2;
     },
-    refetchOnWindowFocus: true, // Always refetch cart when window gains focus
+    refetchOnWindowFocus: false, // Disable auto-refetch to prevent constant reloading
   });
 };
 
 /**
  * Get cart items count (optimized - direct API call)
  */
-export const useCartCount = () => {
+export const useCartCount = (enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.cart.count(),
     queryFn: cartServices.getCartCount,
     staleTime: 60 * 1000, // 1 minute (count can be slightly stale)
     gcTime: 10 * 60 * 1000, // 10 minutes
+    enabled: enabled, // Only run query when enabled (user is authenticated)
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
       if (error instanceof AxiosError && error.response?.status === 401) {
@@ -61,15 +63,15 @@ export const useCartCount = () => {
       }
       return failureCount < 2;
     },
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false, // Disable auto-refetch to prevent constant reloading
   });
 };
 
 /**
  * Get cart items count (fallback - derived from cart data)
  */
-export const useCartCountFromCache = () => {
-  const { data: cartData, ...rest } = useCart();
+export const useCartCountFromCache = (enabled: boolean = true) => {
+  const { data: cartData, ...rest } = useCart(enabled);
 
   const count = useMemo(() => {
     if (!cartData?.items) return 0;
@@ -85,8 +87,8 @@ export const useCartCountFromCache = () => {
 /**
  * Get cart total price (derived from cart data)
  */
-export const useCartTotal = () => {
-  const { data: cartData, ...rest } = useCart();
+export const useCartTotal = (enabled: boolean = true) => {
+  const { data: cartData, ...rest } = useCart(enabled);
 
   const total = useMemo(() => {
     if (!cartData?.items) return { subtotal: 0, total: 0, savings: 0, itemCount: 0 };
@@ -124,8 +126,8 @@ export const useCartTotal = () => {
 /**
  * Check if a specific watch color is in cart
  */
-export const useIsInCart = (watchColorId: string) => {
-  const { data: cartData } = useCart();
+export const useIsInCart = (watchColorId: string, enabled: boolean = true) => {
+  const { data: cartData } = useCart(enabled);
 
   const isInCart = useMemo(() => {
     if (!cartData?.items || !watchColorId) return false;
@@ -318,9 +320,9 @@ export const useClearCart = () => {
 /**
  * Get cart summary data (count + total)
  */
-export const useCartSummary = () => {
-  const { data: count, isLoading: countLoading } = useCartCount();
-  const { data: total, isLoading: totalLoading } = useCartTotal();
+export const useCartSummary = (enabled: boolean = true) => {
+  const { data: count, isLoading: countLoading } = useCartCount(enabled);
+  const { data: total, isLoading: totalLoading } = useCartTotal(enabled);
 
   return {
     count,

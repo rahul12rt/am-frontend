@@ -179,7 +179,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(session?.user ?? null);
           if (session?.user) {
             console.log('SIGNED_IN event - fetching profile for user:', session.user.id);
-            // Small delay to ensure backend session is ready
+            // Longer delay to ensure backend session and database record are ready (especially after registration)
             timeoutId = setTimeout(async () => {
               if (!mounted) return;
               setIsLoadingProfile(true);
@@ -191,15 +191,33 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                 }
               } catch (error) {
                 console.error("Failed to fetch profile after sign in:", error);
-                if (mounted) {
-                  setProfile(null);
-                }
+                // Retry once more with additional delay (helpful for new registrations)
+                setTimeout(async () => {
+                  if (!mounted) return;
+                  try {
+                    const userProfile = await userServices.getProfile();
+                    if (mounted) {
+                      setProfile(userProfile);
+                      console.log('Profile fetched successfully after retry');
+                    }
+                  } catch (retryError) {
+                    console.error("Profile fetch retry also failed:", retryError);
+                    if (mounted) {
+                      setProfile(null);
+                    }
+                  } finally {
+                    if (mounted) {
+                      setIsLoadingProfile(false);
+                    }
+                  }
+                }, 1000);
               } finally {
+                // Don't set loading to false here if we're going to retry
                 if (mounted) {
-                  setIsLoadingProfile(false);
+                  // setIsLoadingProfile(false); // Moved to retry block
                 }
               }
-            }, 300);
+            }, 800);
           }
           break;
 

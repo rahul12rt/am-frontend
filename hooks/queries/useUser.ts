@@ -12,11 +12,11 @@ import { queryKeys } from '@/lib/query-keys';
 import { 
   userServices, 
   addressServices,
-  type UserProfile, 
   type UpdateProfileData,
   type Address,
   type CreateAddressData,
 } from '@/lib/api-services';
+import { type UserProfile } from '@/types/user';
 import { AxiosError } from 'axios';
 import { handleApiError } from '@/lib/api-clients';
 import { createClient } from '@/lib/supabase';
@@ -34,6 +34,8 @@ export const useUserProfile = () => {
     queryFn: userServices.getProfile,
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false, // Prevent refetch when switching tabs
+    refetchOnReconnect: false, // Prevent refetch on network reconnect
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
       if (error instanceof AxiosError && error.response?.status === 401) {
@@ -67,7 +69,7 @@ export const useUpdateProfile = () => {
         const optimisticProfile: UserProfile = {
           ...previousProfile,
           ...updatedData,
-          updatedAt: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         };
         
         queryClient.setQueryData(queryKeys.user.profile(), optimisticProfile);
@@ -107,6 +109,8 @@ export const useAddresses = () => {
     queryFn: addressServices.getAddresses,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnWindowFocus: false, // Prevent refetch when switching tabs
+    refetchOnReconnect: false, // Prevent refetch on network reconnect
     retry: (failureCount, error) => {
       if (error instanceof AxiosError && error.response?.status === 401) {
         return false;
@@ -123,7 +127,7 @@ export const useAddresses = () => {
 export const useDefaultAddress = () => {
   const { data: addresses, ...rest } = useAddresses();
   
-  const defaultAddress = addresses?.find(address => address.isDefault) || null;
+  const defaultAddress = addresses?.find(address => address.is_default) || null;
   
   return {
     ...rest,
@@ -148,7 +152,7 @@ export const useCreateAddress = () => {
       );
       
       // If this is set as default, invalidate to refresh the list
-      if (newAddress.isDefault) {
+      if (newAddress.is_default) {
         queryClient.invalidateQueries({ queryKey: queryKeys.addresses.lists() });
       }
       
@@ -169,7 +173,7 @@ export const useUpdateAddress = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<CreateAddressData> }) => 
+    mutationFn: ({ id, data }: { id: number | string; data: Partial<CreateAddressData> }) => 
       addressServices.updateAddress(id, data),
     
     onMutate: async ({ id, data }) => {
@@ -181,7 +185,7 @@ export const useUpdateAddress = () => {
       if (previousAddresses) {
         const updatedAddresses = previousAddresses.map(address => 
           address.id === id 
-            ? { ...address, ...data, updatedAt: new Date().toISOString() }
+            ? { ...address, ...data, updated_at: new Date().toISOString() }
             : address
         );
         
@@ -198,7 +202,7 @@ export const useUpdateAddress = () => {
         (old) => old?.map(addr => addr.id === updatedAddress.id ? updatedAddress : addr) || []
       );
       
-      if (updatedAddress.isDefault) {
+      if (updatedAddress.is_default) {
         queryClient.invalidateQueries({ queryKey: queryKeys.addresses.lists() });
       }
       
@@ -223,7 +227,7 @@ export const useDeleteAddress = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => addressServices.deleteAddress(id),
+    mutationFn: (id: number | string) => addressServices.deleteAddress(id),
     
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.addresses.lists() });
@@ -270,13 +274,13 @@ export const useIsProfileComplete = () => {
   const { data: profile } = useUserProfile();
   
   const isComplete = profile ? 
-    !!(profile.first_name && profile.phone && profile.email) : 
+    !!(profile.first_name && profile.phone_number && profile.email) : 
     false;
   
   const missingFields = profile ? 
     [
       !profile.first_name && 'first_name',
-      !profile.phone && 'phone', 
+      !profile.phone_number && 'phone_number', 
       !profile.email && 'email'
     ].filter(Boolean) as string[] : 
     [];
@@ -295,7 +299,7 @@ export const useShippingAddresses = () => {
   const { data: addresses, ...rest } = useAddresses();
   
   const shippingAddresses = addresses?.filter(
-    address => address.type === 'home' || address.type === 'other'
+    address => address.address_type === 'home' || address.address_type === 'other'
   ) || [];
   
   return {

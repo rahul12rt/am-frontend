@@ -47,7 +47,7 @@ export default function Component() {
   const preloadImages = useWatchImagePreloader();
 
   // Auth and toast hooks
-  const { profile } = useAuth();
+  const { profile, user, loading: authLoading, refetchProfile } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
 
@@ -79,7 +79,8 @@ export default function Component() {
 
   // Check if current watch color combination is in cart
   const watchColorId = watch?.WatchColors?.[selectedColor]?.id || '';
-  const { isInCart, cartItem } = useIsInCart(watchColorId);
+  const isAuthenticated = !!(user || profile);
+  const { isInCart, cartItem } = useIsInCart(watchColorId, isAuthenticated);
   const [reviewData, setReviewData] = useState({
     name: "",
     rating: 0,
@@ -223,8 +224,8 @@ export default function Component() {
 
   // Handle add to cart
   const handleAddToCart = async () => {
-    // Check authentication
-    if (!profile) {
+    // Check authentication - use both user and profile for robust check
+    if (!user && !profile) {
       // Store current path for redirect after login
       sessionStorage.setItem('redirectAfterLogin', `/collections/${watchId}`);
       setLoginAction('add_to_cart');
@@ -232,6 +233,103 @@ export default function Component() {
       return;
     }
 
+    // If user exists but profile is still loading, wait a moment
+    if (user && !profile && authLoading) {
+      showToast("Loading your profile, please wait...", "info");
+      return;
+    }
+
+    // If authenticated, proceed with add to cart
+    await handleAddToCartAfterAuth();
+  };
+
+  // Handle login success
+  const handleLoginSuccess = async () => {
+    setShowLoginModal(false);
+    
+    try {
+      // Force refresh the profile to get the latest data including email
+      console.log('Refreshing profile after login...');
+      await refetchProfile();
+      
+      // Wait a moment for the profile state to update
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log('Profile refreshed successfully:', { 
+        id: profile?.id, 
+        email: profile?.email,
+        hasEmail: !!profile?.email 
+      });
+      
+      // Execute the original action that triggered login
+      if (loginAction === 'buy_now') {
+        await handleBuyNowAfterAuth();
+      } else if (loginAction === 'add_to_cart') {
+        await handleAddToCartAfterAuth();
+      }
+    } catch (error) {
+      console.error('Failed to refresh profile after login:', error);
+      showToast('Failed to load profile. Please try again.', 'error');
+    }
+  };
+
+  // Handle email verification success
+  const handleEmailVerificationSuccess = async () => {
+    setShowEmailVerificationModal(false);
+    showToast("Email verified successfully!", "success");
+    
+    // After email verification, proceed with buy now
+    if (loginAction === 'buy_now') {
+      // Add item to cart first, then navigate to checkout
+      await handleAddItemToCartForCheckout();
+    }
+  };
+
+  // Helper function to add item to cart for checkout
+  const handleAddItemToCartForCheckout = async () => {
+    if (!watch) {
+      showToast("Watch data not available. Please try again.", "error");
+      return;
+    }
+
+    const selectedWatchColor = watch.WatchColors?.[selectedColor];
+    if (!selectedWatchColor) {
+      showToast("Please select a color.", "error");
+      return;
+    }
+
+    setIsBuyingNow(true);
+
+    try {
+      // Add to cart if not already in cart
+      if (!isInCart) {
+        await addToCart.mutateAsync({
+          watchColorIds: [
+            {
+              watch_color_id: selectedWatchColor.id,
+              quantity: quantity,
+            },
+          ],
+        });
+        
+        showToast(`${watch.name} added to cart successfully!`, "success");
+        
+        // Wait a moment for cart state to update before navigation
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      // Navigate to checkout
+      router.push('/checkout');
+    } catch (error: any) {
+      console.error("Add to cart error:", error);
+      showToast("Failed to add item to cart. Please try again.", "error");
+    } finally {
+      setIsBuyingNow(false);
+    }
+  };
+
+  // Handle add to cart after authentication
+  const handleAddToCartAfterAuth = async () => {
     // Check if watch data is available
     if (!watch) {
       showToast("Watch data not available. Please try again.", "error");
@@ -257,6 +355,11 @@ export default function Component() {
       });
 
       showToast(`${watch.name} (${selectedWatchColor.name}) added to cart successfully!`, "success");
+      
+      // Check if email verification is needed for future checkout
+      if (!profile?.email) {
+        showToast("Please verify your email for faster checkout", "info");
+      }
     } catch (error: any) {
       console.error("Add to cart error:", error);
 
@@ -275,10 +378,32 @@ export default function Component() {
     }
   };
 
+  // Handle buy now after authentication
+  const handleBuyNowAfterAuth = async () => {
+    console.log('Checking email after authentication:', { 
+      email: profile?.email,
+      profileId: profile?.id 
+    });
+    
+    // Check if email exists and is valid
+    const hasValidEmail = profile?.email && profile.email.trim() !== '';
+    
+    if (!hasValidEmail) {
+      console.log('Email verification needed - showing modal');
+      setShowEmailVerificationModal(true);
+      return;
+    }
+
+    console.log('Email exists, proceeding to checkout:', profile?.email);
+
+    // Use the shared helper function to add item and go to checkout
+    await handleAddItemToCartForCheckout();
+  };
+
   // Handle buy now
   const handleBuyNow = async () => {
-    // Check authentication first
-    if (!profile) {
+    // Check authentication first - use both user and profile for robust check
+    if (!user && !profile) {
       // Store current path for redirect after login
       sessionStorage.setItem('redirectAfterLogin', `/collections/${watchId}`);
       setLoginAction('buy_now');
@@ -286,72 +411,14 @@ export default function Component() {
       return;
     }
 
-    // Check email verification before proceeding to checkout
-    if (!profile?.email) {
-      setShowEmailVerificationModal(true);
+    // If user exists but profile is still loading, wait a moment
+    if (user && !profile && authLoading) {
+      showToast("Loading your profile, please wait...", "info");
       return;
     }
 
-    // Check if watch data is available
-    if (!watch) {
-      showToast("Watch data not available. Please try again.", "error");
-      return;
-    }
-
-    const selectedWatchColor = watch.WatchColors?.[selectedColor];
-    if (!selectedWatchColor) {
-      showToast("Please select a color.", "error");
-      return;
-    }
-
-    setIsBuyingNow(true);
-
-    try {
-      // First add to cart if not already in cart
-      if (!isInCart) {
-        await addToCart.mutateAsync({
-          watchColorIds: [
-            {
-              watch_color_id: selectedWatchColor.id,
-              quantity: quantity,
-            },
-          ],
-        });
-        
-        // Show success message
-        showToast(`${watch.name} added to cart successfully!`, "success");
-        
-        // Wait a moment for cart state to update before navigation
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-
-      // Navigate to checkout only after cart operation is complete
-      router.push('/checkout');
-    } catch (error: any) {
-      console.error("Buy now error:", error);
-      showToast("Failed to proceed to checkout. Please try again.", "error");
-    } finally {
-      setIsBuyingNow(false);
-    }
-  };
-
-  // Handle login success
-  const handleLoginSuccess = () => {
-    setShowLoginModal(false);
-    
-    if (loginAction === 'buy_now') {
-      showToast("Login successful! Proceeding to checkout...", "success");
-      // Automatically trigger buy now after successful login
-      setTimeout(() => {
-        handleBuyNow();
-      }, 500);
-    } else if (loginAction === 'add_to_cart') {
-      showToast("Login successful! Adding item to cart...", "success");
-      // Automatically trigger add to cart after successful login
-      setTimeout(() => {
-        handleAddToCart();
-      }, 500);
-    }
+    // If authenticated, proceed with buy now
+    await handleBuyNowAfterAuth();
   };
 
   const getImageViews = (watchColors: any[] | undefined) => {
@@ -1035,18 +1102,6 @@ export default function Component() {
         </div>
       </div>
       
-      {/* Login Modal */}
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onSuccess={handleLoginSuccess}
-        title="Login Required"
-        message={loginAction === 'buy_now' 
-          ? "Please sign in to continue with your purchase" 
-          : "Please sign in to add items to your cart"
-        }
-      />
-
       {/* Email Verification Modal */}
       <EmailVerificationModal
         isOpen={showEmailVerificationModal}
@@ -1188,6 +1243,25 @@ export default function Component() {
           </div>
         </div>
       )}
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSuccess={handleLoginSuccess}
+        title="Sign In Required"
+        message={loginAction === 'buy_now' 
+          ? "Please sign in to proceed with your purchase" 
+          : "Please sign in to add items to your cart"
+        }
+      />
+
+      {/* Email Verification Modal */}
+      <EmailVerificationModal
+        isOpen={showEmailVerificationModal}
+        onClose={() => setShowEmailVerificationModal(false)}
+        onSuccess={handleEmailVerificationSuccess}
+      />
     </div>
   );
 }

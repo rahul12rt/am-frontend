@@ -1,5 +1,5 @@
-import React, { useState, useRef, ChangeEvent, KeyboardEvent } from 'react';
-import { Loader2, X } from 'lucide-react';
+import React, { useState, useRef, ChangeEvent, KeyboardEvent, useEffect } from 'react';
+import { Loader2, X, ArrowLeft, Edit2 } from 'lucide-react';
 import { useAuth, useSendEmailOTP, useVerifyEmailOTP } from '@/hooks/queries/useUser';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -20,6 +20,28 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({ isOpen,
   // Use the new API hooks
   const sendEmailOTP = useSendEmailOTP();
   const verifyEmailOTP = useVerifyEmailOTP();
+
+  // Reset modal state when opened/closed
+  useEffect(() => {
+    if (isOpen) {
+      // Initialize with profile email if available
+      if (profile?.email && !email) {
+        setEmail(profile.email);
+      }
+    } else {
+      // Reset state when modal is closed
+      setStep('email');
+      setOtp(new Array(6).fill(''));
+      // Don't reset email to allow user to keep their entered email
+    }
+  }, [isOpen, profile?.email]);
+
+  // Reset OTP when step changes back to email
+  useEffect(() => {
+    if (step === 'email') {
+      setOtp(new Array(6).fill(''));
+    }
+  }, [step]);
 
   const handleSendOtp = async () => {
     if (!email.trim()) {
@@ -56,6 +78,34 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({ isOpen,
       onSuccess();
     } catch (error: any) {
       const errorMessage = error.message || 'Invalid or expired verification code';
+      showToast(errorMessage, 'error');
+    }
+  };
+
+  const handleChangeEmail = () => {
+    // Reset OTP and go back to email step
+    setOtp(new Array(6).fill(''));
+    setStep('email');
+    showToast('You can now enter a different email address', 'info');
+  };
+
+  const handleResendOtp = async () => {
+    if (!email.trim()) {
+      showToast('Please enter a valid email address', 'error');
+      return;
+    }
+
+    try {
+      await sendEmailOTP.mutateAsync(email);
+      showToast('New verification code sent to your email!', 'success');
+      // Reset OTP inputs
+      setOtp(new Array(6).fill(''));
+      // Focus on first OTP input
+      if (otpInputs.current[0]) {
+        otpInputs.current[0].focus();
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || 'Failed to resend verification code';
       showToast(errorMessage, 'error');
     }
   };
@@ -127,9 +177,25 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({ isOpen,
             <h2 className="font-bold text-gray-900 text-center" style={{ fontSize: '2.2rem' }}>
               Enter Code
             </h2>
-            <p className="text-center text-gray-600" style={{ fontSize: '1.5rem' }}>
-              A 6-digit code has been sent to {email}
-            </p>
+            <div className="text-center">
+              <p className="text-gray-600" style={{ fontSize: '1.5rem' }}>
+                A 6-digit code has been sent to
+              </p>
+              <div className="flex items-center justify-center gap-2 mt-1">
+                <span className="font-medium text-gray-900" style={{ fontSize: '1.4rem' }}>
+                  {email}
+                </span>
+                <button
+                  onClick={handleChangeEmail}
+                  disabled={isLoading}
+                  className="text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50"
+                  title="Change email address"
+                >
+                  <Edit2 size={16} />
+                </button>
+              </div>
+            </div>
+            
             <div className="flex gap-2 justify-center">
               {otp.map((digit, index) => (
                 <input
@@ -145,18 +211,58 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({ isOpen,
                 />
               ))}
             </div>
-            <button 
-              onClick={handleVerifyOtp} 
-              disabled={isLoading || otp.some(d => d === '')} 
-              className="w-full py-4 bg-gray-900 text-white font-medium rounded-lg transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ fontSize: '1.5rem' }}
-            >
-              {isLoading ? (
-                <Loader2 className="w-6 h-6 animate-spin mx-auto" />
-              ) : (
-                'Verify & Proceed'
-              )}
-            </button>
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <button 
+                onClick={handleVerifyOtp} 
+                disabled={isLoading || otp.some(d => d === '')} 
+                className="w-full py-4 bg-gray-900 text-white font-medium rounded-lg transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ fontSize: '1.5rem' }}
+              >
+                {isLoading && verifyEmailOTP.isPending ? (
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                ) : (
+                  'Verify & Proceed'
+                )}
+              </button>
+
+              {/* Secondary Actions */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleChangeEmail}
+                  disabled={isLoading}
+                  className="flex-1 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{ fontSize: '1.3rem' }}
+                >
+                  <ArrowLeft size={16} />
+                  Change Email
+                </button>
+                
+                <button
+                  onClick={handleResendOtp}
+                  disabled={isLoading}
+                  className="flex-1 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ fontSize: '1.3rem' }}
+                >
+                  {isLoading && sendEmailOTP.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                  ) : (
+                    'Resend OTP'
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Help Text */}
+            <div className="text-center">
+              <p className="text-gray-500 text-sm">
+                Didn't receive the code? Check your spam folder or click "Resend OTP"
+              </p>
+              <p className="text-gray-500 text-sm mt-1">
+                Wrong email? Click "Change Email" to enter a different address
+              </p>
+            </div>
           </div>
         )}
       </div>

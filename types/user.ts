@@ -39,5 +39,6 @@ export interface Address {
     created_at: string;
     updated_at: string;
     addresses: Address[];
+    cartCount: number;
   }
   

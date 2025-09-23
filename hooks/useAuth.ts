@@ -16,6 +16,7 @@ export interface SendOtpPayload {
 export interface VerifyOtpSignupPayload extends SendOtpPayload {
   otp: string;
   first_name: string;
+  supabase_id?: string;
 }
 
 export interface VerifyOtpLoginPayload extends SendOtpPayload {
@@ -58,10 +59,19 @@ const verifySignupOtp = async (
     throw new Error(supabaseError.message || 'OTP verification failed');
   }
 
-  // Then create user record in backend database (without redundant verification)
+  // Extract supabase_id from the response
+  const supabaseUserId = supabaseData?.user?.id;
+  if (!supabaseUserId) {
+    throw new Error('Failed to get Supabase user ID');
+  }
+
+  // Then create user record in backend database with supabase_id
   const res = await unprotectedApiClient.post(
     "/auth/signup/verify-otp",
-    payload
+    {
+      ...payload,
+      supabase_id: supabaseUserId
+    }
   );
 
   return res.data;

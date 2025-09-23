@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X, Loader2, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Loader2, MapPin, Check, AlertCircle } from 'lucide-react';
 import { useCreateAddress, useUpdateAddress } from '@/hooks/queries/useAddress';
 import { type CreateAddressData, type Address } from '@/lib/api-services';
 import { useAuth } from '@/contexts/UserContext';
 import { useToast } from '@/contexts/ToastContext';
+import { checkPincodeWithCache, type ValidationResult } from '@/services/pincodeValidation';
 
 interface AddressFormProps {
   isOpen: boolean;
@@ -49,6 +50,8 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pincodeValidation, setPincodeValidation] = useState<ValidationResult | null>(null);
+  const [isCheckingPincode, setIsCheckingPincode] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -68,7 +71,46 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
     }
   };
 
-  const validateForm = (): boolean => {
+  // Pincode validation effect
+  useEffect(() => {
+    const validatePincode = async () => {
+      if (formData.postal_code && /^\d{6}$/.test(formData.postal_code)) {
+        setIsCheckingPincode(true);
+        try {
+          const result = await checkPincodeWithCache(formData.postal_code);
+          setPincodeValidation(result);
+          
+          // Update errors based on pincode validation
+          if (!result.isValid) {
+            setErrors(prev => ({
+              ...prev,
+              postal_code: result.message
+            }));
+          } else {
+            setErrors(prev => {
+              const newErrors = { ...prev };
+              delete newErrors.postal_code;
+              return newErrors;
+            });
+          }
+        } catch (error) {
+          setPincodeValidation({
+            isValid: false,
+            message: 'Failed to validate pincode'
+          });
+        } finally {
+          setIsCheckingPincode(false);
+        }
+      } else {
+        setPincodeValidation(null);
+      }
+    };
+
+    const timeoutId = setTimeout(validatePincode, 500); // Debounce
+    return () => clearTimeout(timeoutId);
+  }, [formData.postal_code]);
+
+  const validateForm = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.full_name.trim()) newErrors.full_name = 'Full name is required';
@@ -79,18 +121,34 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
     if (!formData.address_line1.trim()) newErrors.address_line1 = 'Address is required';
     if (!formData.city.trim()) newErrors.city = 'City is required';
     if (!formData.state.trim()) newErrors.state = 'State is required';
-    if (!formData.postal_code.trim()) newErrors.postal_code = 'PIN code is required';
-    if (!/^\d{6}$/.test(formData.postal_code)) newErrors.postal_code = 'Please enter a valid 6-digit PIN code';
+    if (!formData.postal_code.trim()) {
+      newErrors.postal_code = 'PIN code is required';
+    } else if (!/^\d{6}$/.test(formData.postal_code)) {
+      newErrors.postal_code = 'Please enter a valid 6-digit PIN code';
+    } else if (pincodeValidation && !pincodeValidation.isValid) {
+      newErrors.postal_code = pincodeValidation.message;
+    }
+
+    // Check if pincode validation is still in progress
+    if (isCheckingPincode) {
+      newErrors.postal_code = 'Validating pincode...';
+    }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0 && !isCheckingPincode;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    if (!(await validateForm())) {
       showToast('Please fix the errors in the form', 'error');
+      return;
+    }
+
+    // Final check: ensure pincode is serviceable before saving
+    if (!pincodeValidation?.isValid) {
+      showToast('Please enter a serviceable pincode', 'error');
       return;
     }
 
@@ -103,7 +161,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
         // Update existing address
         result = await updateAddress.mutateAsync({
           ...formData,
-          id: editAddress.id.toString(),
+          id: editAddress.id,
         });
         showToast('Address updated successfully!', 'success');
       } else {

@@ -26,20 +26,7 @@ export default function Home() {
     }
   }, [isCacheReady, allWatches.length]);
 
-  // Show loading state while cache is initializing
-  if (isLoading && !isCacheReady) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-flex items-center space-x-3 mb-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-            <span className="text-xl font-medium text-white">Loading Alban Marcus Collection...</span>
-          </div>
-          <p className="text-gray-300 text-sm">Preparing the finest luxury watches for you</p>
-        </div>
-      </div>
-    );
-  }
+  // Remove the old loading screen - now handled by AppLoader
 
   return (
     <>

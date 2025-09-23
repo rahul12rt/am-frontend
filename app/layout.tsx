@@ -11,6 +11,7 @@ import { Providers } from "./providers";
 import ErrorBoundary from '@/components/ErrorBoundary';
 import NavigationBoundary from '@/components/NavigationBoundary';
 import CacheMonitor from '@/components/molecules/cacheMonitor/CacheMonitor';
+import AppLoader from '@/components/layout/AppLoader';
 
 const centurygothic = localFont({
   src: "../public/fonts/gothic/centurygothic.ttf",
@@ -51,13 +52,18 @@ export default function RootLayout({
           <Providers>
             <ToastProvider>
               <UserModalProvider>
-                <Header />
-                <NavigationBoundary>
-                  {children}
-                </NavigationBoundary>
-                <Footer />
-                <UserModalWrapper />
-                <CacheMonitor />
+                <AppLoader
+                  showAlways={true}
+                  minLoadingTime={3000}
+                >
+                  <Header />
+                  <NavigationBoundary>
+                    {children}
+                  </NavigationBoundary>
+                  <Footer />
+                  <UserModalWrapper />
+                  <CacheMonitor />
+                </AppLoader>
               </UserModalProvider>
             </ToastProvider>
           </Providers>

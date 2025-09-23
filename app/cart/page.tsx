@@ -6,8 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { MdKeyboardArrowRight } from 'react-icons/md';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/UserContext';
+import { useAuth } from '@/hooks/queries/useUser';
 import { useToast } from '@/contexts/ToastContext';
+import { useUserModal } from '@/contexts/UserModalContext';
 import PaymentIcons from '@/components/atoms/PaymentIcons';
 import EmailVerificationModal from '@/components/organisms/checkout/EmailVerificationModal';
 import {
@@ -20,21 +21,31 @@ import {
 } from "@/hooks/queries/useCart";
 
 const CartPage: React.FC = () => {
-  const { profile, loading } = useAuth();
+  const { user, profile, isAuthenticated, isLoading, loading } = useAuth();
   const { showToast } = useToast();
+  const { openModal } = useUserModal();
   const router = useRouter();
 
   // Store redirect path for login
   useEffect(() => {
-    if (!loading && !profile) {
+    if (!isLoading && !profile) {
       sessionStorage.setItem('redirectAfterLogin', '/cart');
     }
-  }, [loading, profile]);
+  }, [isLoading, profile]);
 
   // Only fetch cart data if user is authenticated
-  const { data: cartData, isLoading: cartLoading, error: cartError } = useCart();
-  const { data: totalData } = useCartTotal();
-  const { data: itemCount } = useCartCount();
+  const shouldFetchCart = isAuthenticated && !isLoading;
+  const { data: cartData, isLoading: cartLoading, isFetching: cartFetching, error: cartError } = useCart(isAuthenticated);
+
+  // Clear items awaiting refetch when cart data is updated
+  useEffect(() => {
+    if (!cartFetching && cartData) {
+      // Clear all items awaiting refetch when cart data is fresh
+      setItemsAwaitingRefetch(new Set());
+    }
+  }, [cartFetching, cartData]);
+  const { data: totalData } = useCartTotal(isAuthenticated);
+  const { data: itemCount } = useCartCount(isAuthenticated);
 
   const updateCartItem = useUpdateCartItem();
   const removeFromCart = useRemoveFromCart();
@@ -43,6 +54,17 @@ const CartPage: React.FC = () => {
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [isClearingCart, setIsClearingCart] = useState(false);
+  const [itemsAwaitingRefetch, setItemsAwaitingRefetch] = useState<Set<string>>(new Set());
+
+  // Check if any cart operations are in progress
+  const isCartOperationInProgress = 
+    updateCartItem.isPending || 
+    removeFromCart.isPending || 
+    clearCart.isPending || 
+    isClearingCart ||
+    updatingItems.size > 0 ||
+    cartLoading ||
+    cartFetching; // Include background refetches after mutations
 
   const getProductImage = (imageURL: string): string => {
     return imageURL || "/images/alban-marcus-watch.png";
@@ -53,6 +75,8 @@ const CartPage: React.FC = () => {
     setUpdatingItems(prev => new Set(prev).add(cartItemId));
     try {
       await updateCartItem.mutateAsync({ cartItemId, data: { quantity: newQuantity } });
+      // Mark item as awaiting refetch to show loading during cart data update
+      setItemsAwaitingRefetch(prev => new Set(prev).add(cartItemId));
     } catch (error) {
       showToast("Failed to update quantity", "error");
     } finally {
@@ -67,6 +91,8 @@ const CartPage: React.FC = () => {
   const handleRemoveItem = async (cartItemId: string, itemName: string) => {
     try {
       await removeFromCart.mutateAsync(cartItemId);
+      // Mark item as awaiting refetch to show loading during cart data update
+      setItemsAwaitingRefetch(prev => new Set(prev).add(cartItemId));
       showToast(`${itemName} removed from cart`, "success");
     } catch (error) {
       showToast("Failed to remove item", "error");
@@ -86,6 +112,18 @@ const CartPage: React.FC = () => {
   };
 
   const handleCheckout = () => {
+    // Prevent checkout during cart operations
+    if (isCartOperationInProgress) {
+      showToast("Please wait for cart updates to complete", "info");
+      return;
+    }
+
+    // Check if cart has items
+    if (!cartData?.items?.length) {
+      showToast("Your cart is empty", "error");
+      return;
+    }
+
     if (!profile?.email) {
       setIsVerificationModalOpen(true);
     } else {
@@ -99,14 +137,17 @@ const CartPage: React.FC = () => {
     window.location.href = '/checkout';
   };
 
-  if (loading || cartLoading) {
+  // Show loading only when auth is loading or cart is loading for authenticated users
+  if (isLoading || (shouldFetchCart && cartLoading)) {
     return (
       <div className="pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
         <div className="container">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="inline-flex items-center space-x-3">
               <Loader2 className="w-8 h-8 animate-spin text-gray-900" />
-              <span className="text-lg font-medium text-gray-900">Loading your cart...</span>
+              <span className="text-lg font-medium text-gray-900">
+                {isLoading ? "Loading..." : "Loading your cart..."}
+              </span>
             </div>
           </div>
         </div>
@@ -114,7 +155,8 @@ const CartPage: React.FC = () => {
     );
   }
 
-  if (cartError || !cartData) {
+  // Show cart error only for authenticated users
+  if (shouldFetchCart && (cartError || !cartData)) {
     return (
       <div className="pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
         <div className="container">
@@ -133,7 +175,7 @@ const CartPage: React.FC = () => {
   }
 
   // Handle empty cart states
-  if (cartData.items.length === 0) {
+  if (!cartData || cartData.items.length === 0) {
     return (
       <div className="pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
         <div className="container">
@@ -146,9 +188,13 @@ const CartPage: React.FC = () => {
                   <h1 className="font-bold mb-2 text-gray-900" style={{ fontSize: '2.2rem' }}>You Must Be Logged In</h1>
                   <p className="text-gray-600 mb-8" style={{ fontSize: '1.5rem' }}>Sign in to see your cart and start shopping.</p>
                   <div className="space-y-4">
-                    <Link href="/" className="block w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors" style={{ fontSize: '1.5rem' }}>
+                    <button 
+                      onClick={openModal}
+                      className="block w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors" 
+                      style={{ fontSize: '1.5rem' }}
+                    >
                       Sign In
-                    </Link>
+                    </button>
                     <Link href="/collections" className="block w-full py-4 border border-gray-900 text-gray-900 font-medium rounded-lg hover:bg-gray-200 transition-colors" style={{ fontSize: '1.5rem' }}>
                       Continue Shopping
                     </Link>
@@ -218,8 +264,10 @@ const CartPage: React.FC = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
               <div className="space-y-0">
-                {items.map((item: any, index) => {
+                {items.map((item: any, index: number) => {
                   const isUpdating = updatingItems.has(item.id);
+                  const isAwaitingRefetch = itemsAwaitingRefetch.has(item.id);
+                  const isItemLoading = isUpdating || isAwaitingRefetch;
 
                   return (
                     <div key={item.id} className={`p-6 ${index !== items.length - 1 ? 'border-b border-gray-200' : ''}`}>
@@ -255,17 +303,21 @@ const CartPage: React.FC = () => {
                                 <button 
                                   onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                                   className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                  disabled={isUpdating || item.quantity <= 1}
+                                  disabled={isItemLoading || item.quantity <= 1}
                                 >
                                   <Minus size={16} className="text-gray-600" />
                                 </button>
                                 <span className="px-4 py-2 font-bold text-gray-900 min-w-[3rem] text-center" style={{ fontSize: '1.5rem' }}>
-                                  {isUpdating ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : item.quantity}
+                                  {isItemLoading ? (
+                                    <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                                  ) : (
+                                    item.quantity
+                                  )}
                                 </span>
                                 <button 
                                   onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                                   className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                  disabled={isUpdating}
+                                  disabled={isItemLoading}
                                 >
                                   <Plus size={20} className="text-gray-600" />
                                 </button>
@@ -321,10 +373,22 @@ const CartPage: React.FC = () => {
               <div className="mt-6">
                 <button 
                   onClick={handleCheckout} 
-                  className="w-full py-4 bg-gray-900 text-white font-medium rounded-lg transition-colors hover:bg-gray-800"
+                  disabled={isCartOperationInProgress || !cartData?.items?.length}
+                  className={`w-full py-4 font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                    isCartOperationInProgress || !cartData?.items?.length
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                      : 'bg-gray-900 text-white hover:bg-gray-800'
+                  }`}
                   style={{ fontSize: '1.5rem' }}
                 >
-                  Continue to Checkout
+                  {isCartOperationInProgress ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Updating Cart...
+                    </>
+                  ) : (
+                    'Continue to Checkout'
+                  )}
                 </button>
               </div>
 
@@ -333,7 +397,7 @@ const CartPage: React.FC = () => {
                 <div className="mt-4">
                   <button 
                     className="w-full py-4 border border-gray-900 text-gray-900 font-medium rounded-lg transition-colors hover:bg-gray-200"
-                    onClick={() => window.location.href = '/'}
+                    onClick={openModal}
                     style={{ fontSize: '1.5rem' }}
                   >
                     Sign In
@@ -347,9 +411,9 @@ const CartPage: React.FC = () => {
                   Prices and delivery costs are not confirmed until you've reached the checkout.
                 </p>
                 <p className="text-gray-600" style={{ fontSize: '1.5rem' }}>
-                  15 days free returns. Read more about{' '}
-                  <Link href="/returns" className="text-gray-900 underline hover:text-gray-700">
-                    returns and refund policy
+                7 days free returns. Read more about{' '}
+                  <Link href="/returns" target="_blank" className="text-gray-900 underline hover:text-gray-700">
+                    returns and exchange policy
                   </Link>.
                 </p>
               </div>

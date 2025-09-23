@@ -48,6 +48,7 @@ const User = ({ onClose }: UserProps) => {
 
   const handleOtpChange = (otpValue: string) => {
     setOtp(otpValue);
+    // Remove auto-submit to prevent duplicate calls - let users click verify button
   };
   const [firstName, setFirstName] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -58,6 +59,7 @@ const User = ({ onClose }: UserProps) => {
   const [isResendDisabled, setIsResendDisabled] = useState(true);
   const [orders, setOrders] = useState<any[]>([]);
   const [isRefetchingProfile, setIsRefetchingProfile] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   // Mutations
   const sendSignupOtp = useSendSignupOtp();
@@ -221,12 +223,20 @@ const User = ({ onClose }: UserProps) => {
   /** ---- Handle Verify OTP ---- */
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent duplicate submissions
+    if (isVerifying || isLoading) {
+      return;
+    }
+    
     setMessage(null);
     setIsLoading(true);
+    setIsVerifying(true);
 
   if (!otp) {
     showMessage("OTP is required", "error");
     setIsLoading(false);
+    setIsVerifying(false);
     return;
   }
 
@@ -270,17 +280,29 @@ const User = ({ onClose }: UserProps) => {
       });
 
       console.log('Signup response:', res);
-      showMessage("Account created successfully! 🎉", "success");
+      
+      // Show success message and refetch profile like login does
+      showToast("Registration successful! Welcome to Alban Marcus! 🎉", 'success');
+      
+      // Refetch profile after successful registration (same as login)
+      setTimeout(async () => {
+        setIsRefetchingProfile(true);
+        try {
+          await refetchProfile();
+          showToast("Profile loaded successfully!", 'success');
+        } catch (error) {
+          console.error('Failed to refetch profile after registration:', error);
+          showToast("Registration successful, but failed to load profile", 'info');
+        } finally {
+          setIsRefetchingProfile(false);
+        }
+      }, 200);
 
-      // Close modal and reset form after success
-      setTimeout(() => {
-        onClose?.();
-        setStep("phone");
-        setOtp("");
-        setFirstName("");
-        setAgreedToTerms(false);
-        setMode("login"); // Switch to login mode for future interactions
-      }, 2000);
+      onClose?.();
+      setStep("phone");
+      setOtp("");
+      setFirstName("");
+      setAgreedToTerms(false);
     }
   } catch (error: any) {
     const errorMessage =
@@ -292,6 +314,7 @@ const User = ({ onClose }: UserProps) => {
     showMessage(errorMessage, "error");
   } finally {
     setIsLoading(false);
+    setIsVerifying(false);
   }
 };
 
@@ -732,10 +755,10 @@ const User = ({ onClose }: UserProps) => {
                 {/* Verify OTP Button - Responsive */}
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || isVerifying || otp.length !== 6}
                   className={`${styles.submitButton} ${styles.outlineButton} rounded-lg text-sm md:text-base lg:text-[1.6rem] font-bold py-3 md:py-4 px-4 md:px-6 mt-4 md:mt-6 cursor-pointer w-full flex justify-between items-center gap-2 md:gap-4 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200`}
                 >
-                  {isLoading ? "Verifying..." : "Verify OTP"}
+                  {isLoading || isVerifying ? "Verifying..." : "Verify OTP"}
                   <Image
                     src="/icons/rightArrow.svg"
                     alt="Arrow Icon"
@@ -744,7 +767,6 @@ const User = ({ onClose }: UserProps) => {
                     className="md:w-6 md:h-6"
                   />
                 </button>
-
 
                 {/* Back to Phone Button - Responsive */}
                 <div className="flex justify-between items-center mt-4">

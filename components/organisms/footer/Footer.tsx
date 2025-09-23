@@ -21,6 +21,10 @@ const Footer = () => {
           <Link href="/termsandconditions" className="hover:text-black">
             Terms & Conditions
           </Link>
+          <span>|</span>
+          <Link href="/returns" className="hover:text-black">
+            Returns & Exchange
+          </Link>
         </div>
 
         {/* Right Section - Social Links */}
