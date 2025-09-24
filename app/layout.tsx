@@ -45,6 +45,48 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            /* Hide content initially to prevent flash before loading screen */
+            .app-content-wrapper {
+              opacity: 0;
+              transition: opacity 0.3s ease-in-out;
+            }
+            .app-content-wrapper.loaded {
+              opacity: 1;
+            }
+            /* Ensure loading screen is always on top */
+            .loading-screen {
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              z-index: 9999;
+            }
+            /* CSS-only loading screen for immediate display */
+            body:not(.js-loaded) .app-content-wrapper {
+              opacity: 0;
+            }
+            body:not(.js-loaded)::before {
+              content: '';
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background: #000000;
+              z-index: 10000;
+              display: block;
+            }
+            /* Ensure smooth transition after hydration */
+            body.js-loaded .app-content-wrapper {
+              opacity: 1;
+            }
+          `
+        }} />
+      </head>
       <body
         className={`${centurygothic.className} ${ppneuemontrealNormal.variable} ${ppeditorialnewitalic.variable} ${timesNewRomanNormal.variable} bg-black-1 text-white-1`}
       >

@@ -20,28 +20,36 @@ const AppLoader: React.FC<AppLoaderProps> = ({
   minLoadingTime = 3000,
   loadingEnabledPaths = ['/']
 }) => {
-  const [hasVisited, setHasVisited] = useState(false);
-  const [shouldShowLoader, setShouldShowLoader] = useState(false);
   const pathname = usePathname();
-
+  
   // Check if current path should show loader
   const isLoadingEnabledPath = loadingEnabledPaths.includes(pathname);
+  
+  // Initialize with false to match server-side rendering
+  const [shouldShowLoader, setShouldShowLoader] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
-  // Check if user has visited before
+  // Client-side initialization to prevent hydration mismatch
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const visited = localStorage.getItem('alban-marcus-visited');
-      setHasVisited(!!visited);
-      
-      // Only show loader if current path is enabled for loading
-      if (isLoadingEnabledPath && (showAlways || (!visited && showOnFirstVisit))) {
-        setShouldShowLoader(true);
-        if (!visited) {
-          localStorage.setItem('alban-marcus-visited', 'true');
-        }
-      }
+    setIsClient(true);
+    
+    // Mark that JavaScript has loaded
+    document.body.classList.add('js-loaded');
+    
+    const visited = localStorage.getItem('alban-marcus-visited');
+    
+    // Determine if loader should show based on client-side conditions
+    const shouldShow = isLoadingEnabledPath && (showAlways || (!visited && showOnFirstVisit));
+    setShouldShowLoader(shouldShow);
+    
+    // Set localStorage if this is first visit and loader should show
+    if (shouldShow && !visited && showOnFirstVisit) {
+      localStorage.setItem('alban-marcus-visited', 'true');
     }
-  }, [showOnFirstVisit, showAlways, isLoadingEnabledPath]);
+    
+    setHasInitialized(true);
+  }, [isLoadingEnabledPath, showAlways, showOnFirstVisit]);
 
   const { isLoading, progress, currentTask } = useAppLoader({
     minLoadingTime
@@ -55,13 +63,24 @@ const AppLoader: React.FC<AppLoaderProps> = ({
 
   return (
     <>
-      <LoadingScreen 
-        isLoading={showLoading} 
-        onComplete={handleLoadingComplete}
-        progress={progress}
-        currentTask={currentTask}
-      />
-      <div className={showLoading ? 'opacity-0 pointer-events-none' : 'opacity-100'}>
+      {/* Only render loading screen after client hydration */}
+      {isClient && showLoading && (
+        <div className="loading-screen">
+          <LoadingScreen 
+            isLoading={showLoading} 
+            onComplete={handleLoadingComplete}
+            progress={progress}
+            currentTask={currentTask}
+          />
+        </div>
+      )}
+      
+      {/* Always render content wrapper for consistent SSR/CSR */}
+      <div 
+        className={`app-content-wrapper ${
+          isClient && !showLoading && hasInitialized ? 'loaded' : ''
+        }`}
+      >
         {children}
       </div>
     </>

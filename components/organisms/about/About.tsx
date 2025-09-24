@@ -9,12 +9,16 @@ gsap.registerPlugin(ScrollTrigger);
 const About = () => {
   const containerRef = useRef<HTMLElement>(null);
 
-  const titleWords = ["Upgrade", "Your Timepiece", "Collection Today"];
-  const paragraphWords =
-    `Each timepiece is subjected to the most rigorous quality controls. Our watchmakers control every spare part before it is assigned a place in inventory. Even if there is tiny marks, the piece will not be allowed through quality control, and it invariably means the loss of valuable parts and starting again from scratch. A great number of aesthetic criteria will be taken into consideration to ensure that the watch is beautifully finished.
-    Mechanical watches may go through up to 50 or 60 different processes before the watch is considered to be as near to perfect as humanly possible before delivery.`.split(
-      " "
-    );
+  const titleWords = ["Crafting Time,", "Defining Elegance", "– Alban Marcus"];
+  const paragraphSections = [
+    "At Alban Marcus, we believe time is more than just minutes and hours — it's an experience.",
+    "Each watch we create is a blend of timeless craftsmanship, modern design, and refined luxury, built for those who value precision and elegance in every moment.",
+    "Our upcoming collection of luxury watches reflects sophistication, exclusivity, and artistry. Designed to complement your lifestyle,",
+    "Alban Marcus timepieces are more than accessories — they are statements of individuality and legacy.",
+    "Be the first to experience the new era of premium watches."
+  ];
+
+  const paragraphWords = paragraphSections.join(" ").split(" ");
 
   useEffect(() => {
     const container = containerRef.current;
@@ -68,11 +72,10 @@ const About = () => {
             {titleWords.map((word, i) => (
               <span key={i} className="inline-block overflow-hidden mr-[5px]">
                 <span
-                  className={`title-span inline-block translate-y-full opacity-0 ${
-                    word === "Your Timepiece"
+                  className={`title-span inline-block translate-y-full opacity-0 ${word === "Defining Elegance"
                       ? "font-[family-name:var(--font-ppeditorialnewitalic)]"
                       : ""
-                  }`}
+                    }`}
                 >
                   {word}
                 </span>

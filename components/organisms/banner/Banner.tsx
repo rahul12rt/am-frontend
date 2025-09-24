@@ -5,7 +5,7 @@ import { gsap } from "gsap";
 const Banner = () => {
   const containerRef = useRef<HTMLElement>(null);
 
-  const titleChars = "AM0S1".split("");
+  const titleChars = "AM002 VALOR".split("");
   const textWords =
     "Mechanical watches may go through up to 50 or 60 different processes before the watch is considered to be as near to perfect as humanly possible before delivery.".split(
       " "
