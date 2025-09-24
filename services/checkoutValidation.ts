@@ -49,10 +49,7 @@ export const validateUserProfile = (profile: UserProfile | null): CheckoutValida
     errors.push('Please provide a valid 10-digit phone number');
   }
 
-  // Optional but recommended fields
-  if (!profile.last_name?.trim()) {
-    warnings.push('Last name is recommended for delivery');
-  }
+  // Optional but recommended fields - removed last name warning as per user request
 
   return {
     isValid: errors.length === 0,

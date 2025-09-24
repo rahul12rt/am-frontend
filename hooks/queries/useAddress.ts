@@ -126,8 +126,10 @@ export const useCreateAddress = () => {
     mutationFn: (data: CreateAddressData) => addressServices.createAddress(data),
 
     onSuccess: (newAddress) => {
-      // Invalidate and refetch addresses
+      // Invalidate and refetch addresses immediately
       queryClient.invalidateQueries({ queryKey: queryKeys.addresses.all() });
+      // Also invalidate user profile to update address count
+      queryClient.invalidateQueries({ queryKey: ['user', 'profile'] });
       console.log('Address created successfully:', newAddress.id);
     },
 
@@ -147,23 +149,23 @@ export const useUpdateAddress = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: UpdateAddressData) => addressServices.updateAddress(data),
+    mutationFn: (data: UpdateAddressData) => addressServices.updateAddress(data.id, data),
 
     onMutate: async (updatedAddress) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.addresses.all() });
-      await queryClient.cancelQueries({ queryKey: queryKeys.addresses.detail(updatedAddress.id) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.addresses.detail(updatedAddress.id.toString()) });
 
       // Snapshot the previous values
       const previousAddresses = queryClient.getQueryData(queryKeys.addresses.lists());
-      const previousAddress = queryClient.getQueryData(queryKeys.addresses.detail(updatedAddress.id));
+      const previousAddress = queryClient.getQueryData(queryKeys.addresses.detail(updatedAddress.id.toString()));
 
       return { previousAddresses, previousAddress };
     },
 
     onSuccess: (updatedAddress) => {
       // Update the cache
-      queryClient.setQueryData(queryKeys.addresses.detail(updatedAddress.id), updatedAddress);
+      queryClient.setQueryData(queryKeys.addresses.detail(updatedAddress.id.toString()), updatedAddress);
       queryClient.invalidateQueries({ queryKey: queryKeys.addresses.lists() });
       console.log('Address updated successfully:', updatedAddress.id);
     },
@@ -174,7 +176,7 @@ export const useUpdateAddress = () => {
         queryClient.setQueryData(queryKeys.addresses.lists(), context.previousAddresses);
       }
       if (context?.previousAddress) {
-        queryClient.setQueryData(queryKeys.addresses.detail(updatedAddress.id), context.previousAddress);
+        queryClient.setQueryData(queryKeys.addresses.detail(updatedAddress.id.toString()), context.previousAddress);
       }
 
       const errorMessage = handleApiError(error);

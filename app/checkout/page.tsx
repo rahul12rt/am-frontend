@@ -5,6 +5,7 @@ import { CheckCircle, Edit, Plus, CreditCard, Shield, Loader2, User, Mail, Phone
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useCart } from '@/hooks/queries/useCart';
+import { useAddresses } from '@/hooks/queries/useAddress';
 import AddressForm from '@/components/organisms/checkout/AddressForm';
 import PaymentIcons from '@/components/atoms/PaymentIcons';
 import { useRazorpayCheckout } from '@/hooks/useRazorpayCheckout';
@@ -22,6 +23,7 @@ import {
 const CheckoutPage = () => {
   const { data: cartData, isLoading: cartLoading } = useCart();
   const { profile, refetchProfile } = useUser();
+  const { data: userAddresses, isLoading: addressesLoading, refetch: refetchAddresses } = useAddresses();
   const { showToast } = useToast();
   const { payNow, isProcessing } = useRazorpayCheckout();
 
@@ -36,8 +38,8 @@ const CheckoutPage = () => {
   const [addressType, setAddressType] = useState<'billing' | 'shipping'>('billing');
   const [isRefreshingProfile, setIsRefreshingProfile] = useState(false);
 
-  // Mock data for now - replace with actual address data
-  const addresses: any[] = profile?.addresses || [];
+  // Use addresses from React Query hook
+  const addresses = userAddresses || [];
   const deliveryFee = 0;
   const subtotal = cartData?.summary?.totalAmount ? parseFloat(cartData.summary.totalAmount) : 0;
   const total = subtotal + deliveryFee;
@@ -109,7 +111,7 @@ const CheckoutPage = () => {
 
     // Get user details for prefill
     const prefillData = {
-      name: `${profile.first_name} ${profile.last_name || ''}`.trim(),
+      name: profile.first_name || 'Customer',
       email: profile.email || 'customer@example.com',
       contact: `${profile.phone_country_code || '+91'}${profile.phone_number}` || '9999999999'
     };
@@ -162,18 +164,27 @@ const CheckoutPage = () => {
     }
   }, []); // Only run once when component mounts
 
-  const handleAddressSuccess = (address: Address) => {
+  const handleAddressSuccess = async (address: Address) => {
     setShowAddressForm(false);
     setEditingAddress(null);
     
-    if (address.is_billing_address && addressType === 'billing') {
-      setSelectedBillingAddress(address.id.toString());
+    // Refresh addresses to get the latest data
+    try {
+      await refetchAddresses();
+      
+      // Auto-select the new/updated address
+      if (address.is_billing_address && (addressType === 'billing' || !editingAddress)) {
+        setSelectedBillingAddress(address.id.toString());
+      }
+      if (address.is_shipping_address && (addressType === 'shipping' || useSameAddress || !editingAddress)) {
+        setSelectedShippingAddress(address.id.toString());
+      }
+      
+      showToast(`Address ${editingAddress ? 'updated' : 'added'} successfully!`, 'success');
+    } catch (error) {
+      console.error('Failed to refresh addresses:', error);
+      showToast(`Address ${editingAddress ? 'updated' : 'added'} successfully! Please refresh if not visible.`, 'success');
     }
-    if (address.is_shipping_address && (addressType === 'shipping' || useSameAddress)) {
-      setSelectedShippingAddress(address.id.toString());
-    }
-    
-    showToast(`Address ${editingAddress ? 'updated' : 'added'} successfully!`, 'success');
   };
 
   const handleEditAddress = (address: Address) => {
@@ -300,7 +311,7 @@ const CheckoutPage = () => {
                 <div className="flex items-center gap-3">
                   <User className="text-gray-600" size={20} />
                   <span className="text-gray-900" style={{ fontSize: '1.5rem' }}>
-                    {profile.first_name} {profile.last_name || ''}
+                    {profile.first_name}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -327,7 +338,7 @@ const CheckoutPage = () => {
             {/* Billing Address */}
             <div className="bg-white rounded-3xl shadow-sm p-6">
               <h2 className="font-bold text-gray-900 mb-6" style={{ fontSize: '2.2rem' }}>Billing Address</h2>
-              {false ? (
+              {addressesLoading ? (
                 <div className="flex items-center gap-2 py-4">
                   <Loader2 className="w-5 h-5 animate-spin text-gray-900" />
                   <span className="text-gray-900" style={{ fontSize: '1.5rem' }}>Loading addresses...</span>
@@ -410,7 +421,12 @@ const CheckoutPage = () => {
               {!useSameAddress && (
                 <div className="space-y-4">
                   <p className="text-gray-600 mb-4" style={{ fontSize: '1.3rem' }}>Select a different shipping address:</p>
-                  {addresses && addresses.filter(addr => addr.is_shipping_address).length > 0 ? (
+                  {addressesLoading ? (
+                    <div className="flex items-center gap-2 py-4">
+                      <Loader2 className="w-5 h-5 animate-spin text-gray-900" />
+                      <span className="text-gray-900" style={{ fontSize: '1.5rem' }}>Loading addresses...</span>
+                    </div>
+                  ) : addresses && addresses.filter(addr => addr.is_shipping_address).length > 0 ? (
                     <div className="space-y-3">
                       {addresses
                         .filter(address => address.is_shipping_address)

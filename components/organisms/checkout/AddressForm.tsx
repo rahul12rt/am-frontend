@@ -34,7 +34,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ isOpen, onClose, onSuccess, e
     address_type: editAddress?.address_type || 'home',
     is_billing_address: editAddress?.is_billing_address ?? true,
     is_shipping_address: editAddress?.is_shipping_address ?? true,
-    full_name: editAddress?.full_name || `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(),
+    full_name: editAddress?.full_name || profile?.first_name || '',
     phone: editAddress?.phone || profile?.phone_number || '',
     address_line1: editAddress?.address_line1 || '',
     address_line2: editAddress?.address_line2 || '',

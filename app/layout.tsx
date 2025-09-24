@@ -53,7 +53,7 @@ export default function RootLayout({
             <ToastProvider>
               <UserModalProvider>
                 <AppLoader
-                  showAlways={true}
+                  showOnFirstVisit={true}
                   minLoadingTime={3000}
                 >
                   <Header />

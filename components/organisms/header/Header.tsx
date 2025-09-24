@@ -293,6 +293,16 @@ const Header = () => {
                 </Link>
               </li>
               <li className="text-center text-[18px]">
+                <Link href="/cart" onClick={toggleMenu} className="flex items-center justify-center gap-2">
+                  <span>Cart</span>
+                  {user && cartCount > 0 && (
+                    <span className="flex justify-center items-center rounded-full bg-red-1 min-w-[16px] min-h-[16px] text-white-1 text-[10px] font-bold px-[4px]">
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </span>
+                  )}
+                </Link>
+              </li>
+              <li className="text-center text-[18px]">
                 <Link href="/offers" onClick={toggleMenu}>
                   Offers
                 </Link>

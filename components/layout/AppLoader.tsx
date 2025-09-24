@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { useAppLoader } from '@/hooks/useAppLoader';
 
@@ -19,21 +20,37 @@ const AppLoader: React.FC<AppLoaderProps> = ({
 }) => {
   const [hasVisited, setHasVisited] = useState(false);
   const [shouldShowLoader, setShouldShowLoader] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const pathname = usePathname();
 
-  // Check if user has visited before
+  // Check if user has visited before and determine if we should show loader
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const visited = localStorage.getItem('alban-marcus-visited');
+      const isFirstVisit = !visited;
       setHasVisited(!!visited);
       
-      if (showAlways || (!visited && showOnFirstVisit)) {
-        setShouldShowLoader(true);
-        if (!visited) {
-          localStorage.setItem('alban-marcus-visited', 'true');
-        }
+      // Only show loader on first visit to the main page (/) 
+      // Don't show on internal navigation (like cart to checkout)
+      const isMainPage = pathname === '/';
+      const shouldShow = (isFirstVisit && showOnFirstVisit && isMainPage && isInitialLoad);
+      
+      setShouldShowLoader(shouldShow);
+      
+      if (isFirstVisit && isMainPage) {
+        localStorage.setItem('alban-marcus-visited', 'true');
       }
     }
-  }, [showOnFirstVisit, showAlways]);
+  }, [showOnFirstVisit, showAlways, pathname, isInitialLoad]);
+
+  // Track if this is the initial page load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoad(false);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const { isLoading, progress, currentTask } = useAppLoader({
     minLoadingTime

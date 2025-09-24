@@ -71,7 +71,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
         transition={{ duration: 0.5 }}
         className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center"
         style={{
-          background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%)'
+          background: 'linear-gradient(135deg, #000000 0%, #000000 50%, #000000 100%)'
         }}
       >
         {/* Animated background pattern */}
@@ -95,7 +95,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
             transition={{ duration: 1, ease: "easeOut" }}
             className="mb-12"
           >
-            <h1 className="text-white text-center zen-dots-regular text-[24px] lg:text-[32px] tracking-[4px] lg:tracking-[10px]">
+            <h1 className="text-white text-center zen-dots-regular text-[24px] lg:text-[38px] tracking-[4px] lg:tracking-[10px]">
               ALBAN MARCUS
             </h1>
           </motion.div>
@@ -123,7 +123,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.5 }}
-                className="text-white/80 text-center text-[18px] lg:text-[24px]"
+                className="text-white/80 text-center text-[18px] lg:text-[20px]"
                 style={{ 
                   fontFamily: 'var(--font-ppneuemontrealNormal), -apple-system, BlinkMacSystemFont, sans-serif',
                   letterSpacing: '0.1em'
