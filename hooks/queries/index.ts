@@ -21,13 +21,16 @@ export type {
   WatchFormData,
   WatchImage,
   CartItem,
-  AddToCartData,
-  UpdateCartData,
-  UserProfile,
+  AddToCartRequest,
+  AddToCartResponse,
+  UpdateCartItemData,
   UpdateProfileData,
   Address,
   CreateAddressData,
 } from '@/lib/api-services';
+
+// Import types from types/user.ts
+export type { UserProfile } from '@/types/user';
 
 // Re-export query keys
 export { queryKeys } from '@/lib/query-keys';

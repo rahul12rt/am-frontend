@@ -18,7 +18,7 @@ import { MdKeyboardArrowRight } from 'react-icons/md';
 import { useParams } from 'next/navigation';
 import { useWatch } from '@/hooks/queries/useWatches';
 import { useWatchFromCache, useRandomRecommendations, useWatchImagePreloader } from '@/contexts/WatchCacheContext';
-import { WatchImage, Review } from '@/lib/api-services';
+import { WatchImage, Review, WatchColor } from '@/lib/api-services';
 import { useAuth } from '@/contexts/UserContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useAddToCart, useIsInCart, useUpdateCartItem } from '@/hooks/queries/useCart';
@@ -123,20 +123,20 @@ export default function Component() {
     const timer = setTimeout(() => {
       updateCartItem({
         cartItemId: cartItem.id,
-        data: { quantity: finalQuantity },
+        data: { quantity: finalQuantity }
       });
-    }, 1500); // 500ms delay
+    }, 1500); // 1.5s delay
 
     setDebounceTimer(timer);
   };
 
-  const formatObjectToString = (value: string | object | undefined): string => {
+  const formatObjectToString = (value: string | object | null | undefined): string => {
     if (typeof value === 'object' && value !== null) {
       return Object.entries(value)
-        .map(([key, val]) => `${key}: ${val}`)
+        .map(([key, val]) => `${key}: ${val !== null ? val : 'null'}`)
         .join(', ');
     }
-    return (value as string) || '';
+    return String(value || ''); // Handle null values
   };
 
   // Get dispatch date (current date + 2 days)
@@ -651,7 +651,7 @@ export default function Component() {
                     </span>
                   </div>
                   <div className='space-y-3'>
-                    {watch.WatchColors?.map((color, index) => {
+                    {watch.WatchColors?.map((color: WatchColor, index: number) => {
                       // Get the front view image for this variant - with better fallback logic
                       const imageData = color.WatchImage?.[0];
                       let frontImage = '/images/alban-marcus-watch.png'; // default fallback

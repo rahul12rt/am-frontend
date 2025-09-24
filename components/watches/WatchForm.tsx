@@ -11,8 +11,8 @@ import {
 interface Watch {
   id?: string;
   name: string;
-  description: string;
-  characteristics: string;
+  description: string | { [key: string]: any };
+  characteristics: string | { [key: string]: any };
   actualprice: number;
   offerprice: number;
   offerpercentage: number;
@@ -24,7 +24,25 @@ interface Watch {
   warrantyperiod: string;
   stockavailability: boolean;
   isfeatured: boolean;
+  WatchImages?: any[];
+  WatchColors?: any[];
+  reviews?: any[];
 }
+
+// Helper functions to handle object/string conversion
+const stringifyObjectField = (field: string | { [key: string]: any }): string => {
+  if (typeof field === 'string') return field;
+  try {
+    return JSON.stringify(field, null, 2);
+  } catch (e) {
+    return '';
+  }
+};
+
+const parseStringField = (field: string): string => {
+  // We'll just keep it as a string for the form
+  return field;
+};
 
 interface WatchFormProps {
   initialData?: Watch;
@@ -84,6 +102,9 @@ const WatchForm: React.FC<WatchFormProps> = ({ initialData }) => {
     if (watchData) {
       setFormData({
         ...watchData,
+        // Convert object fields to strings for the form
+        description: stringifyObjectField(watchData.description),
+        characteristics: stringifyObjectField(watchData.characteristics),
         releasedate: watchData.releasedate
           ? new Date(watchData.releasedate).toISOString().split("T")[0]
           : new Date().toISOString().split("T")[0],
@@ -179,8 +200,9 @@ const WatchForm: React.FC<WatchFormProps> = ({ initialData }) => {
           id: formData.id,
           formData: {
             name: formData.name,
-            description: formData.description,
-            characteristics: formData.characteristics,
+            // Convert to string for API
+            description: typeof formData.description === 'string' ? formData.description : '',
+            characteristics: typeof formData.characteristics === 'string' ? formData.characteristics : '',
             actualprice: formData.actualprice,
             offerprice: formData.offerprice,
             offerpercentage: formData.offerpercentage,
@@ -200,8 +222,9 @@ const WatchForm: React.FC<WatchFormProps> = ({ initialData }) => {
         await createWatchMutation.mutateAsync({
           formData: {
             name: formData.name,
-            description: formData.description,
-            characteristics: formData.characteristics,
+            // Convert to string for API
+            description: typeof formData.description === 'string' ? formData.description : '',
+            characteristics: typeof formData.characteristics === 'string' ? formData.characteristics : '',
             actualprice: formData.actualprice,
             offerprice: formData.offerprice,
             offerpercentage: formData.offerpercentage,
@@ -311,7 +334,7 @@ const WatchForm: React.FC<WatchFormProps> = ({ initialData }) => {
             </label>
             <textarea
               name="description"
-              value={formData.description}
+              value={typeof formData.description === 'string' ? formData.description : stringifyObjectField(formData.description)}
               onChange={handleInputChange}
               rows={4}
               disabled={loading}
@@ -327,7 +350,7 @@ const WatchForm: React.FC<WatchFormProps> = ({ initialData }) => {
             </label>
             <textarea
               name="characteristics"
-              value={formData.characteristics}
+              value={typeof formData.characteristics === 'string' ? formData.characteristics : stringifyObjectField(formData.characteristics)}
               onChange={handleInputChange}
               rows={3}
               disabled={loading}

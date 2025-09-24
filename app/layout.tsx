@@ -54,7 +54,9 @@ export default function RootLayout({
               <UserModalProvider>
                 <AppLoader
                   showOnFirstVisit={true}
+                  showAlways={true}
                   minLoadingTime={3000}
+                  loadingEnabledPaths={['/']}
                 >
                   <Header />
                   <NavigationBoundary>

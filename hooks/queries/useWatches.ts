@@ -14,8 +14,7 @@ import {
   type Watch, 
   type WatchFilters, 
   type WatchFormData, 
-  type WatchImageFiles,
-  apiErrorHandler
+  type WatchImageFiles
 } from '@/lib/api-services';
 import { AxiosError } from 'axios';
 import { handleApiError } from '@/lib/api-clients';
@@ -28,12 +27,12 @@ import { handleApiError } from '@/lib/api-clients';
  * Get all watches with optional filters
  */
 export const useWatches = (filters?: WatchFilters) => {
-  return useQuery({
+  return useQuery<Watch[], AxiosError>({
     queryKey: queryKeys.watches.list(filters),
     queryFn: () => watchServices.getWatches(filters),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-    retry: (failureCount, error) => {
+    retry: (failureCount: number, error: AxiosError) => {
       // Don't retry on client errors (4xx)
       if (error instanceof AxiosError && error.response?.status && error.response.status >= 400 && error.response.status < 500) {
         return false;
@@ -48,13 +47,13 @@ export const useWatches = (filters?: WatchFilters) => {
  * Get a single watch by ID
  */
 export const useWatch = (id: string, enabled: boolean = true) => {
-  return useQuery({
+  return useQuery<Watch, AxiosError>({
     queryKey: queryKeys.watches.detail(id),
     queryFn: () => watchServices.getWatchById(id),
     enabled: !!id && enabled,
     staleTime: 10 * 60 * 1000, // 10 minutes (longer stale time for individual items)
     gcTime: 30 * 60 * 1000, // 30 minutes
-    retry: (failureCount, error) => {
+    retry: (failureCount: number, error: AxiosError) => {
       // Don't retry on 404 errors
       if (error instanceof AxiosError && error.response?.status === 404) {
         return false;
@@ -68,7 +67,7 @@ export const useWatch = (id: string, enabled: boolean = true) => {
  * Get featured watches
  */
 export const useFeaturedWatches = (limit?: number) => {
-  return useQuery({
+  return useQuery<Watch[], AxiosError>({
     queryKey: queryKeys.watches.featured(),
     queryFn: () => watchServices.getFeaturedWatches(limit),
     staleTime: 15 * 60 * 1000, // 15 minutes (featured content changes less frequently)
@@ -81,7 +80,7 @@ export const useFeaturedWatches = (limit?: number) => {
  * Search watches with debouncing
  */
 export const useSearchWatches = (query: string, filters?: Omit<WatchFilters, 'search'>, enabled: boolean = true) => {
-  return useQuery({
+  return useQuery<Watch[], AxiosError>({
     queryKey: queryKeys.watches.search(query),
     queryFn: () => watchServices.searchWatches(query, filters),
     enabled: !!query.trim() && query.length >= 2 && enabled, // Only search if query is meaningful
@@ -95,7 +94,7 @@ export const useSearchWatches = (query: string, filters?: Omit<WatchFilters, 'se
  * Get watches by category
  */
 export const useWatchesByCategory = (category: string, enabled: boolean = true) => {
-  return useQuery({
+  return useQuery<Watch[], AxiosError>({
     queryKey: queryKeys.watches.byCategory(category),
     queryFn: () => watchServices.getWatches({ category }),
     enabled: !!category && enabled,
@@ -108,7 +107,7 @@ export const useWatchesByCategory = (category: string, enabled: boolean = true) 
  * Get watches by series
  */
 export const useWatchesBySeries = (series: string, enabled: boolean = true) => {
-  return useQuery({
+  return useQuery<Watch[], AxiosError>({
     queryKey: queryKeys.watches.bySeries(series),
     queryFn: () => watchServices.getWatches({ series }),
     enabled: !!series && enabled,
@@ -121,11 +120,11 @@ export const useWatchesBySeries = (series: string, enabled: boolean = true) => {
  * Infinite query for paginated watches (useful for infinite scroll)
  */
 export const useInfiniteWatches = (filters?: Omit<WatchFilters, 'page'>) => {
-  return useInfiniteQuery({
+  return useInfiniteQuery<Watch[], AxiosError, number>({
     queryKey: queryKeys.watches.list({ ...filters, infinite: true }),
-    queryFn: ({ pageParam = 1 }) => 
-      watchServices.getWatches({ ...filters, page: pageParam }),
-    getNextPageParam: (lastPage, allPages) => {
+    queryFn: ({ pageParam }) => 
+      watchServices.getWatches({ ...filters, page: pageParam as number }),
+    getNextPageParam: (lastPage: Watch[], allPages: Watch[][]) => {
       // Assuming your API returns empty array when no more data
       if (lastPage.length === 0) return undefined;
       return allPages.length + 1;
@@ -146,11 +145,15 @@ export const useInfiniteWatches = (filters?: Omit<WatchFilters, 'page'>) => {
 export const useCreateWatch = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({ formData, images }: { formData: WatchFormData; images: WatchImageFiles }) =>
+  return useMutation<
+    Watch, 
+    AxiosError, 
+    { formData: WatchFormData; images: WatchImageFiles }
+  >({
+    mutationFn: ({ formData, images }) =>
       watchServices.createWatch(formData, images),
     
-    onSuccess: (newWatch) => {
+    onSuccess: (newWatch: Watch) => {
       // Invalidate and refetch all watch lists
       queryClient.invalidateQueries({ queryKey: queryKeys.watches.lists() });
       
@@ -188,18 +191,17 @@ export const useCreateWatch = () => {
 export const useUpdateWatch = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({ 
-      id, 
-      formData, 
-      images 
-    }: { 
-      id: string; 
-      formData: Partial<WatchFormData>; 
-      images?: WatchImageFiles 
-    }) => watchServices.updateWatch(id, formData, images),
+  type UpdateWatchVariables = { 
+    id: string; 
+    formData: Partial<WatchFormData>; 
+    images?: WatchImageFiles 
+  };
+
+  return useMutation<Watch, AxiosError, UpdateWatchVariables>({
+    mutationFn: ({ id, formData, images }) => 
+      watchServices.updateWatch(id, formData, images),
     
-    onSuccess: (updatedWatch, variables) => {
+    onSuccess: (updatedWatch: Watch, variables: UpdateWatchVariables) => {
       // Update the specific watch in the cache
       queryClient.setQueryData(queryKeys.watches.detail(variables.id), updatedWatch);
       
@@ -228,7 +230,7 @@ export const useUpdateWatch = () => {
       console.log('Watch updated successfully:', updatedWatch);
     },
     
-    onError: (error: AxiosError, variables) => {
+    onError: (error: AxiosError, variables: UpdateWatchVariables) => {
       const errorMessage = handleApiError(error);
       console.error(`Failed to update watch ${variables.id}:`, errorMessage);
     },
@@ -241,10 +243,10 @@ export const useUpdateWatch = () => {
 export const useDeleteWatch = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<void, AxiosError, string>({
     mutationFn: (id: string) => watchServices.deleteWatch(id),
     
-    onSuccess: (_, deletedId) => {
+    onSuccess: (_: void, deletedId: string) => {
       // Remove the watch from all relevant queries
       queryClient.removeQueries({ queryKey: queryKeys.watches.detail(deletedId) });
       
@@ -254,7 +256,7 @@ export const useDeleteWatch = () => {
       
       // Invalidate category and series queries
       queryClient.invalidateQueries({ 
-        predicate: (query) => {
+        predicate: (query: any) => {
           const key = query.queryKey;
           return (
             key.includes('watches') && 
@@ -266,7 +268,7 @@ export const useDeleteWatch = () => {
       console.log('Watch deleted successfully:', deletedId);
     },
     
-    onError: (error: AxiosError, deletedId) => {
+    onError: (error: AxiosError, deletedId: string) => {
       const errorMessage = handleApiError(error);
       console.error(`Failed to delete watch ${deletedId}:`, errorMessage);
     },

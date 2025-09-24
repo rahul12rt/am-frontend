@@ -10,47 +10,38 @@ interface AppLoaderProps {
   showOnFirstVisit?: boolean;
   showAlways?: boolean;
   minLoadingTime?: number;
+  loadingEnabledPaths?: string[];
 }
 
 const AppLoader: React.FC<AppLoaderProps> = ({ 
   children, 
   showOnFirstVisit = true,
   showAlways = false,
-  minLoadingTime = 3000
+  minLoadingTime = 3000,
+  loadingEnabledPaths = ['/']
 }) => {
   const [hasVisited, setHasVisited] = useState(false);
   const [shouldShowLoader, setShouldShowLoader] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const pathname = usePathname();
 
-  // Check if user has visited before and determine if we should show loader
+  // Check if current path should show loader
+  const isLoadingEnabledPath = loadingEnabledPaths.includes(pathname);
+
+  // Check if user has visited before
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const visited = localStorage.getItem('alban-marcus-visited');
-      const isFirstVisit = !visited;
       setHasVisited(!!visited);
       
-      // Only show loader on first visit to the main page (/) 
-      // Don't show on internal navigation (like cart to checkout)
-      const isMainPage = pathname === '/';
-      const shouldShow = (isFirstVisit && showOnFirstVisit && isMainPage && isInitialLoad);
-      
-      setShouldShowLoader(shouldShow);
-      
-      if (isFirstVisit && isMainPage) {
-        localStorage.setItem('alban-marcus-visited', 'true');
+      // Only show loader if current path is enabled for loading
+      if (isLoadingEnabledPath && (showAlways || (!visited && showOnFirstVisit))) {
+        setShouldShowLoader(true);
+        if (!visited) {
+          localStorage.setItem('alban-marcus-visited', 'true');
+        }
       }
     }
-  }, [showOnFirstVisit, showAlways, pathname, isInitialLoad]);
-
-  // Track if this is the initial page load
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsInitialLoad(false);
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
+  }, [showOnFirstVisit, showAlways, isLoadingEnabledPath]);
 
   const { isLoading, progress, currentTask } = useAppLoader({
     minLoadingTime
