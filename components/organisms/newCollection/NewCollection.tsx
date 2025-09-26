@@ -52,7 +52,7 @@ const NewCollection = () => {
         style={{ 
           backgroundImage: 'url("/images/newSection.jpg")',
           backgroundPositionX: 'center',
-          backgroundPositionY: `${clampedPositionY}px`,
+          // backgroundPositionY: `${clampedPositionY}px`,
           backgroundSize: 'cover'
         }}
       >

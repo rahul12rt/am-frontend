@@ -86,7 +86,7 @@ const About = () => {
           </h2>
 
           {/* List of paragraph items */}
-          <ul className="text-[2rem] leading-[2.5rem] list-disc pl-[20px] max-[765px]:text-[16px]">
+          <ul className="text-[2rem] leading-[2.5rem] list-disc pl-[20px] max-[768px]:text-[16px] max-[768px]:pl-[0px]">
             {paragraphItems.map((item, i) => (
               <li
                 key={i}

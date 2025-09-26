@@ -142,7 +142,7 @@ const LoginPage = () => {
 
         {/* Footer */}
         <div className="p-6 border-t border-gray-800 text-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-[1.4rem] text-gray-500">
             By continuing, you agree to our{' '}
             <Link href="/termsandconditions" className="text-white hover:underline">
               Terms & Conditions
