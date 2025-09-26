@@ -64,16 +64,18 @@ const Banner = () => {
   return (
     <section
       ref={containerRef}
-      className="relative h-screen overflow-hidden bg-cover bg-center bg-no-repeat"
+      className="relative h-screen overflow-hidden bg-cover bg-center bg-no-repeat max-[768px]:bg-top max-[768px]:bg-contain max-[768px]:mt-[80px] max-[768px]:h-[calc(100vh-80px)]"
       style={{ backgroundImage: 'url("/images/hero_image.jpg")' }}
     >
       <div className="container h-full">
         <div className="h-full flex flex-col justify-end items-start py-16">
           {/* Title */}
-          <h1 className="text-[5.6rem] font-[family-name:var(--font-ppeditorialnewitalic)] leading-[1]">
+          <h1 className="text-[5.6rem] max-[768px]:text-[4rem] font-[family-name:var(--font-ppeditorialnewitalic)] leading-[1]">
             {titleChars.map((char, i) => (
               <span key={i} className="inline-block overflow-hidden">
-                <span className="title-span inline-block translate-y-full opacity-0">
+                <span className="title-span inline-block translate-y-full opacity-0 transition-all duration-1000 ease-out"
+                style={{ transitionDelay: `${i * 50}ms` }} 
+              >
                   {char}
                 </span>
               </span>
