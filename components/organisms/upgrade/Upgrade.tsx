@@ -11,14 +11,10 @@ const About = () => {
 
   const titleWords = ["Upgrade", "Your Timepiece", "Collection Today"];
   const paragraphItems = [
-    "• Movement: Landeron 24 Skeleton AutomaticMovement - Swiss data to move Made merge data to be made single",
-    "• Dimensions: 55 x 45 mm",
-    "• Glass: Double Dome Sapphire Crystal with Anti-reflective coating",
-    "• Number of jewels: 25",
-    "• Movement: Landeron 24 Skeleton AutomaticMovement - Swiss data to move Made merge data to be made single",
-    "• Dimensions: 55 x 45 mm",
-    "• Glass: Double Dome Sapphire Crystal with Anti-reflective coating",
-    "• Number of jewels: 25",
+    "Timeless Craftsmanship – Each piece is carefully designed with precision engineering.",
+    "Luxury Lifestyle – Watches that complement your individuality and elegance.",
+    "Exclusivity – Limited edition collections for true connoisseurs of time",
+    "Modern Design, Classic Soul – The perfect balance between heritage and innovation.",    
   ];
 
   useEffect(() => {
@@ -75,7 +71,7 @@ const About = () => {
                 <span
                   className={`title-span inline-block translate-y-full opacity-0 ${
                     word === "Your Timepiece"
-                      ? "font-[family-name:var(--font-ppeditorialnewitalic)] leading-[58px]"
+                      ? "font-[family-name:var(--font-ppeditorialnewitalic)]"
                       : ""
                   }`}
                 >
@@ -86,11 +82,11 @@ const About = () => {
           </h2>
 
           {/* List of paragraph items */}
-          <ul className="text-[2rem] leading-[2.5rem] list-disc pl-[20px] max-[768px]:text-[16px] max-[768px]:pl-[0px]">
+          <ul className="text-[2rem] leading-[2.5rem] list-disc pl-[20px] max-[768px]:text-[16px] max-[768px]:pl-[0px] list-none">
             {paragraphItems.map((item, i) => (
               <li
                 key={i}
-                className="pb-[10px] text-span inline-block translate-y-full opacity-0"
+                className="pb-[10px] text-span inline-block translate-y-full opacity-0 list-none before:content-['•'] before:absolute before:-left-0 pl-[20px]"
               >
                 {item}
               </li>

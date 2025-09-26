@@ -1,4 +1,4 @@
-'use client';
+'use clent';
 import { useMemo } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { EmblaOptionsType } from 'embla-carousel';

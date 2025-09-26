@@ -5,10 +5,10 @@ import Image from "next/image";
 import ImageModal from "@/components/molecules/imageModal/ImageModal";
 
 const images = [
-  "galleryOne.webp",
-  "galleryTwo.webp",
-  "galleryThree.webp",
-  "galleryFour.webp",
+  "galleryOne.png",
+  "galleryTwo.png",
+  "galleryFour.png",
+  "galleryFour.jpg",
 ];
 
 const Gallery = () => {
@@ -21,7 +21,7 @@ const Gallery = () => {
           {images.map((image, index) => (
             <div
               key={index}
-              className={`relative rounded-lg cursor-pointer h-[300px] md:h-auto
+              className={`relative rounded-[1rem] cursor-pointer h-[300px] md:h-auto
                 ${
                   index === 2
                     ? "md:[&]:col-span-2 md:[&]:col-start-1 md:[&]:row-start-2"
@@ -36,7 +36,7 @@ const Gallery = () => {
               onClick={() => setSelectedImage(image)}
             >
               <Image
-                className="object-cover rounded-lg object-center "
+                className="object-cover rounded-[1rem] object-center border border-gray-300"
                 src={`/images/${image}`}
                 alt="gallery"
                 fill

@@ -39,7 +39,7 @@ export default function Home() {
       <QaulityMarque />
       <Gallery />
       <GetInTouch />
-      <Articles />
+      {/* <Articles /> */}
     </>
   );
 }

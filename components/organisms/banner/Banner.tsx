@@ -73,10 +73,11 @@ const Banner = () => {
           <h1 className="text-[5.6rem] max-[768px]:text-[4rem] font-[family-name:var(--font-ppeditorialnewitalic)]">
             {titleChars.map((char, i) => (
               <span key={i} className="inline-block">
-                <span className="title-span inline-block translate-y-full opacity-0 transition-all duration-1000 ease-out"
-                style={{ transitionDelay: `${i * 50}ms` }} 
-              >
-                  {char}
+                <span
+                  className="title-span inline-block translate-y-full opacity-0 transition-all duration-1000 ease-out"
+                  style={{ transitionDelay: `${i * 50}ms` }}
+                >
+                  {char === " " ? "\u00A0" : char}
                 </span>
               </span>
             ))}

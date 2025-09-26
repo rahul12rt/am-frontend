@@ -46,12 +46,12 @@ const NewCollection = () => {
           xl:h-[750px]
           bg-cover 
           bg-no-repeat 
-          bg-center
+          bg-bottom
           relative
         '
         style={{ 
           backgroundImage: 'url("/images/newSection.jpg")',
-          backgroundPositionX: 'center',
+          backgroundPositionX: 'bottom',
           // backgroundPositionY: `${clampedPositionY}px`,
           backgroundSize: 'cover'
         }}
