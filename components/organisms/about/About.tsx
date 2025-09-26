@@ -68,7 +68,7 @@ const About = () => {
       <div className="container">
         <div className="flex justify-center gap-[141px] max-[1280px]:gap-[40px] max-[1024px]:flex-col">
           {/* Title animation */}
-          <h2 className="max-w-[522px] flex-shrink-0 text-[4.8rem] leading-[58px] text-white-1">
+          <h2 className="max-w-[522px] flex-shrink-0 text-[4.8rem] leading-[58px] text-white-1 max-[768px]:text-[3.6rem] max-[765px]:leading-[46px]">
             {titleWords.map((word, i) => (
               <span key={i} className="inline-block overflow-hidden mr-[5px]">
                 <span

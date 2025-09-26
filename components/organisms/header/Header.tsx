@@ -302,11 +302,6 @@ const Header = () => {
                   )}
                 </Link>
               </li>
-              <li className="text-center text-[18px]">
-                <Link href="/offers" onClick={toggleMenu}>
-                  Offers
-                </Link>
-              </li>
             </ul>
           </div>
         </div>

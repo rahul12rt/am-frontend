@@ -562,7 +562,7 @@ const User = ({ onClose }: UserProps) => {
     <div className="h-full flex flex-col bg-black overflow-hidden  pt-20">
       {/* Mobile/Tablet Close Button Header */}
       <div className="flex justify-between items-center p-4 md:p-6 border-b border-gray-800 shrink-0">
-        <h2 className="text-lg md:text-xl font-semibold text-white">
+        <h2 className="text-[2.4rem] font-semibold text-white">
           {mode === "login" ? "Sign In" : "Create Account"}
         </h2>
         {onClose && (
@@ -571,7 +571,7 @@ const User = ({ onClose }: UserProps) => {
             className="text-white hover:text-gray-300 transition-colors p-2"
             aria-label="Close"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -587,17 +587,17 @@ const User = ({ onClose }: UserProps) => {
               mode === "login" ? styles.loginForm : styles.registerForm
             }`}
           >
-            <h3 className="text-xl md:text-2xl lg:text-[2.4rem] font-bold leading-tight mb-2 md:mb-4">
+            <h3 className="text-[1.8rem] font-bold leading-tight mb-2 md:mb-4">
               {mode === "login" ? "Existing member" : "Register New Account"}
             </h3>
-            <h6 className="text-sm md:text-base lg:text-[1.6rem] leading-relaxed mb-6 md:mb-8 text-gray-300">
+            <h6 className="text-[1.6rem] leading-relaxed mb-6 md:mb-8 text-gray-300">
               {mode === "login" ? "Welcome Back!" : "Join Us!"}
             </h6>
 
             {/* Inline Message Display */}
             {message && (
               <div
-                className={`${styles.messageContainer} mb-6 p-4 rounded-[8px] text-[1.4rem] font-medium leading-[1.4] transition-all duration-300 ease-in-out ${
+                className={`${styles.messageContainer} mb-6 p-4 rounded-[8px] text-[1.6rem] font-medium leading-[1.4] transition-all duration-300 ease-in-out ${
                   message.type === "success"
                     ? `${styles.successMessage} bg-green-900/20 text-green-300 border border-green-600/30`
                     : message.type === "error"
@@ -644,7 +644,7 @@ const User = ({ onClose }: UserProps) => {
                         className="md:w-5 md:h-5"
                       />
                     </div>
-                    <span className="text-white text-sm md:text-base lg:text-[1.6rem] font-medium mr-2 md:mr-3">
+                    <span className="text-white text-[1.6rem] font-medium mr-2 md:mr-3">
                       +91
                     </span>
                     <input 
@@ -658,7 +658,7 @@ const User = ({ onClose }: UserProps) => {
                       inputMode="numeric"
                       pattern="[6-9][0-9]{9}"
                       autoComplete="tel"
-                      className="bg-transparent border-none outline-none text-white flex-1 placeholder:text-gray-400 text-sm md:text-base lg:text-[1.6rem] font-medium disabled:opacity-60"
+                      className="bg-transparent border-none outline-none text-white flex-1 placeholder:text-gray-400 text-[1.4rem] font-medium disabled:opacity-60"
                     />
                   </div>
                 </div>
@@ -680,7 +680,7 @@ const User = ({ onClose }: UserProps) => {
                         type="text"
                         name="firstName"
                         placeholder="Enter Name"
-                        className="bg-transparent border-none outline-none text-white flex-1 placeholder:text-gray-400 text-sm md:text-base lg:text-[1.6rem] font-medium disabled:opacity-60"
+                        className="bg-transparent border-none outline-none text-white flex-1 placeholder:text-gray-400 text-[1.4rem] font-medium disabled:opacity-60"
                         value={firstName}
                         onChange={handleNameChange}
                         disabled={isLoading}
@@ -706,7 +706,7 @@ const User = ({ onClose }: UserProps) => {
                         disabled={isLoading}
                         className="mt-1 accent-white w-4 h-4 md:w-5 md:h-5 cursor-pointer disabled:opacity-60"
                       />
-                        <label htmlFor="termsAgreement" className="text-xs md:text-sm lg:text-[1.2rem] text-gray-300 leading-relaxed cursor-pointer select-none">
+                        <label htmlFor="termsAgreement" className="text-[1.4rem] text-gray-300 leading-relaxed cursor-pointer select-none">
                           By registering, you agree to our{" "}
                           <Link 
                             href="/termsandconditions" 
@@ -732,7 +732,7 @@ const User = ({ onClose }: UserProps) => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`${styles.submitButton} ${styles.outlineButton} rounded-lg text-sm md:text-base lg:text-[1.6rem] font-bold py-3 md:py-4 px-4 md:px-6 mt-4 md:mt-6 cursor-pointer w-full flex justify-between items-center gap-2 md:gap-4 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200`}
+                  className={`${styles.submitButton} ${styles.outlineButton} rounded-lg text-[1.6rem] font-bold py-3 md:py-4 px-4 md:px-6 mt-4 md:mt-6 cursor-pointer w-full flex justify-between items-center gap-2 md:gap-4 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200`}
                 >
                   {isLoading ? "Sending..." : "Send OTP"}
                   <Image
@@ -756,7 +756,7 @@ const User = ({ onClose }: UserProps) => {
                 <button
                   type="submit"
                   disabled={isLoading || isVerifying || otp.length !== 6}
-                  className={`${styles.submitButton} ${styles.outlineButton} rounded-lg text-sm md:text-base lg:text-[1.6rem] font-bold py-3 md:py-4 px-4 md:px-6 mt-4 md:mt-6 cursor-pointer w-full flex justify-between items-center gap-2 md:gap-4 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200`}
+                  className={`${styles.submitButton} ${styles.outlineButton} rounded-lg text-[1.6rem] font-bold py-3 md:py-4 px-4 md:px-6 mt-4 md:mt-6 cursor-pointer w-full flex justify-between items-center gap-2 md:gap-4 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200`}
                 >
                   {isLoading || isVerifying ? "Verifying..." : "Verify OTP"}
                   <Image
@@ -774,7 +774,7 @@ const User = ({ onClose }: UserProps) => {
                     type="button"
                     onClick={() => setStep("phone")}
                     disabled={isLoading}
-                    className="text-xs md:text-sm lg:text-[1.2rem] font-medium text-left text-gray-300 hover:text-white hover:underline cursor-pointer bg-transparent border-none p-0 disabled:opacity-60 transition-colors"
+                    className="text-[1.4rem] font-medium text-left text-gray-300 hover:text-white hover:underline cursor-pointer bg-transparent border-none p-0 disabled:opacity-60 transition-colors"
                   >
                     ← Back to phone number
                   </button>
@@ -782,7 +782,7 @@ const User = ({ onClose }: UserProps) => {
                     type="button"
                     onClick={handleResendOtp}
                     disabled={isResendDisabled || isLoading}
-                    className="text-xs md:text-sm lg:text-[1.2rem] font-medium text-right text-gray-300 hover:text-white hover:underline cursor-pointer bg-transparent border-none p-0 disabled:opacity-60 transition-colors"
+                    className="text-[1.4rem] font-medium text-right text-gray-300 hover:text-white hover:underline cursor-pointer bg-transparent border-none p-0 disabled:opacity-60 transition-colors"
                   >
                     {isResendDisabled ? `Resend OTP in ${resendTimer}s` : "Resend OTP"}
                   </button>
@@ -793,7 +793,7 @@ const User = ({ onClose }: UserProps) => {
             {/* Toggle between Login and Register - Responsive */}
             {step === "phone" && (
               <div className="mt-6 md:mt-8 pt-4 border-t border-gray-800">
-                <p className="text-xs md:text-sm lg:text-[1.2rem] text-center text-gray-400">
+                <p className="text-[1.4rem] text-center text-gray-400">
                   {mode === "login"
                     ? "Don't have an account?"
                     : "Already have an account?"}{" "}
@@ -801,7 +801,7 @@ const User = ({ onClose }: UserProps) => {
                     onClick={() =>
                       handleModeSwitch(mode === "login" ? "signup" : "login")
                     }
-                    className="text-xs md:text-sm lg:text-[1.2rem] font-bold text-white cursor-pointer hover:underline transition-colors"
+                    className="text-[1.4rem] font-bold text-white cursor-pointer hover:underline transition-colors underline"
                   >
                     {mode === "login" ? "Register Now" : "Login"}
                   </span>

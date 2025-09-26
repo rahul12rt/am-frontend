@@ -48,7 +48,6 @@ const NewCollection = () => {
           bg-no-repeat 
           bg-center
           relative
-          overflow-hidden
         '
         style={{ 
           backgroundImage: 'url("/images/newSection.jpg")',
@@ -81,7 +80,7 @@ const NewCollection = () => {
               shadow-lg
             '>
               <span>NEW - NEW-</span>
-              <span aria-hidden='true'>NEW - NEW-</span>
+              <span>NEW - NEW-</span>
             </div>
           </div>
         </div>

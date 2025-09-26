@@ -121,10 +121,10 @@ const LoginPage = () => {
             <div className="p-6">
               {/* Welcome Message */}
               <div className="mb-8 text-center lg:text-left">
-                <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2">
+                <h2 className="text-[3.6rem] font-bold text-white mb-2">
                   Welcome Back
                 </h2>
-                <p className="text-gray-400 text-base lg:text-lg">
+                <p className="text-gray-400 text-[1.6rem]">
                   Sign in to access your account and continue shopping
                 </p>
                 {redirectUrl !== '/' && (

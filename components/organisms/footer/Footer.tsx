@@ -13,7 +13,7 @@ const Footer = () => {
         </p>
 
         {/* Middle Section */}
-        <div className="flex gap-4 text-[14px] text-white">
+        <div className="flex gap-4 text-[14px] text-white flex-wrap">
           <Link href="/privacypolicy" className="hover:text-black">
             Privacy Policy
           </Link>
