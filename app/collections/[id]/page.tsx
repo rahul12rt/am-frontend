@@ -982,7 +982,7 @@ export default function Component() {
                                   !isLeftColumn ? 'md:border-l md:border-gray-200' : ''
                                 }`}
                               >
-                                <dt className='text-sm font-bold text-gray-900 tracking-wide mb-2' style={{ fontSize: '14px' }}>
+                                <dt className='text-[1.4rem] font-bold text-gray-900 tracking-wide mb-2' style={{ fontSize: '14px' }}>
                                   {readableKey}
                                 </dt>
                                 <dd className='text-gray-700 font-medium leading-relaxed' style={{ fontSize: '13px' }}>
@@ -1001,14 +1001,14 @@ export default function Component() {
                   <div className='flex items-center gap-4'>
                     <div className='w-3 h-3 bg-gradient-to-r from-gray-800 to-gray-600 rounded-full'></div>
                     <div>
-                      <span className='text-sm font-medium text-gray-500 uppercase tracking-wider'>Warranty Period</span>
+                      <span className='text-[1.4rem] font-medium text-gray-500 uppercase tracking-wider'>Warranty Period</span>
                       <p className='text-base md:text-lg font-bold text-gray-900'>{watch.warrantyperiod}</p>
                     </div>
                   </div>
                   <div className='flex items-center gap-4'>
                     <div className='w-3 h-3 bg-gradient-to-r from-gray-800 to-gray-600 rounded-full'></div>
                     <div>
-                      <span className='text-sm font-medium text-gray-500 uppercase tracking-wider'>Release Date</span>
+                      <span className='text-[1.4rem] font-medium text-gray-500 uppercase tracking-wider'>Release Date</span>
                       <p className='text-base md:text-lg font-bold text-gray-900'>{new Date(watch.releasedate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                     </div>
                   </div>
@@ -1049,7 +1049,7 @@ export default function Component() {
           <div className='bg-white rounded-3xl shadow-lg p-6 md:p-8'>
             <h2 className='text-2xl text-gray-900 pb-6 font-bold'>
               Recommended for You
-              <span className='text-sm font-normal text-gray-500 ml-2'>
+              <span className='text-[1.4rem] font-normal text-gray-500 ml-2'>
                 (Refreshed daily)
               </span>
             </h2>

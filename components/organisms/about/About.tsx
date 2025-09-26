@@ -11,14 +11,9 @@ const About = () => {
 
   const titleWords = ["Crafting Time,", "Defining Elegance", "– Alban Marcus"];
   const paragraphSections = [
-    "At Alban Marcus, we believe time is more than just minutes and hours — it's an experience.",
-    "Each watch we create is a blend of timeless craftsmanship, modern design, and refined luxury, built for those who value precision and elegance in every moment.",
-    "Our upcoming collection of luxury watches reflects sophistication, exclusivity, and artistry. Designed to complement your lifestyle,",
-    "Alban Marcus timepieces are more than accessories — they are statements of individuality and legacy.",
-    "Be the first to experience the new era of premium watches."
+    "At Alban Marcus, we believe time is more than just minutes and hours — it's an experience. Each watch we create is a blend of timeless craftsmanship, modern design, and refined luxury, built for those who value precision and elegance in every moment. Our upcoming collection of luxury watches reflects sophistication, exclusivity, and artistry.",
+    "Designed to complement your lifestyle, Alban Marcus timepieces are more than accessories — they are statements of individuality and legacy. Be the first to experience the new era of premium watches.",
   ];
-
-  const paragraphWords = paragraphSections.join(" ").split(" ");
 
   useEffect(() => {
     const container = containerRef.current;
@@ -83,16 +78,23 @@ const About = () => {
             ))}
           </h2>
 
-          {/* Paragraph animation */}
-          <p className="text-[2rem] leading-[25px] max-[765px]:text-[16px]">
-            {paragraphWords.map((word, i) => (
-              <span key={i} className="inline-block overflow-hidden mr-[5px]">
-                <span className="text-span inline-block translate-y-full opacity-0">
-                  {word}
-                </span>
-              </span>
+          {/* Paragraphs */}
+          <div className="space-y-6 text-[2rem] leading-[25px] max-[765px]:text-[16px]">
+            {paragraphSections.map((section, idx) => (
+              <p key={idx}>
+                {section.split(" ").map((word, i) => (
+                  <span
+                    key={i}
+                    className="inline-block overflow-hidden mr-[5px]"
+                  >
+                    <span className="text-span inline-block translate-y-full opacity-0">
+                      {word}
+                    </span>
+                  </span>
+                ))}
+              </p>
             ))}
-          </p>
+          </div>
         </div>
       </div>
     </section>

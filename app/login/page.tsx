@@ -128,7 +128,7 @@ const LoginPage = () => {
                   Sign in to access your account and continue shopping
                 </p>
                 {redirectUrl !== '/' && (
-                  <p className="text-sm text-blue-400 mt-2">
+                  <p className="text-[1.4rem] text-blue-400 mt-2">
                     You'll be redirected after signing in
                   </p>
                 )}

@@ -109,7 +109,7 @@ const Collections = ({ data }: { data: Watch[] }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 custom-xsm:grid-cols-2 custom-sm:grid-cols-3 custom-md:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 min-[578px]:grid-cols-2 min-[769px]:grid-cols-3 min-[1025px]:grid-cols-4 gap-6">
       {data.map((product) => {
         const images = getWatchImages(product);
         
