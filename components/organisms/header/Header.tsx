@@ -234,8 +234,8 @@ const Header = () => {
             </Link>
 
             {/* Bag */}
-            <Link href='/cart'>
-              <button className="flex justify-center items-center relative hidden custom-xmd:block">
+            <Link href='/cart' className="hidden custom-xmd:block">
+              <button className="flex justify-center items-center relative">
                 {/* Show cart count badge only if user is logged in and cart has items */}
                 {user && cartCount > 0 && (
                   <span className="flex justify-center items-center rounded-full bg-red-1 min-w-[16px] min-h-[16px] absolute top-[-1px] right-[-2px] text-white-1 text-[10px] font-bold px-[4px]">
@@ -300,11 +300,6 @@ const Header = () => {
                       {cartCount > 99 ? '99+' : cartCount}
                     </span>
                   )}
-                </Link>
-              </li>
-              <li className="text-center text-[18px]">
-                <Link href="/offers" onClick={toggleMenu}>
-                  Offers
                 </Link>
               </li>
             </ul>
