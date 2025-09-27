@@ -57,7 +57,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
           <div className="absolute inset-0 bg-black bg-opacity-60 flex flex-col justify-end p-8">
             <div className="text-white">
               <h3 className="text-3xl font-bold mb-3 tracking-wider">ALBAN MARCUS</h3>
-              <p className="text-white text-base leading-relaxed font-medium">
+              <p className="text-white text-[1.4rem] leading-relaxed font-medium">
                 Premium timepieces for the discerning collector
               </p>
             </div>
@@ -74,7 +74,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-white mb-2">{title}</h2>
               {message && (
-                <p className="text-base text-gray-200 leading-relaxed font-medium">{message}</p>
+                <p className="text-[1.4rem] text-gray-200 leading-relaxed font-medium">{message}</p>
               )}
             </div>
             <button

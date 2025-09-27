@@ -241,13 +241,12 @@ const CartPage: React.FC = () => {
 
         {/* Header with Clear Cart */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="font-bold text-gray-900" style={{ fontSize: '2.2rem' }}>Shopping Cart ({items.length} {items.length === 1 ? 'item' : 'items'})</h1>
+          <h1 className="font-bold text-gray-900 text-[2.2rem] max-[768px]:text-[1.6rem]">Shopping Cart ({items.length} {items.length === 1 ? 'item' : 'items'})</h1>
           {items.length > 0 && (
             <button
               onClick={handleClearCart}
               disabled={isClearingCart}
-              className="flex items-center gap-2 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
-              style={{ fontSize: '1.5rem' }}
+              className="text-[1.5rem] max-[768px]:text-[1.4rem] flex items-center gap-2 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
             >
               {isClearingCart ? (
                 <Loader2 className="w-6 h-6 animate-spin" />
@@ -271,7 +270,7 @@ const CartPage: React.FC = () => {
 
                   return (
                     <div key={item.id} className={`p-6 ${index !== items.length - 1 ? 'border-b border-gray-200' : ''}`}>
-                      <div className="flex gap-6">
+                      <div className="flex gap-6 flex-wrap">
                         {/* Watch Image */}
                         <div className="w-40 h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden flex-shrink-0 border border-gray-200">
                           <Image

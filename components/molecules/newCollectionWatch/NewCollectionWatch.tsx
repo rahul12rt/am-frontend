@@ -23,7 +23,7 @@ const NewCollectionWatch = ({ item }: { item: Watch }) => {
     return '';
   };
   
-  const truncateText = (text: string, maxLength = 80) => {
+  const truncateText = (text: string, maxLength = 60) => {
     if (!text || text.length <= maxLength) return text;
     return text.substring(0, maxLength).trim() + '...';
   };
