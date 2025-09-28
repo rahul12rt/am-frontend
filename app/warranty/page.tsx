@@ -5,7 +5,7 @@ export default function WarrantyPage() {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-wider">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-wider zen-dots-regular">
               ALBAN MARCUS WARRANTY
             </h1>
             <div className="w-24 h-1 bg-white mx-auto"></div>
@@ -83,7 +83,7 @@ export default function WarrantyPage() {
             {/* Thank You Section */}
             <div className="text-center py-12">
               <div className="bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-600 rounded-lg p-8">
-                <h2 className="text-3xl md:text-4xl font-bold tracking-wider">
+                <h2 className="text-3xl md:text-4xl font-bold tracking-wider zen-dots-regular">
                   THANK YOU - ALBAN MARCUS
                 </h2>
               </div>

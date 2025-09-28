@@ -60,7 +60,7 @@ const LoginPage = () => {
       <div className="hidden lg:flex lg:w-[70%] relative overflow-hidden">
         <Image
           src="/images/login_page_image.jpg"
-          alt="Alban Marcus Watches"
+          alt="ALBAN MARCUS Watches"
           fill
           className="object-cover"
           priority
@@ -70,7 +70,7 @@ const LoginPage = () => {
         <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col justify-between p-8">
           {/* Top - Logo */}
           <div className="flex items-center">
-            <Link href="/" className="text-white text-2xl font-bold tracking-[10px]">
+            <Link href="/" className="text-white text-2xl font-bold tracking-[10px] zen-dots-regular">
               ALBAN MARCUS
             </Link>
           </div>

@@ -33,60 +33,72 @@ const NewCollection = () => {
   // Reduce parallax effect on mobile for better performance
   const scrollFactor = isMobile ? 0.3 : 1; // Slower on mobile
   const backgroundPositionY = -160 + (scrollY * scrollFactor);
-  const clampedPositionY = Math.min(-148, Math.max(-160, backgroundPositionY));
+
 
   return (
     <section className='pb-[25px]'>
       <div
         className='
-          h-[670px] 
-          sm:h-[500px] 
-          md:h-[600px] 
-          lg:h-[670px] 
-          xl:h-[750px]
-          bg-cover 
-          bg-no-repeat 
-          bg-bottom
           relative
+          w-full
+          h-[100vh]
+          sm:h-[80vh]
+          md:h-[70vh]
+          lg:h-[100vh]
+          xl:h-[100vh]
+          max-[768px]:h-[30vh]
+          bg-center
+          bg-no-repeat
         '
         style={{ 
           backgroundImage: 'url("/images/newSection.jpg")',
-          backgroundPositionX: 'bottom',
-          // backgroundPositionY: `${clampedPositionY}px`,
-          backgroundSize: 'cover'
+          backgroundSize: isMobile ? 'contain' : 'cover',
+          backgroundPosition: isMobile ? 'center' : 'center 90%',
         }}
       >
-        <div className='container translate-y-[-50%] px-4 sm:px-6 lg:px-8'>
-          <div className='flex justify-end items-center'>
-            <div className='
-              overflow-hidden 
-              w-[66px] 
-              sm:w-[70px] 
-              md:w-[80px]
-              whitespace-nowrap 
-              flex 
-              items-center 
-              leading-[12px] 
-              marquee 
-              bg-white-1 
-              text-black-1 
-              text-[0.9rem] 
-              sm:text-[1rem] 
-              md:text-[1.1rem]
-              font-bold 
-              rounded-[4px] 
-              py-[6px] 
-              px-[8px]
-              shadow-lg
-            '>
-              <span>NEW - NEW-</span>
-              <span>NEW - NEW-</span>
-            </div>
+        {/* Linear gradient black to black top to bottom 50% to 20% opacity */}
+        <div className='absolute inset-0 bg-gradient-to-b from-black/50 to-black/20'></div>
+        
+        {/* 10% OFF Marquee - Top Right */}
+        <div className='absolute top-4 right-4 sm:top-6 sm:right-6 md:top-8 md:right-8'>
+          <div className='
+            overflow-hidden 
+            w-[80px] 
+            sm:w-[90px] 
+            md:w-[100px]
+            whitespace-nowrap 
+            flex 
+            items-center 
+            leading-[12px] 
+            marquee 
+            bg-white-1 
+            text-black-1 
+            text-[0.9rem] 
+            sm:text-[1rem] 
+            md:text-[1.1rem]
+            font-bold 
+            rounded-[4px] 
+            py-[6px] 
+            px-[8px]
+            shadow-lg
+          '
+          >
+            <span>10% OFF - 10% OFF-</span>
+            <span>10% OFF - 10% OFF-</span>
           </div>
         </div>
         
-        {/* Responsive overlay for better mobile experience */}
-        <div className='absolute inset-0 bg-black bg-opacity-10 sm:bg-opacity-0'></div>
+        {/* Centered Main Text */}
+        <div className='absolute inset-0 flex justify-center'>
+          <div className='text-center text-white px-4 py-[40px]'>
+            <h2 className='text-[3rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] font-[family-name:var(--font-ppeditorialnewitalic)] mb-4 leading-tight'>
+              10% OFF
+            </h2>
+            <p className='text-[1rem] sm:text-[1.2rem] md:text-[1.4rem] font-medium opacity-90'>
+               On Your First Luxury Purchase
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* <div className='container py-[80px] max-[768px]:pb-[0px]'>

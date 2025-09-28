@@ -937,7 +937,7 @@ export default function Component() {
             </div>
 
             {/* Items Grid - matching Service Icons style */}
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-6 py-6 border-t border-gray-200'>
+            <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 py-6 border-t border-gray-200'>
               {/* Premium Watch Box */}
               <div className='text-center'>
                 <div className='w-16 h-16 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center'>
@@ -979,7 +979,22 @@ export default function Component() {
                   <Shield className='w-8 h-8 text-gray-600' />
                 </div>
                 <p className='text-gray-700 font-medium' style={{ fontSize: '12px' }}>Warranty Card</p>
-                <p className='text-gray-700' style={{ fontSize: '12px' }}>Peace of mind</p>
+                <p className='text-gray-700' style={{ fontSize: '12px' }}>Protection</p>
+              </div>
+
+              {/* Peace of Mind */}
+              <div className='text-center'>
+                <div className='w-16 h-16 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center'>
+                  <Image 
+                    src="/icons/peace.svg" 
+                    alt="Peace of mind" 
+                    width={32} 
+                    height={32} 
+                    className="w-8 h-8" 
+                  />
+                </div>
+                <p className='text-gray-700 font-medium' style={{ fontSize: '12px' }}>Peace of Mind</p>
+                <p className='text-gray-700' style={{ fontSize: '12px' }}>Complete assurance</p>
               </div>
             </div>
 

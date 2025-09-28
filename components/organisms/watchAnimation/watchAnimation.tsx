@@ -5,15 +5,29 @@ const WatchAnimation: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isSafari, setIsSafari] = useState(false);
 
   useEffect(() => {
+    // Detect Safari browser
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isSafariBrowser = /safari/.test(userAgent) && !/chrome/.test(userAgent);
+    setIsSafari(isSafariBrowser);
+
     const video = videoRef.current;
     if (!video) return;
 
-    // Auto-play when video is loaded and ready
+    // Enhanced Safari compatibility
     const handleCanPlay = () => {
       setIsVideoLoaded(true);
-      // Small delay to ensure smooth playback
+      
+      // For Safari, we need to be more careful with autoplay
+      if (isSafariBrowser) {
+        // Safari mobile often blocks autoplay, so we'll just show the play button
+        console.log('Safari detected - autoplay may be restricted');
+        return;
+      }
+      
+      // Small delay to ensure smooth playback for other browsers
       setTimeout(() => {
         video.play().then(() => {
           setIsPlaying(true);
@@ -24,12 +38,27 @@ const WatchAnimation: React.FC = () => {
       }, 100);
     };
 
+    const handleLoadedData = () => {
+      setIsVideoLoaded(true);
+      // Force Safari to prepare for playback
+      if (isSafariBrowser) {
+        video.load(); // Reload video for Safari compatibility
+      }
+    };
+
+    const handleError = (e: Event) => {
+      console.error('Video loading error:', e);
+      setIsVideoLoaded(true); // Still show the interface even if video fails
+    };
+
     video.addEventListener('canplay', handleCanPlay);
-    video.addEventListener('loadeddata', () => setIsVideoLoaded(true));
+    video.addEventListener('loadeddata', handleLoadedData);
+    video.addEventListener('error', handleError);
 
     return () => {
       video.removeEventListener('canplay', handleCanPlay);
-      video.removeEventListener('loadeddata', () => setIsVideoLoaded(true));
+      video.removeEventListener('loadeddata', handleLoadedData);
+      video.removeEventListener('error', handleError);
     };
   }, []);
 
@@ -51,7 +80,7 @@ const WatchAnimation: React.FC = () => {
     <section className="
       relative 
       w-full 
-      h-screen 
+      h-[50vh]
       sm:h-[60vh] 
       md:h-[70vh] 
       lg:h-[80vh] 
@@ -71,13 +100,22 @@ const WatchAnimation: React.FC = () => {
         "
         loop // Loop the video
         muted // Required for autoplay
-        playsInline // Better mobile support
-        preload="auto" // Load the video for smooth playback
+        playsInline // Better mobile support - critical for Safari iOS
+        preload={isSafari ? "metadata" : "auto"} // Safari works better with metadata
         disablePictureInPicture
+        controls={false} // Explicitly disable controls
+        webkit-playsinline="true" // Legacy Safari support
+        x-webkit-airplay="allow" // Allow AirPlay
         onClick={handleVideoClick}
         onError={(e) => console.error('Video loading error:', e)}
+        onLoadStart={() => console.log('Video load started')}
+        onCanPlay={() => console.log('Video can play')}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
       >
         <source src="/images/alban_final_video.mp4" type="video/mp4" />
+        {/* Add WebM fallback for better browser support */}
+        <source src="/images/alban_final_video.webm" type="video/webm" />
         Your browser does not support the video tag.
       </video>
       
@@ -98,21 +136,22 @@ const WatchAnimation: React.FC = () => {
         </div>
       )}
 
-      {/* Play button overlay (shows if autoplay is blocked) */}
-      {isVideoLoaded && !isPlaying && (
+      {/* Play button overlay (shows if autoplay is blocked or Safari) */}
+      {isVideoLoaded && (!isPlaying || isSafari) && (
         <div 
           className="
             absolute 
             inset-0 
             flex 
+            flex-col
             items-center 
             justify-center 
             bg-black 
-            bg-opacity-50 
+            bg-opacity-60 
             cursor-pointer
             transition-all
             duration-300
-            hover:bg-opacity-40
+            hover:bg-opacity-50
           "
           onClick={handleVideoClick}
         >
@@ -128,6 +167,7 @@ const WatchAnimation: React.FC = () => {
             duration-300
             hover:scale-110
             backdrop-blur-sm
+            mb-4
           ">
             <svg 
               className="
@@ -146,6 +186,14 @@ const WatchAnimation: React.FC = () => {
               <path d="M8 5v14l11-7z"/>
             </svg>
           </div>
+          
+          {/* Safari-specific message */}
+          {isSafari && (
+            <div className="text-white text-center px-4">
+              <p className="text-lg sm:text-xl font-medium mb-2">Tap to Play Video</p>
+              <p className="text-sm opacity-80">Safari requires user interaction to start videos</p>
+            </div>
+          )}
         </div>
       )}
 

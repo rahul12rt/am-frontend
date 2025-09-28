@@ -182,7 +182,7 @@ const Header = () => {
             >
               <Image
                 src="/images/Am_logo_small_transparentpng.png"
-                alt="Alban Marcus Logo"
+                alt="ALBAN MARCUS Logo"
                 width={31}
                 height={31}
                 className="object-contain"
@@ -194,7 +194,7 @@ const Header = () => {
               <button className="flex justify-center items-center transition-transform duration-300 hover:rotate-[360deg] hidden custom-xmd:block">
                 <Image
                   src="/images/Am_logo_small_transparentpng.png"
-                  alt="Alban Marcus Logo"
+                  alt="ALBAN MARCUS Logo"
                   width={31}
                   height={31}
                   className="object-contain"

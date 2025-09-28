@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Facebook, Twitter, Instagram } from "lucide-react";
+import { Facebook, Instagram } from "lucide-react";
+import Image from "next/image";
 
 const Footer = () => {
   return (
     <footer className="w-full border-gray-200 py-10 mt-10">
       <div className="container flex flex-col md:flex-row justify-between items-center gap-4">
         {/* Left Section */}
-        <p className="text-[14px] text-white">
-          © Alban Marcus {new Date().getFullYear()}
+        <p className="text-[14px] text-white zen-dots-regular">
+          © ALBAN MARCUS {new Date().getFullYear()}
         </p>
 
         {/* Middle Section */}
@@ -33,13 +34,19 @@ const Footer = () => {
 
         {/* Right Section - Social Links */}
         <div className="flex gap-4 text-white">
-          <Link href="https://instagram.com" target="_blank">
+          <Link href="https://www.instagram.com/albanmarcus_?igsh=MXVpNGp1OHJ1anl4dA==" target="_blank">
             <Instagram className="w-8 h-8 hover:text-black" />
           </Link>
-          <Link href="https://twitter.com" target="_blank">
-            <Twitter className="w-8 h-8 hover:text-black" />
+          <Link href="https://x.com/albanmarcu95380" target="_blank">
+            <Image 
+              src="/icons/twitter_icon.svg" 
+              alt="Twitter" 
+              width={32} 
+              height={32} 
+              className="w-8 h-8 hover:opacity-70 transition-opacity" 
+            />
           </Link>   
-          <Link href="https://facebook.com" target="_blank">
+          <Link href="https://www.facebook.com/profile.php?id=61581064653071" target="_blank">
             <Facebook className="w-8 h-8 hover:text-black" />
           </Link>                 
         </div>

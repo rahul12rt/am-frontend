@@ -9,7 +9,7 @@ const PrivacyPolicy = () => {
       <section className="mb-8">
         <h2 className="text-[18px] font-semibold mb-3">INTRODUCTION</h2>
         <p className="text-[16px]">
-          At <span className="font-semibold">ALBAN MARCUS WATCHES PRIVATE LIMITED</span>, we respect your
+          At <span className="font-semibold zen-dots-regular">ALBAN MARCUS WATCHES PRIVATE LIMITED</span>, we respect your
           privacy and are committed to protecting your personal information. This Privacy Policy explains
           how we collect, use, disclose, and safeguard your information when you visit our website{" "}
           <span className="italic">albanmarcus.com</span> or make a purchase from us.
