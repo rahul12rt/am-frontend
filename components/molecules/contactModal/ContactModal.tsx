@@ -2,12 +2,19 @@
 import React, { useState } from 'react';
 import { X, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import './ContactModal.scss';
 
 interface ContactModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose?: () => void;
   onSuccess?: () => void;
+  /**
+   * Render style for the component
+   * - 'modal' (default): overlay popup with backdrop and close icon
+   * - 'page': full-page layout without backdrop/close icon
+   */
+  mode?: 'modal' | 'page';
 }
 
 interface FormData {
@@ -24,7 +31,8 @@ interface FormErrors {
 const ContactModal: React.FC<ContactModalProps> = ({ 
   isOpen, 
   onClose, 
-  onSuccess 
+  onSuccess,
+  mode = 'modal'
 }) => {
   const [formData, setFormData] = useState<FormData>({
     email: '',
@@ -33,8 +41,10 @@ const ContactModal: React.FC<ContactModalProps> = ({
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const router = useRouter();
 
-  if (!isOpen) return null;
+  // In modal mode, respect isOpen; in page mode always render
+  if (mode !== 'page' && !isOpen) return null;
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -80,11 +90,17 @@ const ContactModal: React.FC<ContactModalProps> = ({
       setIsSuccess(true);
       setFormData({ email: '', message: '' });
       
-      // Auto close after 2 seconds
+      // After 2 seconds: in page mode redirect to home; in modal mode close
       setTimeout(() => {
-        onSuccess?.();
-        onClose();
-        setIsSuccess(false);
+        if (mode === 'page') {
+          onSuccess?.();
+          setIsSuccess(false);
+          router.push('/');
+        } else {
+          onSuccess?.();
+          onClose?.();
+          setIsSuccess(false);
+        }
       }, 2000);
 
     } catch (error: any) {
@@ -121,21 +137,25 @@ const ContactModal: React.FC<ContactModalProps> = ({
       setFormData({ email: '', message: '' });
       setErrors({});
       setIsSuccess(false);
-      onClose();
+      onClose?.();
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/90 backdrop-blur-lg"
-        onClick={handleClose}
-      />
+    <div className={mode === 'page' ? "w-full" : "fixed inset-0 z-50 flex items-center justify-center p-4"}>
+      {/* Backdrop only for modal mode */}
+      {mode === 'modal' && (
+        <div 
+          className="absolute inset-0 bg-black/90 backdrop-blur-lg"
+          onClick={handleClose}
+        />
+      )}
       
-      {/* Modal */}
+      {/* Container */}
       <div 
-        className="relative w-full max-w-6xl min-h-[80vh] bg-black border-2 border-white/30 rounded-2xl shadow-2xl overflow-hidden flex"
+        className={mode === 'page'
+          ? "relative w-full  my-16 md:my-24 min-h-[100vh] bg-black shadow-2xl overflow-hidden flex"
+          : "relative w-full  min-h-[100vh] bg-black overflow-hidden flex"}
         style={{ 
           backgroundColor: '#000000',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1)' 
@@ -176,13 +196,15 @@ const ContactModal: React.FC<ContactModalProps> = ({
                 Send us your inquiry and we'll get back to you soon
               </p>
             </div>
-            <button
-              onClick={handleClose}
-              disabled={isSubmitting}
-              className="text-gray-300 hover:text-white transition-all duration-200 p-3 rounded-full hover:bg-gray-800 ml-4 border border-gray-600 hover:border-gray-400 disabled:opacity-50"
-            >
-              <X className="w-7 h-7" />
-            </button>
+            {mode === 'modal' && (
+              <button
+                onClick={handleClose}
+                disabled={isSubmitting}
+                className="text-gray-300 hover:text-white transition-all duration-200 p-3 rounded-full hover:bg-gray-800 ml-4 border border-gray-600 hover:border-gray-400 disabled:opacity-50"
+              >
+                <X className="w-7 h-7" />
+              </button>
+            )}
           </div>
           
           {/* Form Container */}

@@ -5,9 +5,9 @@ import Image from "next/image";
 import ImageModal from "@/components/molecules/imageModal/ImageModal";
 
 const images = [
-  "galleryOne.png",
-  "galleryTwo.png",
-  "galleryFour.png",
+  "imageSectiion_2_final.jpg",
+  "imageSection_3_final.jpg",
+  "imageSection_1_final.jpg",
   "galleryFour.jpg",
 ];
 

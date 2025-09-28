@@ -1,10 +1,8 @@
 'use client';
-import Link from 'next/link';
-import { useState } from 'react';
-import ContactModal from '@/components/molecules/contactModal/ContactModal';
+import { useRouter } from 'next/navigation';
 
 const GetInTouch = () => {
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const router = useRouter();
   return (
     <section className='pb-[40px] md:pb-[80px]'>
       <div className='container'>
@@ -18,23 +16,13 @@ const GetInTouch = () => {
             </p>
           </div>
           <button
-            onClick={() => setIsContactModalOpen(true)}
+            onClick={() => router.push('/contact')}
             className='w-full md:w-auto bg-black-1 text-white-1 px-[30px] md:px-[54px] py-[16px] md:py-[24px] text-[1.4rem] md:text-[1.6rem] leading-[1.2] text-center md:inline-flex whitespace-nowrap hover:bg-gray-800 transition-colors duration-200'
           >
             Get in touch
           </button>
         </div>
       </div>
-
-      {/* Contact Modal */}
-      <ContactModal
-        isOpen={isContactModalOpen}
-        onClose={() => setIsContactModalOpen(false)}
-        onSuccess={() => {
-          // Optional: Add success callback logic here
-          console.log('Contact form submitted successfully');
-        }}
-      />
     </section>
   );
 };
