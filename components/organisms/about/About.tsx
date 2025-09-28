@@ -59,7 +59,7 @@ const About = () => {
   }, []);
 
   return (
-    <section ref={containerRef} className="pt-[90px] pb-[70px]">
+    <section ref={containerRef} className="pt-[90px] max-[768px]:pt-[30px] pb-[70px]">
       <div className="container">
         <div className="flex justify-center gap-[141px] max-[1280px]:gap-[40px] max-[1024px]:flex-col">
           {/* Title animation */}

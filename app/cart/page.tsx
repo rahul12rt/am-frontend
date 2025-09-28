@@ -410,16 +410,19 @@ const CartPage: React.FC = () => {
                   Prices and delivery costs are not confirmed until you've reached the checkout.
                 </p>
                 <p className="text-gray-600" style={{ fontSize: '1.5rem' }}>
-                7 days free returns. Read more about{' '}
+                  7 days free returns. Read more about{' '}
                   <Link href="/returns" target="_blank" className="text-gray-900 underline hover:text-gray-700">
                     returns and exchange policy
+                  </Link>{' '}
+                  and{' '}
+                  <Link href="/warranty" target="_blank" className="text-gray-900 underline hover:text-gray-700">
+                    warranty
                   </Link>.
                 </p>
               </div>
 
               {/* Payment Icons */}
               <div className="mt-6">
-                <p className="text-gray-600 mb-3" style={{ fontSize: '1.5rem' }}>We accept:</p>
                 <PaymentIcons size="small" />
               </div>
 

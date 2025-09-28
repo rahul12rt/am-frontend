@@ -25,6 +25,10 @@ const Footer = () => {
           <Link href="/returns" className="hover:text-black">
             Returns & Exchange
           </Link>
+          <span>|</span>
+          <Link href="/warranty" className="hover:text-black">
+            Warranty
+          </Link>
         </div>
 
         {/* Right Section - Social Links */}

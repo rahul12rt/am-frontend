@@ -888,7 +888,9 @@ export default function Component() {
                       <Shield className='w-8 h-8 text-gray-600' />
                     </div>
                     <p className='text-gray-700 font-medium' style={{ fontSize: '12px' }}>24 Months</p>
-                    <p className='text-gray-700' style={{ fontSize: '12px' }}>Warranty</p>
+                    <Link href='/warranty' className='text-gray-700 hover:text-gray-900 underline transition-colors' style={{ fontSize: '12px' }}>
+                      Warranty
+                    </Link>
                   </div>
                   
                   <div className='text-center'>
@@ -920,6 +922,72 @@ export default function Component() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* What's in the Box Section */}
+          <div className='bg-white rounded-3xl shadow-lg p-8 md:p-12 mb-12'>
+            <div className='text-center mb-8 md:mb-12'>
+              <h3 className='text-3xl md:text-4xl lg:text-5xl text-gray-900 font-bold mb-6 md:mb-8 tracking-tight'>
+                What's in the Box
+              </h3>
+              <p className='text-gray-700 leading-relaxed font-light max-w-3xl mx-auto' style={{ fontSize: '14px' }}>
+                Inside every Alban Marcus package, you'll receive premium accessories designed to enhance your luxury watch experience
+              </p>
+            </div>
+
+            {/* Items Grid - matching Service Icons style */}
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-6 py-6 border-t border-gray-200'>
+              {/* Premium Watch Box */}
+              <div className='text-center'>
+                <div className='w-16 h-16 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center'>
+                  <svg className='w-8 h-8 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 8a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V8z' />
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4' />
+                  </svg>
+                </div>
+                <p className='text-gray-700 font-medium' style={{ fontSize: '12px' }}>Premium</p>
+                <p className='text-gray-700' style={{ fontSize: '12px' }}>Watch Box</p>
+              </div>
+
+              {/* Polishing Cloth */}
+              <div className='text-center'>
+                <div className='w-16 h-16 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center'>
+                  <svg className='w-8 h-8 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z' />
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 8v8' />
+                  </svg>
+                </div>
+                <p className='text-gray-700 font-medium' style={{ fontSize: '12px' }}>Polishing</p>
+                <p className='text-gray-700' style={{ fontSize: '12px' }}>Cloth</p>
+              </div>
+
+              {/* Owner's Manual */}
+              <div className='text-center'>
+                <div className='w-16 h-16 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center'>
+                  <svg className='w-8 h-8 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' />
+                  </svg>
+                </div>
+                <p className='text-gray-700 font-medium' style={{ fontSize: '12px' }}>Owner's</p>
+                <p className='text-gray-700' style={{ fontSize: '12px' }}>Manual</p>
+              </div>
+
+              {/* Warranty Card */}
+              <div className='text-center'>
+                <div className='w-16 h-16 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center'>
+                  <Shield className='w-8 h-8 text-gray-600' />
+                </div>
+                <p className='text-gray-700 font-medium' style={{ fontSize: '12px' }}>Warranty Card</p>
+                <p className='text-gray-700' style={{ fontSize: '12px' }}>Peace of mind</p>
+              </div>
+            </div>
+
+            {/* Additional Description */}
+            <div className='text-center pt-6 border-t border-gray-200'>
+              <p className='text-gray-700 leading-relaxed font-light' style={{ fontSize: '14px' }}>
+                Each timepiece comes with premium accessories ensuring complete luxury experience and worldwide support
+              </p>
             </div>
           </div>
 
@@ -1001,7 +1069,9 @@ export default function Component() {
                   <div className='flex items-center gap-4'>
                     <div className='w-3 h-3 bg-gradient-to-r from-gray-800 to-gray-600 rounded-full'></div>
                     <div>
-                      <span className='text-[1.4rem] font-medium text-gray-500 uppercase tracking-wider'>Warranty Period</span>
+                      <Link href='/warranty' className='text-[1.4rem] font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors'>
+                        Warranty Period
+                      </Link>
                       <p className='text-base md:text-lg font-bold text-gray-900'>{watch.warrantyperiod}</p>
                     </div>
                   </div>

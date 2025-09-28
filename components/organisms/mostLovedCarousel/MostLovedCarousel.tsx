@@ -23,9 +23,40 @@ const MostLovedCarousel: React.FC<PropType> = (props) => {
 
   const { allWatches, isLoading: loading, error, isCacheReady } = useWatchCache();
   
-  // Get first 5 watches for carousel
+  // Specific watch color IDs for Most Loved section
+  const mostLovedColorIds = [
+    'a54b336d-89a2-448d-a996-87eb322ea92e',
+    'a5f5480a-1210-4cb6-9fb5-f5452f63a79d',
+    '5fe51fa5-eac7-40f5-9ec9-4d1e45696363',
+    '24278931-0215-428d-8c93-3ce6405224c2',
+    '4d1a160e-a91d-4064-8a55-4c48c850c0d6'
+  ];
+  
+  // Get watches by specific color IDs
   const watches = useMemo(() => {
-    return allWatches.slice(0, 5);
+    const filteredWatches = [];
+    
+    for (const colorId of mostLovedColorIds) {
+      // Find watch that has this color ID
+      const watchWithColor = allWatches.find(watch => 
+        watch.WatchColors && watch.WatchColors.some((color: any) => color.id === colorId)
+      );
+      
+      if (watchWithColor) {
+        // Create a watch object with the specific color as the first/primary color
+        const specificColor = watchWithColor.WatchColors.find((color: any) => color.id === colorId);
+        if (specificColor) {
+          filteredWatches.push({
+            ...watchWithColor,
+            // Put the specific color first so NewCollectionWatch uses it
+            WatchColors: [specificColor, ...watchWithColor.WatchColors.filter((color: any) => color.id !== colorId)],
+            selectedColorId: colorId
+          });
+        }
+      }
+    }
+    
+    return filteredWatches;
   }, [allWatches]);
 
   return (
