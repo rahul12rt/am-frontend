@@ -116,11 +116,25 @@ const CheckoutPage = () => {
       contact: `${profile.phone_country_code || '+91'}${profile.phone_number}` || '9999999999'
     };
 
+    // Validate address selection
+    if (!selectedBillingAddress) {
+      showToast('Please select a billing address', 'error');
+      return;
+    }
+
+    const finalShippingAddress = useSameAddress ? selectedBillingAddress : selectedShippingAddress;
+    if (!finalShippingAddress) {
+      showToast('Please select a shipping address', 'error');
+      return;
+    }
+
     try {
       await payNow({
         totalAmountInRupees: total,
         itemsSummary: itemsSummary,
-        prefill: prefillData
+        prefill: prefillData,
+        billingAddressId: selectedBillingAddress,
+        shippingAddressId: finalShippingAddress
       });
     } catch (error) {
       console.error('Payment error:', error);

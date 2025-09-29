@@ -14,11 +14,11 @@ const Gallery = () => {
   return (
     <section className="pb-[80px]">
       <div className="container">
-        <div className="grid grid-cols-2 grid-rows-2 gap-2 sm:gap-3 md:grid-cols-3 md:grid-rows-2 md:h-[753px] md:gap-5">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3 md:grid-rows-2 md:h-[753px]">
           {images.map((image, index) => (
             <div
               key={index}
-              className={`relative rounded-[1rem] cursor-pointer h-[150px] sm:h-[180px] md:h-auto
+              className={`relative rounded-[1rem] cursor-pointer h-[300px] md:h-auto
                 ${
                   index === 2
                     ? "md:[&]:col-span-2 md:[&]:col-start-1 md:[&]:row-start-2"

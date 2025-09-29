@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useCreateOrder, useVerifyPayment } from '@/hooks/usePayment';
+import { useCreateOrder, useVerifyPayment, useCreateOrderAndShip } from '@/hooks/usePayment';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/query-keys';
+import { useRouter } from 'next/navigation';
 
 declare global {
   interface Window { Razorpay?: any }
@@ -10,9 +13,13 @@ declare global {
 export function useRazorpayCheckout() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [sdkReady, setSdkReady] = useState<boolean>(false);
+  const [paymentStage, setPaymentStage] = useState<'processing' | 'success' | 'creating-order' | 'completed'>('processing');
 
   const createOrderMutation = useCreateOrder();
   const verifyPaymentMutation = useVerifyPayment();
+  const createOrderAndShipMutation = useCreateOrderAndShip();
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
   const loadRazorpayScript = useCallback((): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -33,8 +40,10 @@ export function useRazorpayCheckout() {
     totalAmountInRupees: number;
     itemsSummary: string;
     prefill?: { name?: string; email?: string; contact?: string };
+    billingAddressId: string;
+    shippingAddressId: string;
   }) => {
-    const { totalAmountInRupees, itemsSummary, prefill } = params;
+    const { totalAmountInRupees, itemsSummary, prefill, billingAddressId, shippingAddressId } = params;
 
     if (!totalAmountInRupees || totalAmountInRupees <= 0) {
       alert('Invalid amount');
@@ -43,6 +52,7 @@ export function useRazorpayCheckout() {
 
     try {
       setIsProcessing(true);
+      setPaymentStage('processing');
 
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded || !window.Razorpay) {
@@ -89,28 +99,37 @@ export function useRazorpayCheckout() {
           } else {
             console.error('Payment failed (client callback): Missing fields', resp);
             alert('Payment failed. Please try again.');
+            setIsProcessing(false);
             return;
           }
 
           try {
-            // Stage 2: Server verification (source of truth)
-            const verificationResponse = await verifyPaymentMutation.mutateAsync({
+            // Stage 2: Complete order creation flow
+            const orderResponse = await createOrderAndShipMutation.mutateAsync({
               razorpay_order_id: resp.razorpay_order_id,
               razorpay_payment_id: resp.razorpay_payment_id,
               razorpay_signature: resp.razorpay_signature,
+              billing_address_id: billingAddressId,
+              shipping_address_id: shippingAddressId,
             });
-
-            if (verificationResponse?.success) {
-              console.log('Payment successful (server verified)', verificationResponse);
-              alert('Payment successful! Thank you for your purchase.');
-              // proceed to order creation or success UI
+            if (orderResponse?.success) {
+              console.log('Order created successfully', orderResponse);
+              
+              queryClient.invalidateQueries({ queryKey: queryKeys.cart.all() });
+              
+              // Show success message
+              alert(`Order placed successfully! Order ID: ${orderResponse.order.id}`);
+              
+              // Redirect to order success page
+              router.push(`/order-success?orderId=${orderResponse.order.id}`);
             } else {
-              console.error('Payment failed (server verification)', verificationResponse);
-              alert('Payment failed during verification. Please contact support.');
+              console.error('Order creation failed', orderResponse);
+              alert('Payment successful but order creation failed. Please contact support.');
             }
           } catch (err) {
-            console.error('Payment failed (verification error)', err);
-            alert('Payment failed during verification. Please try again or contact support.');
+            alert('Payment successful but order creation failed. Please contact support.');
+          } finally {
+            setIsProcessing(false);
           }
         }
         ,
@@ -128,7 +147,14 @@ export function useRazorpayCheckout() {
     } finally {
       setIsProcessing(false);
     }
-  }, [createOrderMutation, verifyPaymentMutation, loadRazorpayScript]);
+  }, [createOrderMutation, verifyPaymentMutation, createOrderAndShipMutation, loadRazorpayScript, queryClient, router]);
 
-  return { payNow, isProcessing, sdkReady, createOrderMutation, verifyPaymentMutation };
+  return { 
+    payNow, 
+    isProcessing, 
+    sdkReady, 
+    createOrderMutation, 
+    verifyPaymentMutation, 
+    createOrderAndShipMutation 
+  };
 }
