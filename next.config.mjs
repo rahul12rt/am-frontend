@@ -1,13 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // ... your existing configuration
   images: {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'alban.b-cdn.net',
+        hostname: 'alban-marcus-images.s3.ap-southeast-2.amazonaws.com',
         port: '',
-        pathname: '/watches/**',
+        pathname: '/AlbanMarcus/**',
       },
     ],
   },
