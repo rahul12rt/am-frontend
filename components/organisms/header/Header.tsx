@@ -11,6 +11,7 @@ import { useUserModal } from "@/contexts/UserModalContext";
 import { useUser } from "@/contexts/UserContext";
 import { useNavigationGuard } from "@/hooks/useNavigationGuard";
 import UserAccountPanel from "@/components/organisms/userAccountPanel/UserAccountPanel";
+import { useCartCount } from "@/hooks/queries/useCart";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -19,8 +20,13 @@ const Header = () => {
 
   // Auth and cart
   const { user, isAuthenticated, profile } = useUser();
-  // Use cart count from user profile instead of separate API call
-  const cartCount = profile?.cartCount || 0;
+  // Get real-time cart count from direct API call
+  const { data: cartCount = 0, isLoading: cartCountLoading } = useCartCount(!!user);
+  
+  // Debug logging for cart count
+  useEffect(() => {
+    console.log('Header cart count updated:', { cartCount, user: !!user, cartCountLoading });
+  }, [cartCount, user, cartCountLoading]);
 
   // Drawer states
   const [drawerType, setDrawerType] = useState<"series" | null>(null);

@@ -114,9 +114,6 @@ const WatchAnimation: React.FC = () => {
         onPause={() => setIsPlaying(false)}
       >
         <source src="/images/alban_final_video.mp4" type="video/mp4" />
-        {/* Add WebM fallback for better browser support */}
-        <source src="/images/alban_final_video.webm" type="video/webm" />
-        Your browser does not support the video tag.
       </video>
       
       {/* Loading indicator */}

@@ -40,5 +40,6 @@ export interface Address {
     updated_at: string;
     addresses: Address[];
     cartCount: number;
+    eligibleForDiscount: boolean;
   }
   

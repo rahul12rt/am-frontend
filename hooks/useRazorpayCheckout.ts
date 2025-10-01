@@ -156,6 +156,11 @@ export function useRazorpayCheckout() {
               
               // Refresh cart data (backend has already cleared the cart)
               queryClient.invalidateQueries({ queryKey: queryKeys.cart.all() });
+              // Also invalidate specific cart queries to ensure UI updates
+              queryClient.invalidateQueries({ queryKey: queryKeys.cart.items() });
+              queryClient.invalidateQueries({ queryKey: queryKeys.cart.count() });
+              // Force immediate refetch of cart count for instant UI update
+              queryClient.refetchQueries({ queryKey: queryKeys.cart.count() });
               
               // Redirect to order success page
               setTimeout(() => {

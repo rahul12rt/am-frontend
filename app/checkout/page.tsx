@@ -44,7 +44,9 @@ const CheckoutPage = () => {
   const addresses = userAddresses || [];
   const deliveryFee = 0;
   const subtotal = cartData?.summary?.totalAmount ? parseFloat(cartData.summary.totalAmount) : 0;
-  const total = subtotal + deliveryFee;
+  const isEligibleForDiscount = profile?.eligibleForDiscount || false;
+  const discountAmount = isEligibleForDiscount ? (subtotal * 0.1) : 0;
+  const finalTotal = subtotal - discountAmount + deliveryFee;
 
   // Validate checkout readiness
   const validateCheckout = async () => {
@@ -63,7 +65,7 @@ const CheckoutPage = () => {
         billingAddress,
         shippingAddress,
         cartData?.items || [],
-        total
+        finalTotal
       );
 
       setValidationErrors(validation.errors);
@@ -132,7 +134,7 @@ const CheckoutPage = () => {
 
     try {
       const paymentParams = {
-        totalAmountInRupees: total,
+        totalAmountInRupees: finalTotal,
         itemsSummary: itemsSummary,
         prefill: prefillData,
         billingAddressId: selectedBillingAddress,
@@ -548,16 +550,54 @@ const CheckoutPage = () => {
                 <div className="space-y-3 border-t border-gray-200 pt-4">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700" style={{ fontSize: '1.5rem' }}>Order value</span>
-                    <span className="text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>₹{cartData?.summary?.totalAmount ? parseFloat(cartData.summary.totalAmount).toLocaleString() : '0'}</span>
+                    <span className="text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>₹{subtotal.toLocaleString()}</span>
                   </div>
+                  
+                  {/* Discount Section with Popper Animation */}
+                  {isEligibleForDiscount && discountAmount > 0 && (
+                    <div className="relative">
+                      <div className="animate-bounce bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-4 shadow-lg transform transition-all duration-700 hover:scale-105">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">🎉</span>
+                            <div>
+                              <span className="text-green-700 font-bold" style={{ fontSize: '1.4rem' }}>Special Discount (10%)</span>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                                  APPLIED
+                                </span>
+                                <span className="text-green-600 text-sm">You're saving big!</span>
+                              </div>
+                            </div>
+                          </div>
+                          <span className="font-bold text-green-700" style={{ fontSize: '1.6rem' }}>-₹{discountAmount.toLocaleString()}</span>
+                        </div>
+                      </div>
+                      {/* Popper arrow */}
+                      <div className="absolute -bottom-2 left-8 w-4 h-4 bg-green-50 border-r-2 border-b-2 border-green-300 transform rotate-45"></div>
+                    </div>
+                  )}
+                  
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700" style={{ fontSize: '1.5rem' }}>Delivery</span>
                     <span className="text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>{deliveryFee > 0 ? `₹${deliveryFee.toLocaleString()}` : 'Free'}</span>
                   </div>
                   <div className="flex justify-between items-center pt-3 border-t border-gray-200">
                     <span className="text-gray-900 font-bold" style={{ fontSize: '1.8rem' }}>Total</span>
-                    <span className="text-gray-900 font-bold" style={{ fontSize: '1.8rem' }}>₹{cartData?.summary?.totalAmount ? (parseFloat(cartData.summary.totalAmount) + deliveryFee).toLocaleString() : '0'}</span>
+                    <div className="text-right">
+                      {isEligibleForDiscount && discountAmount > 0 && (
+                        <div className="text-gray-500 line-through text-sm">₹{subtotal.toLocaleString()}</div>
+                      )}
+                      <span className="text-gray-900 font-bold" style={{ fontSize: '1.8rem' }}>₹{finalTotal.toLocaleString()}</span>
+                    </div>
                   </div>
+                </div>
+                
+                {/* Cart Editing Notice */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                  <p className="text-blue-700 text-sm text-center">
+                    <span className="font-semibold">Need to modify your order?</span> You can add, remove, or update quantities in your <Link href="/cart" className="underline hover:text-blue-900">cart</Link>. Changes cannot be made during checkout.
+                  </p>
                 </div>
                 {/* Validation Status */}
                 {validationErrors.length > 0 && (
