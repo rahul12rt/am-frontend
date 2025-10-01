@@ -64,7 +64,7 @@ const Banner = () => {
   return (
     <section
       ref={containerRef}
-      className="relative h-screen overflow-hidden bg-cover bg-center bg-no-repeat max-[768px]:bg-[center_100px] max-[768px]:bg-[length:150%] max-[768px]:bg-contain max-[768px]:h-[80vh]"
+      className="relative h-screen overflow-hidden bg-cover bg-center bg-no-repeat max-[768px]:bg-[center_100px] max-[768px]:bg-[length:150%] max-[768px]:h-[80vh]"
       style={{ backgroundImage: 'url("/images/hero_image.jpg")' }}
     >
       <div className="container h-full">
