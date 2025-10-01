@@ -36,6 +36,36 @@ export const metadata: Metadata = {
   title: "ALBAN MARCUS",
   description:
     "Mechanical watches may go through up to 50 or 60 different processes before the watch is considered to be as near to perfect as humanly possible before delivery.",
+  icons: {
+    icon: [
+      {
+        url: '/images/Am_logo_small_transparentpng.png',
+        sizes: '32x32',
+        type: 'image/png',
+      },
+      {
+        url: '/images/Am_logo_small_transparentpng.png',
+        sizes: '16x16',
+        type: 'image/png',
+      },
+      {
+        url: '/images/Am_logo_small_transparentpng.png',
+        sizes: '192x192',
+        type: 'image/png',
+      },
+    ],
+    shortcut: '/images/Am_logo_small_transparentpng.png',
+    apple: [
+      {
+        url: '/images/Am_logo_small_transparentpng.png',
+        sizes: '180x180',
+        type: 'image/png',
+      },
+    ],
+  },
+  manifest: '/manifest.json',
+  themeColor: '#000000',
+  viewport: 'width=device-width, initial-scale=1',
 };
 
 export default function RootLayout({
@@ -46,6 +76,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Additional favicon meta tags for better browser support */}
+        <link rel="icon" type="image/png" sizes="32x32" href="/images/Am_logo_small_transparentpng.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/images/Am_logo_small_transparentpng.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/images/Am_logo_small_transparentpng.png" />
+        <link rel="mask-icon" href="/images/Am_logo_small_transparentpng.png" color="#000000" />
+        <meta name="msapplication-TileColor" content="#000000" />
+        <meta name="msapplication-TileImage" content="/images/Am_logo_small_transparentpng.png" />
+        
         <style dangerouslySetInnerHTML={{
           __html: `
             /* Hide content initially to prevent flash before loading screen */
