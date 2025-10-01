@@ -211,7 +211,7 @@ const Header = () => {
 
           {/* Center Logo */}
           <Link href="/" className="text-[16px] zen-dots-regular">
-            <p className="tracking-[0px] lg:tracking-[10px] text-[16px]">
+            <p className="tracking-[0px] lg:tracking-[10px] text-[16px] [@media(min-width:1024px)]:pl-[140px]">
               ALBAN MARCUS
             </p>
           </Link>
