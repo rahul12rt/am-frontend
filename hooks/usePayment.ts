@@ -28,12 +28,32 @@ interface VerifyPaymentResponse {
   order_id: string;
 }
 
+interface CartItem {
+  id: string;
+  watch_color_id: string;
+  name: string;
+  category: string;
+  modelGroup: string;
+  price: string;
+  quantity: number;
+  imageURL: string;
+  color: string;
+  inlinePrice: string;
+}
+
 interface CreateOrderAndShipRequest {
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
   billing_address_id: string;
   shipping_address_id: string;
+  cart_data: {
+    items: CartItem[];
+    summary: {
+      totalItems: string;
+      totalAmount: string;
+    };
+  };
 }
 
 interface CreateOrderAndShipResponse {

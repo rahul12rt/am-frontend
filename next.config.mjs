@@ -5,7 +5,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'alban.b-cdn.net',
+        hostname: 'https://alban-marcus-images.s3.ap-southeast-2.amazonaws.com',
         port: '',
         pathname: '/watches/**',
       },

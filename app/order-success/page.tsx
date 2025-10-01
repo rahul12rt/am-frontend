@@ -31,7 +31,7 @@ const OrderSuccessPage = () => {
   if (!profile) {
     return (
       <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center text-center">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-auto">
+        <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md mx-4 sm:mx-auto">
           <h2 className="font-bold mb-4 text-gray-900" style={{ fontSize: '2.2rem' }}>Authentication Required</h2>
           <p className="text-gray-600 mb-6" style={{ fontSize: '1.5rem' }}>Please sign in to view your order.</p>
           <Link
@@ -77,7 +77,7 @@ const OrderSuccessPage = () => {
         </div>
 
         {/* Order Details Card */}
-        <div className="bg-white rounded-3xl shadow-lg p-8 mb-8">
+        <div className="bg-white rounded-3xl shadow-lg p-6 sm:p-8 mb-8">
           <div className="border-b border-gray-200 pb-6 mb-6">
             <h2 className="font-bold text-gray-900 mb-4" style={{ fontSize: '2.4rem' }}>Order Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -101,7 +101,7 @@ const OrderSuccessPage = () => {
           {/* Order Status Timeline */}
           <div className="mb-8">
             <h3 className="font-bold text-gray-900 mb-6" style={{ fontSize: '2rem' }}>Order Status</h3>
-            <div className="flex items-center justify-between relative">
+            <div className="flex flex-col sm:flex-row items-center justify-between relative">
               {/* Progress Line */}
               <div className="absolute top-6 left-6 right-6 h-0.5 bg-gray-200">
                 <div className="h-full bg-green-500 w-1/4 transition-all duration-500"></div>

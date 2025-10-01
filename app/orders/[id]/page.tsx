@@ -8,6 +8,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useQuery } from '@tanstack/react-query';
 import { protectedApiClient } from '@/lib/api-clients';
 import Image from 'next/image';
+import OrderStepper from '@/components/ui/OrderStepper';
 
 interface OrderDetails {
   id: string;
@@ -27,12 +28,10 @@ interface OrderDetails {
     unit_price: string;
     total_price: string;
     WatchColor: {
-      id: string;
+      watch_name: string;
       name: string;
-      Watch: {
-        name: string;
-      };
     };
+    imageURL: string;
   }>;
   ShippingAddress: {
     full_name: string;
@@ -119,7 +118,7 @@ const OrderDetailsPage = () => {
           <p className="text-gray-600 mb-6" style={{ fontSize: '1.5rem' }}>Please sign in to view order details.</p>
           <Link
             href="/"
-            className="block w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+            className="block w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:opacity-80 transition-opacity"
             style={{ fontSize: '1.5rem' }}
           >
             Sign In
@@ -148,7 +147,7 @@ const OrderDetailsPage = () => {
           <p className="text-gray-600 mb-6" style={{ fontSize: '1.5rem' }}>The order you're looking for doesn't exist or you don't have permission to view it.</p>
           <Link
             href="/orders"
-            className="block w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+            className="block w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:opacity-80 transition-opacity"
             style={{ fontSize: '1.5rem' }}
           >
             Back to Orders
@@ -168,7 +167,7 @@ const OrderDetailsPage = () => {
         <div className="flex items-center gap-4 mb-8">
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-lg border border-gray-300 hover:border-gray-900 transition-colors"
+            className="p-2 rounded-lg border border-gray-300 hover:opacity-80 transition-opacity"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
@@ -186,7 +185,7 @@ const OrderDetailsPage = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Order Status */}
@@ -199,33 +198,11 @@ const OrderDetailsPage = () => {
                 </span>
               </div>
 
-              {/* Tracking Timeline */}
-              {shipments.length > 0 && (
-                <div className="space-y-4">
-                  {shipments.map((shipment:any, index:any) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="flex flex-col items-center">
-                        <div className={`w-3 h-3 rounded-full ${index === shipments.length - 1 ? 'bg-blue-500' : 'bg-green-500'}`}></div>
-                        {index < shipments.length - 1 && <div className="w-0.5 h-8 bg-gray-200 mt-2"></div>}
-                      </div>
-                      <div className="flex-1 pb-4">
-                        <p className="font-medium text-gray-900" style={{ fontSize: '1.5rem' }}>
-                          {shipment.status}
-                        </p>
-                        <p className="text-gray-600" style={{ fontSize: '1.3rem' }}>
-                          {new Date(shipment.date).toLocaleDateString('en-IN', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* Order Stepper */}
+              <OrderStepper 
+                orderStatus={order.order_status}
+                shipments={shipments}
+              />
 
               {/* Track Package Button */}
               {order.waybill && (
@@ -234,7 +211,7 @@ const OrderDetailsPage = () => {
                     href={`https://www.delhivery.com/track/package/${order.waybill}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:opacity-80 transition-opacity"
                     style={{ fontSize: '1.4rem' }}
                   >
                     <Truck className="w-4 h-4" />
@@ -250,19 +227,22 @@ const OrderDetailsPage = () => {
               <h2 className="font-bold text-gray-900 mb-6" style={{ fontSize: '2.2rem' }}>Order Items</h2>
               <div className="space-y-4">
                 {order.OrderItems?.map((item) => (
-                  <div key={item.id} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
+                  <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border border-gray-200 rounded-lg">
                     <div className="w-16 h-20 bg-gray-100 border border-gray-300 rounded-lg overflow-hidden">
                       <Image 
-                        src="/images/alban-marcus-watch.png" 
-                        alt={item.WatchColor?.Watch?.name || 'Watch'} 
+                        src={item.imageURL || "/images/alban-marcus-watch.png"} 
+                        alt={item.WatchColor?.watch_name || 'Watch'} 
                         width={64} 
                         height={80} 
                         className="w-full h-full object-contain p-1" 
+                        onError={(e) => {
+                          e.currentTarget.src = '/images/alban-marcus-watch.png';
+                        }}
                       />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-medium text-gray-900" style={{ fontSize: '1.6rem' }}>
-                        {item.WatchColor?.Watch?.name || 'Watch'}
+                        {item.WatchColor?.watch_name || 'Watch'}
                       </h3>
                       <p className="text-gray-600" style={{ fontSize: '1.4rem' }}>
                         Color: {item.WatchColor?.name || 'Default'}
@@ -271,7 +251,7 @@ const OrderDetailsPage = () => {
                         Quantity: {item.quantity}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right w-full sm:w-auto">
                       <p className="font-bold text-gray-900" style={{ fontSize: '1.6rem' }}>
                         ₹{parseFloat(item.total_price).toLocaleString('en-IN')}
                       </p>
@@ -285,7 +265,7 @@ const OrderDetailsPage = () => {
             </div>
 
             {/* Addresses */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {/* Shipping Address */}
               <div className="bg-white rounded-3xl shadow-sm p-6">
                 <h3 className="font-bold text-gray-900 mb-4" style={{ fontSize: '1.8rem' }}>Shipping Address</h3>
@@ -362,7 +342,7 @@ const OrderDetailsPage = () => {
                       </span>
                     </div>
                     <div className="space-y-2 text-gray-600" style={{ fontSize: '1.3rem' }}>
-                      <p>Method: {payment.payment_method.toUpperCase()}</p>
+                    {/* <p>Method: {payment.payment_method.toUpperCase()}</p> v*/}
                       <p>Amount: ₹{parseFloat(payment.amount).toLocaleString('en-IN')}</p>
                       <p>Transaction ID: {payment.gateway_payment_id}</p>
                       <p>Date: {new Date(payment.completed_at).toLocaleDateString('en-IN')}</p>

@@ -9,6 +9,7 @@ import { useAddresses } from '@/hooks/queries/useAddress';
 import AddressForm from '@/components/organisms/checkout/AddressForm';
 import PaymentIcons from '@/components/atoms/PaymentIcons';
 import { useRazorpayCheckout } from '@/hooks/useRazorpayCheckout';
+import OrderCreationLoader from '@/components/ui/OrderCreationLoader';
 import { type Address } from '@/lib/api-services';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -25,7 +26,7 @@ const CheckoutPage = () => {
   const { profile, refetchProfile } = useUser();
   const { data: userAddresses, isLoading: addressesLoading, refetch: refetchAddresses } = useAddresses();
   const { showToast } = useToast();
-  const { payNow, isProcessing } = useRazorpayCheckout();
+  const { payNow, isProcessing, paymentStage, loadingMessage, cancelPayment, retryPayment } = useRazorpayCheckout();
 
   const [selectedBillingAddress, setSelectedBillingAddress] = useState<string>('');
   const [selectedShippingAddress, setSelectedShippingAddress] = useState<string>('');
@@ -36,6 +37,7 @@ const CheckoutPage = () => {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [addressType, setAddressType] = useState<'billing' | 'shipping'>('billing');
+  const [lastPaymentParams, setLastPaymentParams] = useState<any>(null);
   const [isRefreshingProfile, setIsRefreshingProfile] = useState(false);
 
   // Use addresses from React Query hook
@@ -129,13 +131,19 @@ const CheckoutPage = () => {
     }
 
     try {
-      await payNow({
+      const paymentParams = {
         totalAmountInRupees: total,
         itemsSummary: itemsSummary,
         prefill: prefillData,
         billingAddressId: selectedBillingAddress,
-        shippingAddressId: finalShippingAddress
-      });
+        shippingAddressId: finalShippingAddress,
+        cartData: cartData // Pass current cart data to lock pricing
+      };
+      
+      // Store payment parameters for retry functionality
+      setLastPaymentParams(paymentParams);
+      
+      await payNow(paymentParams);
     } catch (error) {
       console.error('Payment error:', error);
       showToast('Payment failed. Please try again.', 'error');
@@ -640,6 +648,18 @@ const CheckoutPage = () => {
         }}
         onSuccess={handleAddressSuccess}
         editAddress={editingAddress}
+      />
+
+      {/* Order Creation Loader */}
+      <OrderCreationLoader 
+        stage={paymentStage}
+        message={loadingMessage}
+        onRetry={() => {
+          if (lastPaymentParams) {
+            retryPayment(lastPaymentParams);
+          }
+        }}
+        onCancel={cancelPayment}
       />
     </div>
   );

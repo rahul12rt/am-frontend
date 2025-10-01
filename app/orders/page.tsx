@@ -85,7 +85,7 @@ const OrdersPage = () => {
           <p className="text-gray-600 mb-6" style={{ fontSize: '1.5rem' }}>Please sign in to view your orders.</p>
           <Link
             href="/"
-            className="block w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+            className="block w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:opacity-80 transition-opacity"
             style={{ fontSize: '1.5rem' }}
           >
             Sign In
@@ -114,7 +114,7 @@ const OrdersPage = () => {
           <p className="text-gray-600 mb-6" style={{ fontSize: '1.5rem' }}>Unable to load your orders. Please try again.</p>
           <button
             onClick={() => window.location.reload()}
-            className="w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+            className="w-full py-4 bg-gray-900 text-white font-medium rounded-lg hover:opacity-80 transition-opacity"
             style={{ fontSize: '1.5rem' }}
           >
             Retry
@@ -151,7 +151,7 @@ const OrdersPage = () => {
             </p>
             <Link
               href="/collections"
-              className="inline-flex items-center gap-3 px-8 py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-gray-900 text-white font-medium rounded-lg hover:opacity-80 transition-opacity"
               style={{ fontSize: '1.6rem' }}
             >
               Start Shopping
@@ -175,7 +175,7 @@ const OrdersPage = () => {
                       </span>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-gray-600">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-gray-600">
                       <div>
                         <p className="text-sm font-medium mb-1">Order Date</p>
                         <p style={{ fontSize: '1.4rem' }}>
@@ -218,10 +218,10 @@ const OrdersPage = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                     <Link
                       href={`/orders/${order.id}`}
-                      className="flex items-center justify-center gap-2 px-6 py-3 border-2 border-gray-900 text-gray-900 font-medium rounded-lg hover:bg-gray-900 hover:text-white transition-colors"
+                      className="flex items-center justify-center gap-2 px-6 py-3 border-2 border-gray-900 text-gray-900 font-medium rounded-lg hover:opacity-80 transition-opacity"
                       style={{ fontSize: '1.4rem' }}
                     >
                       <Eye className="w-4 h-4" />
@@ -233,7 +233,7 @@ const OrdersPage = () => {
                         href={`https://www.delhivery.com/track/package/${order.waybill}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:opacity-80 transition-opacity"
                         style={{ fontSize: '1.4rem' }}
                       >
                         <Truck className="w-4 h-4" />
@@ -251,7 +251,7 @@ const OrdersPage = () => {
         <div className="text-center mt-12">
           <Link
             href="/collections"
-            className="inline-flex items-center gap-3 px-8 py-4 border-2 border-gray-300 text-gray-600 font-medium rounded-lg hover:border-gray-900 hover:text-gray-900 transition-colors"
+            className="inline-flex items-center gap-3 px-8 py-4 border-2 border-gray-300 text-gray-600 font-medium rounded-lg hover:opacity-80 transition-opacity"
             style={{ fontSize: '1.6rem' }}
           >
             Continue Shopping
