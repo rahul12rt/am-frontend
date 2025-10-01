@@ -101,14 +101,13 @@ export default function Component() {
     setSelectedImage(0);
   }, [selectedColor]);
 
-  // Preload images when watch data is available
+  // Image preloading disabled for better mobile performance
+  // Next.js Image optimization handles loading efficiently
   useEffect(() => {
     if (watch && watchId) {
-      // Preload images for all color variants of this watch
-      preloadImages(watchId);
-      console.log(`🖼️ Preloading images for watch: ${watch.name}`);
+      console.log(`✅ Watch loaded: ${watch.name} (preloading disabled for performance)`);
     }
-  }, [watch, watchId, preloadImages]);
+  }, [watch, watchId]);
 
   const handleQuantityChange = (newQuantity: number) => {
     if (!cartItem) return;
@@ -558,6 +557,8 @@ export default function Component() {
                           width={80}
                           height={80}
                           className='w-full h-full object-cover'
+                          sizes="80px"
+                          quality={75} // Lower quality for thumbnails
                         />
                       </button>
                     ))}
@@ -568,9 +569,11 @@ export default function Component() {
                     <Image
                       src={imageViews[selectedImage]?.url || imageViews[0]?.url || '/images/alban-marcus-watch.png'}
                       alt={watch.name || 'Watch'}
-                      width={500}
-                      height={500}
-                      className='w-full h-full object-contain p-8 cursor-zoom-in transition-transform duration-500 group-hover:scale-150'
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 500px"
+                      className='object-contain p-8 cursor-zoom-in transition-transform duration-500 group-hover:scale-150'
+                      priority={selectedImage === 0} // Prioritize first image
+                      quality={90} // High quality for main product images
                     />
                     
                     {/* Zoom Icon */}
@@ -699,6 +702,7 @@ export default function Component() {
                               fill
                               className='object-contain p-2'
                               sizes='64px'
+                              quality={60} // Lower quality for small variant images
                               onError={(e) => {
                                 console.error(`Failed to load image for ${color.name}:`, finalImageUrl);
                                 // Set fallback image on error

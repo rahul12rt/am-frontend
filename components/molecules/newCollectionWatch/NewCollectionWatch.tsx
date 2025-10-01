@@ -42,6 +42,9 @@ const NewCollectionWatch = ({ item }: { item: Watch }) => {
         height={307}
         alt={item.name}
         className='mx-auto scale145'
+        sizes="(max-width: 768px) 50vw, 234px"
+        quality={85} // High quality for featured products
+        priority={false} // Not critical for initial page load
       />
     </Link>
   );

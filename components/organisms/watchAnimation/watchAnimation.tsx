@@ -1,29 +1,71 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 
 const WatchAnimation: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSafari, setIsSafari] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
+
+  // Reset video function for retry mechanism
+  const resetVideo = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Reset all states
+    setIsVideoLoaded(false);
+    setIsPlaying(false);
+    setVideoError(false);
+
+    // Force reload the video element
+    video.load();
+  }, []);
+
+  // Retry mechanism for failed video loads
+  const retryVideoLoad = useCallback(() => {
+    if (retryCount < maxRetries) {
+      console.log(`Retrying video load (attempt ${retryCount + 1}/${maxRetries})`);
+      setRetryCount(prev => prev + 1);
+      resetVideo();
+    } else {
+      console.error('Max retries reached for video loading');
+      setVideoError(true);
+    }
+  }, [retryCount, maxRetries, resetVideo]);
 
   useEffect(() => {
-    // Detect Safari browser
+    // Detect Safari browser and iOS
     const userAgent = navigator.userAgent.toLowerCase();
     const isSafariBrowser = /safari/.test(userAgent) && !/chrome/.test(userAgent);
-    setIsSafari(isSafariBrowser);
+    const isIOS = /iphone|ipad|ipod/.test(userAgent);
+    setIsSafari(isSafariBrowser || isIOS);
 
     const video = videoRef.current;
     if (!video) return;
 
-    // Enhanced Safari compatibility
+    // Clear any existing event listeners
+    const cleanup = () => {
+      video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('loadeddata', handleLoadedData);
+      video.removeEventListener('error', handleError);
+      video.removeEventListener('loadstart', handleLoadStart);
+      video.removeEventListener('progress', handleProgress);
+      video.removeEventListener('stalled', handleStalled);
+      video.removeEventListener('suspend', handleSuspend);
+    };
+
+    // Enhanced event handlers
     const handleCanPlay = () => {
+      console.log('Video can play');
       setIsVideoLoaded(true);
+      setVideoError(false);
       
-      // For Safari, we need to be more careful with autoplay
-      if (isSafariBrowser) {
-        // Safari mobile often blocks autoplay, so we'll just show the play button
-        console.log('Safari detected - autoplay may be restricted');
+      // For Safari/iOS, we need to be more careful with autoplay
+      if (isSafariBrowser || isIOS) {
+        console.log('Safari/iOS detected - autoplay may be restricted');
         return;
       }
       
@@ -33,34 +75,67 @@ const WatchAnimation: React.FC = () => {
           setIsPlaying(true);
         }).catch((error) => {
           console.log('Autoplay prevented:', error);
-          // Autoplay was prevented, user will need to interact
         });
       }, 100);
     };
 
     const handleLoadedData = () => {
+      console.log('Video data loaded');
       setIsVideoLoaded(true);
-      // Force Safari to prepare for playback
-      if (isSafariBrowser) {
-        video.load(); // Reload video for Safari compatibility
-      }
+      setVideoError(false);
     };
 
     const handleError = (e: Event) => {
       console.error('Video loading error:', e);
-      setIsVideoLoaded(true); // Still show the interface even if video fails
+      setVideoError(true);
+      
+      // Auto-retry on error
+      setTimeout(() => {
+        retryVideoLoad();
+      }, 1000);
     };
 
+    const handleLoadStart = () => {
+      console.log('Video load started');
+    };
+
+    const handleProgress = () => {
+      // Video is downloading
+      if (video.buffered.length > 0) {
+        const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+        const duration = video.duration;
+        if (duration > 0) {
+          const bufferedPercent = (bufferedEnd / duration) * 100;
+          console.log(`Video buffered: ${bufferedPercent.toFixed(1)}%`);
+        }
+      }
+    };
+
+    const handleStalled = () => {
+      console.log('Video loading stalled - attempting retry');
+      setTimeout(() => {
+        retryVideoLoad();
+      }, 2000);
+    };
+
+    const handleSuspend = () => {
+      console.log('Video loading suspended');
+    };
+
+    // Add event listeners
     video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('error', handleError);
+    video.addEventListener('loadstart', handleLoadStart);
+    video.addEventListener('progress', handleProgress);
+    video.addEventListener('stalled', handleStalled);
+    video.addEventListener('suspend', handleSuspend);
 
-    return () => {
-      video.removeEventListener('canplay', handleCanPlay);
-      video.removeEventListener('loadeddata', handleLoadedData);
-      video.removeEventListener('error', handleError);
-    };
-  }, []);
+    // Force initial load
+    video.load();
+
+    return cleanup;
+  }, [retryCount, retryVideoLoad]);
 
   // Handle manual play (in case autoplay is blocked)
   const handleVideoClick = () => {
@@ -101,23 +176,31 @@ const WatchAnimation: React.FC = () => {
         loop // Loop the video
         muted // Required for autoplay
         playsInline // Better mobile support - critical for Safari iOS
-        preload={isSafari ? "metadata" : "auto"} // Safari works better with metadata
+        preload="none" // Don't preload to avoid caching issues
         disablePictureInPicture
         controls={false} // Explicitly disable controls
         webkit-playsinline="true" // Legacy Safari support
         x-webkit-airplay="allow" // Allow AirPlay
+        crossOrigin="anonymous" // Help with CORS issues
         onClick={handleVideoClick}
-        onError={(e) => console.error('Video loading error:', e)}
-        onLoadStart={() => console.log('Video load started')}
-        onCanPlay={() => console.log('Video can play')}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
+        onEnded={() => setIsPlaying(false)}
+        onWaiting={() => console.log('Video waiting for data')}
+        onCanPlayThrough={() => console.log('Video can play through')}
+        // Add cache busting parameter to prevent iOS caching issues
+        key={`video-${retryCount}`} // Force re-render on retry
       >
-        <source src="/images/alban_final_video.mp4" type="video/mp4" />
+        <source 
+          src={`/images/alban_final_video.mp4?v=${Date.now()}`} 
+          type="video/mp4" 
+        />
+        {/* Fallback message */}
+        Your browser does not support the video tag.
       </video>
       
       {/* Loading indicator */}
-      {!isVideoLoaded && (
+      {!isVideoLoaded && !videoError && (
         <div className="absolute inset-0 flex items-center justify-center bg-black">
           <div className="
             text-white 
@@ -128,7 +211,36 @@ const WatchAnimation: React.FC = () => {
             px-4
             text-center
           ">
-            Loading video...
+            {retryCount > 0 ? `Retrying... (${retryCount}/${maxRetries})` : 'Loading video...'}
+          </div>
+        </div>
+      )}
+
+      {/* Error state with retry button */}
+      {videoError && retryCount >= maxRetries && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black">
+          <div className="text-white text-center px-4 mb-4">
+            <p className="text-lg sm:text-xl font-medium mb-2">Video failed to load</p>
+            <p className="text-sm opacity-80 mb-4">Please check your connection and try again</p>
+            <button
+              onClick={() => {
+                setRetryCount(0);
+                resetVideo();
+              }}
+              className="
+                bg-white 
+                bg-opacity-20 
+                hover:bg-opacity-30 
+                px-6 
+                py-3 
+                rounded-lg 
+                transition-all
+                duration-300
+                backdrop-blur-sm
+              "
+            >
+              Retry Video
+            </button>
           </div>
         </div>
       )}

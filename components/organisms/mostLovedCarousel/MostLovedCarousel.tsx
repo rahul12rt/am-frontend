@@ -74,7 +74,7 @@ const MostLovedCarousel: React.FC<PropType> = (props) => {
               <div className={styles.embla__slide} key={item.id}>
                 <div className='relative text-center'>
                   <NewCollectionWatch item={item} />
-                  <p className='text-[12rem] absolute bottom-0 left-[20%] leading-[9rem] font-[family-name:var(--font-timesNewRomanNormal)]'>
+                  <p className='text-[12rem] absolute bottom-0 lg:left-[20%] [max-width:786px]:left-[5%]  leading-[9rem] font-[family-name:var(--font-timesNewRomanNormal)]'>
                     {index + 1}
                   </p>
                 </div>

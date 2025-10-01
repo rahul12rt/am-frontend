@@ -22,7 +22,7 @@ interface Order {
 }
 
 const OrdersPage = () => {
-  const { profile } = useUser();
+  const { profile, isInitializing, isAuthenticated } = useUser();
 
   // Fetch user orders
   const { data: ordersData, isLoading, error } = useQuery({
@@ -76,8 +76,20 @@ const OrdersPage = () => {
     }
   };
 
-  // Redirect if not authenticated
-  if (!profile) {
+  // Show loading while initializing authentication
+  if (isInitializing) {
+    return (
+      <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center">
+        <div className="flex items-center gap-4">
+          <div className="w-8 h-8 border-4 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-gray-900" style={{ fontSize: '1.5rem' }}>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated (only after initialization is complete)
+  if (!isAuthenticated || !profile) {
     return (
       <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center text-center">
         <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-auto">
