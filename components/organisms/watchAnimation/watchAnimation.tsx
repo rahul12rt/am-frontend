@@ -8,6 +8,8 @@ const WatchAnimation: React.FC = () => {
   const [isSafari, setIsSafari] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+    const [autoplayAttempted, setAutoplayAttempted] = useState(false);
+  const [userInteracted, setUserInteracted] = useState(false);
   const maxRetries = 3;
 
   // Reset video function for retry mechanism
@@ -63,20 +65,71 @@ const WatchAnimation: React.FC = () => {
       setIsVideoLoaded(true);
       setVideoError(false);
       
-      // For Safari/iOS, we need to be more careful with autoplay
-      if (isSafariBrowser || isIOS) {
-        // Safari detection logging disabled for production
-        return;
+      // Always attempt autoplay - Safari will block if needed
+      if (!autoplayAttempted) {
+        setAutoplayAttempted(true);
+        attemptAutoplay();
       }
+    };
+
+    // Aggressive autoplay attempt for Safari compatibility
+    const attemptAutoplay = async () => {
+      if (!video) return;
       
-      // Small delay to ensure smooth playback for other browsers
-      setTimeout(() => {
-        video.play().then(() => {
-          setIsPlaying(true);
-        }).catch((error) => {
-          // Autoplay prevention logging disabled for production
-        });
-      }, 100);
+      try {
+        // Multiple autoplay strategies
+        video.muted = true; // Ensure muted for autoplay
+        video.volume = 0; // Double ensure silence
+        
+        // Strategy 1: Direct play
+        await video.play();
+        setIsPlaying(true);
+        // Autoplay success logging disabled for production
+      } catch (error) {
+        // Strategy 2: Try with intersection observer (viewport visibility)
+        if ('IntersectionObserver' in window) {
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach(async (entry) => {
+              if (entry.isIntersecting && !isPlaying) {
+                try {
+                  await video.play();
+                  setIsPlaying(true);
+                  observer.disconnect();
+                } catch (e) {
+                  // Intersection play failed logging disabled for production
+                }
+              }
+            });
+          }, { threshold: 0.5 });
+          
+          observer.observe(video);
+          
+          // Cleanup observer after 10 seconds
+          setTimeout(() => observer.disconnect(), 10000);
+        }
+        
+        // Strategy 3: Listen for any user interaction on the page
+        const playOnInteraction = async () => {
+          if (!userInteracted) {
+            setUserInteracted(true);
+            try {
+              await video.play();
+              setIsPlaying(true);
+              // Remove listeners after successful play
+              document.removeEventListener('touchstart', playOnInteraction);
+              document.removeEventListener('click', playOnInteraction);
+              document.removeEventListener('scroll', playOnInteraction);
+            } catch (e) {
+              // User interaction play failed logging disabled for production
+            }
+          }
+        };
+        
+        // Add listeners for user interaction
+        document.addEventListener('touchstart', playOnInteraction, { once: true, passive: true });
+        document.addEventListener('click', playOnInteraction, { once: true });
+        document.addEventListener('scroll', playOnInteraction, { once: true, passive: true });
+      }
     };
 
     const handleLoadedData = () => {
@@ -173,10 +226,11 @@ const WatchAnimation: React.FC = () => {
           transition-all
           duration-300
         "
+        autoPlay // Enable autoplay attribute
         loop // Loop the video
         muted // Required for autoplay
         playsInline // Better mobile support - critical for Safari iOS
-        preload="none" // Don't preload to avoid caching issues
+        preload="metadata" // Changed from none to metadata for better Safari support
         disablePictureInPicture
         controls={false} // Explicitly disable controls
         webkit-playsinline="true" // Legacy Safari support
@@ -192,7 +246,7 @@ const WatchAnimation: React.FC = () => {
         key={`video-${retryCount}`} // Force re-render on retry
       >
         <source 
-          src={`/images/alban_final_video.mp4?v=${Date.now()}`} 
+          src={`/images/alban_final_video.mp4`} 
           type="video/mp4" 
         />
         {/* Fallback message */}
@@ -245,8 +299,8 @@ const WatchAnimation: React.FC = () => {
         </div>
       )}
 
-      {/* Play button overlay (shows if autoplay is blocked or Safari) */}
-      {isVideoLoaded && (!isPlaying || isSafari) && (
+      {/* Play button overlay (only shows if autoplay completely failed) */}
+      {isVideoLoaded && !isPlaying && autoplayAttempted && (
         <div 
           className="
             absolute 
@@ -256,11 +310,11 @@ const WatchAnimation: React.FC = () => {
             items-center 
             justify-center 
             bg-black 
-            bg-opacity-60 
+            bg-opacity-40 
             cursor-pointer
             transition-all
             duration-300
-            hover:bg-opacity-50
+            hover:bg-opacity-30
           "
           onClick={handleVideoClick}
         >
@@ -296,13 +350,10 @@ const WatchAnimation: React.FC = () => {
             </svg>
           </div>
           
-          {/* Safari-specific message */}
-          {isSafari && (
-            <div className="text-white text-center px-4">
-              <p className="text-lg sm:text-xl font-medium mb-2">Tap to Play Video</p>
-              <p className="text-sm opacity-80">Safari requires user interaction to start videos</p>
-            </div>
-          )}
+          <div className="text-white text-center px-4">
+            <p className="text-lg sm:text-xl font-medium mb-2">Tap to Play</p>
+            <p className="text-sm opacity-80">Experience our luxury watch collection</p>
+          </div>
         </div>
       )}
 

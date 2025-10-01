@@ -56,7 +56,18 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({ isOpen,
     }
 
     try {
-      await sendEmailOTP.mutateAsync(email);
+      const response = await sendEmailOTP.mutateAsync(email);
+      
+      // Check if email is already verified
+      if (response?.alreadyVerified) {
+        showToast(response.message || 'Email is already verified!', 'success');
+        // Auto-close modal after showing success message
+        setTimeout(() => {
+          onSuccess();
+        }, 2000);
+        return;
+      }
+      
       showToast('Verification code sent to your email!', 'success');
       setStep('otp');
     } catch (error: any) {
@@ -73,12 +84,34 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({ isOpen,
     }
 
     try {
-      await verifyEmailOTP.mutateAsync({ email, otp: otpCode });
+      const response = await verifyEmailOTP.mutateAsync({ email, otp: otpCode });
+      
+      // Check if email was already verified
+      if (response?.alreadyVerified) {
+        showToast(response?.message || 'Email is already verified!', 'success');
+        onSuccess();
+        return;
+      }
+      
       showToast('Email verified successfully!', 'success');
       onSuccess();
     } catch (error: any) {
-      const errorMessage = error.message || 'Invalid or expired verification code';
+      // Handle specific error responses
+      let errorMessage = 'Invalid or expired verification code';
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       showToast(errorMessage, 'error');
+      
+      // Clear OTP fields on error for better UX
+      setOtp(new Array(6).fill(''));
+      if (otpInputs.current[0]) {
+        otpInputs.current[0].focus();
+      }
     }
   };
 
@@ -124,8 +157,19 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({ isOpen,
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, index: number) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      otpInputs.current[index - 1]?.focus();
+    if (e.key === 'Backspace') {
+      if (otp[index]) {
+        // Clear current field if it has a value
+        const newOtp = [...otp];
+        newOtp[index] = '';
+        setOtp(newOtp);
+      } else if (index > 0) {
+        // Move to previous field and clear it if current field is empty
+        const newOtp = [...otp];
+        newOtp[index - 1] = '';
+        setOtp(newOtp);
+        otpInputs.current[index - 1]?.focus();
+      }
     }
   };
 
@@ -134,8 +178,8 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({ isOpen,
   const isLoading = sendEmailOTP.isPending || verifyEmailOTP.isPending;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-[300px] relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
+      <div className="backgroundWhite rounded-3xl shadow-2xl border-2 border-gray-200 p-6 w-full max-w-[300px] relative">
         <button 
           onClick={onClose} 
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
@@ -151,6 +195,14 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({ isOpen,
             <p className="text-center text-gray-600" style={{ fontSize: '1.5rem' }}>
               We'll send a verification code to your email.
             </p>
+            <div className="text-center bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 rounded-xl border border-blue-200">
+              <p className="text-blue-700 font-medium" style={{ fontSize: '1.3rem' }}>
+                💡 Already verified?
+              </p>
+              <p className="text-blue-600 text-sm mt-1">
+                If your email is already verified, the system will detect it automatically!
+              </p>
+            </div>
             <input
               type="email"
               placeholder="Enter your email"

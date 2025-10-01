@@ -52,6 +52,10 @@ html {
      object-fit: "cover";
 }
 
+.backgroundWhite {
+  background-color: white;
+}
+
 /* Shimmer animation for skeleton loaders */
 @keyframes shimmer {
   0% {
