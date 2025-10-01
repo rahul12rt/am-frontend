@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { MdKeyboardArrowRight } from 'react-icons/md';
 import Collections from '@/components/organisms/collections/Collections';
 import { useWatchCache } from '@/contexts/WatchCacheContext';
+import { CollectionsGridSkeleton } from '@/components/ui/SkeletonLoader';
 
 const Collection = () => {
   const { allWatches: watches, isLoading: loading, error, isCacheReady } = useWatchCache();
@@ -18,14 +19,19 @@ const Collection = () => {
           <span className="font-medium text-black">Collection</span>
         </div>
         {(loading || !isCacheReady) ? (
-          <div className='text-center text-gray-600 py-20'>
-            <div className="inline-flex items-center space-x-3">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-              <span className="text-lg font-medium">
-                {isCacheReady ? 'Loading luxury watches...' : 'Loading from cache...'}
-              </span>
+          <>
+            {/* Loading Header */}
+            <div className='text-center text-gray-600 mb-8'>
+              <div className="inline-flex items-center space-x-3">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                <span className="text-lg font-medium">
+                  {isCacheReady ? 'Loading luxury watches...' : 'Loading from cache...'}
+                </span>
+              </div>
             </div>
-          </div>
+            {/* Skeleton Grid */}
+            <CollectionsGridSkeleton count={8} />
+          </>
         ) : error ? (
           <div className='text-center text-red-600 py-20'>
             <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">

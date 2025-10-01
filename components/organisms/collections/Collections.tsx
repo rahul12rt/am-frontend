@@ -3,6 +3,8 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Watch } from "@/lib/api-services";
+import WatchImage from "@/components/ui/WatchImage";
+import { CollectionsGridSkeleton } from "@/components/ui/SkeletonLoader";
 
 const Collections = ({ data }: { data: Watch[] }) => {
   const [hoveredWatch, setHoveredWatch] = useState<string | null>(null);
@@ -170,15 +172,12 @@ const Collections = ({ data }: { data: Watch[] }) => {
             <Link href={`/collections/${product.id}`} className="block">
               {/* Image Section - 70% of card height */}
               <div className="relative h-96 overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 group-hover:from-gray-100 group-hover:to-gray-50 transition-all duration-500">
-                <Image
-                  fill
+                <WatchImage
                   src={getCurrentImage(product)}
                   alt={product.name}
                   className="object-contain p-4 transition-transform duration-500 group-hover:scale-110"
                   onError={() => handleImageError(product.id, currentImageIndex[product.id] || 0)}
                   priority={false}
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                 />
                 
                 {/* Image Navigation Dots */}

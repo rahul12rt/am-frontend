@@ -27,6 +27,8 @@ import LoginModal from '@/components/molecules/loginModal/LoginModal';
 import EmailVerificationModal from '@/components/organisms/checkout/EmailVerificationModal';
 import { useRouter } from 'next/navigation';
 import { unprotectedApiClient } from '@/lib/api-clients';
+import WatchDetailSkeleton from '@/components/ui/WatchDetailSkeleton';
+import WatchImageComponent from '@/components/ui/WatchImage';
 
 export default function Component() {
   const params = useParams();
@@ -105,7 +107,7 @@ export default function Component() {
   // Next.js Image optimization handles loading efficiently
   useEffect(() => {
     if (watch && watchId) {
-      console.log(`✅ Watch loaded: ${watch.name} (preloading disabled for performance)`);
+      // Watch loading logging disabled for production
     }
   }, [watch, watchId]);
 
@@ -205,7 +207,7 @@ export default function Component() {
         showToast(data.message || 'Failed to check serviceability', 'error');
       }
     } catch (error) {
-      console.error('Serviceability check error:', error);
+      // Serviceability error logging disabled for production
       showToast('Failed to check serviceability. Please try again.', 'error');
       // Don't clear previous result on network error - keep showing previous data
     } finally {
@@ -248,17 +250,13 @@ export default function Component() {
     
     try {
       // Force refresh the profile to get the latest data including email
-      console.log('Refreshing profile after login...');
+      // Profile refresh logging disabled for production
       await refetchProfile();
       
       // Wait a moment for the profile state to update
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      console.log('Profile refreshed successfully:', { 
-        id: profile?.id, 
-        email: profile?.email,
-        hasEmail: !!profile?.email 
-      });
+      // Profile success logging disabled for production
       
       // Execute the original action that triggered login
       if (loginAction === 'buy_now') {
@@ -267,7 +265,7 @@ export default function Component() {
         await handleAddToCartAfterAuth();
       }
     } catch (error) {
-      console.error('Failed to refresh profile after login:', error);
+      // Profile error logging disabled for production
       showToast('Failed to load profile. Please try again.', 'error');
     }
   };
@@ -320,7 +318,7 @@ export default function Component() {
       // Navigate to checkout
       router.push('/checkout');
     } catch (error: any) {
-      console.error("Add to cart error:", error);
+      // Add to cart error logging disabled for production
       showToast("Failed to add item to cart. Please try again.", "error");
     } finally {
       setIsBuyingNow(false);
@@ -360,7 +358,7 @@ export default function Component() {
         showToast("Please verify your email for faster checkout", "info");
       }
     } catch (error: any) {
-      console.error("Add to cart error:", error);
+      // Add to cart error logging disabled for production
 
       // Handle specific error cases
       if (error?.response?.status === 409) {
@@ -379,21 +377,18 @@ export default function Component() {
 
   // Handle buy now after authentication
   const handleBuyNowAfterAuth = async () => {
-    console.log('Checking email after authentication:', { 
-      email: profile?.email,
-      profileId: profile?.id 
-    });
+    // Email check logging disabled for production
     
     // Check if email exists and is valid
     const hasValidEmail = profile?.email && profile.email.trim() !== '';
     
     if (!hasValidEmail) {
-      console.log('Email verification needed - showing modal');
+      // Email verification logging disabled for production
       setShowEmailVerificationModal(true);
       return;
     }
 
-    console.log('Email exists, proceeding to checkout:', profile?.email);
+    // Email exists logging disabled for production
 
     // Use the shared helper function to add item and go to checkout
     await handleAddItemToCartForCheckout();
@@ -482,18 +477,7 @@ export default function Component() {
   });
 
   if (loading) {
-    return (
-      <div className='pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen'>
-        <div className='container'>
-          <div className='flex items-center justify-center min-h-[400px]'>
-            <div className="inline-flex items-center space-x-3">
-              <Loader2 className='w-8 h-8 animate-spin text-gray-900' />
-              <span className='text-lg font-medium text-gray-900'>Loading luxury watch details...</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <WatchDetailSkeleton />;
   }
 
   if (error || !watch) {
@@ -551,14 +535,13 @@ export default function Component() {
                         className={`w-20 h-20 rounded-lg border-2 overflow-hidden transition-all duration-200 ${selectedImage === index ? 'border-gray-900 ring-2 ring-gray-300' : 'border-gray-300 hover:border-gray-500'}`}
                         title={view.label}
                       >
-                        <Image
+                        <WatchImageComponent
                           src={view.url}
                           alt={view.label}
                           width={80}
                           height={80}
+                          fill={false}
                           className='w-full h-full object-cover'
-                          sizes="80px"
-                          quality={75} // Lower quality for thumbnails
                         />
                       </button>
                     ))}
@@ -566,14 +549,11 @@ export default function Component() {
                 )}
                 <div className='flex-1 relative'>
                   <div className='aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl overflow-hidden border border-gray-200 relative group'>
-                    <Image
+                    <WatchImageComponent
                       src={imageViews[selectedImage]?.url || imageViews[0]?.url || '/images/alban-marcus-watch.png'}
                       alt={watch.name || 'Watch'}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 500px"
                       className='object-contain p-8 cursor-zoom-in transition-transform duration-500 group-hover:scale-150'
-                      priority={selectedImage === 0} // Prioritize first image
-                      quality={90} // High quality for main product images
+                      priority={selectedImage === 0}
                     />
                     
                     {/* Zoom Icon */}
@@ -666,7 +646,7 @@ export default function Component() {
                       
                       const formatUrl = (url: string) => {
                         if (!url || url === 'undefined' || url === 'null') {
-                          console.log(`Missing image for variant: ${color.name}, using fallback`);
+                          // Missing image logging disabled for production
                           return '/images/alban-marcus-watch.png';
                         }
                         if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -696,17 +676,12 @@ export default function Component() {
                           
                           {/* Image container */}
                           <div className='relative w-16 h-16 rounded-lg overflow-hidden bg-white border border-gray-200 flex-shrink-0'>
-                            <Image
+                            <WatchImageComponent
                               src={finalImageUrl}
                               alt={color.name}
-                              fill
                               className='object-contain p-2'
-                              sizes='64px'
-                              quality={60} // Lower quality for small variant images
-                              onError={(e) => {
-                                console.error(`Failed to load image for ${color.name}:`, finalImageUrl);
-                                // Set fallback image on error
-                                e.currentTarget.src = '/images/alban-marcus-watch.png';
+                              onError={() => {
+                                // Error logging disabled for production
                               }}
                             />
                           </div>

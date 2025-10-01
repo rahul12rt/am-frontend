@@ -7,7 +7,7 @@ module.exports = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'alban-marcus-images.s3.ap-southeast-2.amazonaws.com',
+        hostname: 'd1w5wvfcm01czh.cloudfront.net',
         pathname: '/AlbanMarcus/**',
       },
     ],
