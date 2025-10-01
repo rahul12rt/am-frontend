@@ -58,12 +58,12 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
     setIsLoadingProfile(true);
     try {
-      console.log('Fetching profile for user:', user.id);
+      // Profile fetching logging disabled for production
       const userProfile = await userServices.getProfile();
       setProfile(userProfile);
-      console.log('Profile loaded successfully:', userProfile);
+      // Profile success logging disabled for production
     } catch (error) {
-      console.error('Failed to fetch profile:', error);
+      // Profile error logging disabled for production
       setProfile(null);
     } finally {
       setIsLoadingProfile(false);
@@ -72,11 +72,11 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = useCallback(async () => {
     try {
-      console.log('Attempting to sign out...');
+      // Logout logging disabled for production
       const { error } = await supabase.auth.signOut();
 
       if (error) {
-        console.error('Supabase signOut error:', error);
+        // Supabase error logging disabled for production
         throw error;
       }
 
@@ -93,12 +93,12 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         sessionStorage.clear();
       }
 
-      console.log('Sign out successful');
+      // Logout success logging disabled for production
 
       // Redirect to home page after logout
       router.push('/');
     } catch (error) {
-      console.error('Logout failed:', error);
+      // Logout error logging disabled for production
       // Even if logout fails, clear local state
       setUser(null);
       setProfile(null);
@@ -118,28 +118,28 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
     const getInitialSession = async () => {
       try {
-        console.log('Checking initial session...');
+        // Initial session logging disabled for production
         const { data: { user }, error } = await supabase.auth.getUser();
 
         if (error) {
-          console.error('Error getting user:', error);
+          // User error logging disabled for production
         }
 
         if (mounted) {
           setUser(user);
 
           if (user) {
-            console.log('Initial session found for user:', user.id);
+            // Initial session logging disabled for production
             // Fetch profile for authenticated user
             setIsLoadingProfile(true);
             try {
               const userProfile = await userServices.getProfile();
               if (mounted) {
                 setProfile(userProfile);
-                console.log('Profile loaded on initial session');
+                // Profile load logging disabled for production
               }
             } catch (error) {
-              console.error("Failed to fetch profile on initial load:", error);
+              // Profile error logging disabled for production
               if (mounted) {
                 setProfile(null);
               }
@@ -149,14 +149,14 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
               }
             }
           } else {
-            console.log('No initial session found');
+            // No session logging disabled for production
             setProfile(null);
           }
 
           setIsInitializing(false);
         }
       } catch (error) {
-        console.error('Error in getInitialSession:', error);
+        // Initial session error logging disabled for production
         if (mounted) {
           setUser(null);
           setProfile(null);
@@ -171,14 +171,14 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
-      console.log('Auth state changed:', event, session?.user?.id);
+      // Auth state logging disabled for production
 
       // Handle different auth events
       switch (event) {
         case 'SIGNED_IN':
           setUser(session?.user ?? null);
           if (session?.user) {
-            console.log('SIGNED_IN event - fetching profile for user:', session.user.id);
+            // Sign in event logging disabled for production
             // Longer delay to ensure backend session and database record are ready (especially after registration)
             timeoutId = setTimeout(async () => {
               if (!mounted) return;
@@ -187,10 +187,10 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                 const userProfile = await userServices.getProfile();
                 if (mounted) {
                   setProfile(userProfile);
-                  console.log('Profile fetched successfully after SIGNED_IN');
+                  // Profile fetch success logging disabled for production
                 }
               } catch (error) {
-                console.error("Failed to fetch profile after sign in:", error);
+                // Profile fetch error logging disabled for production
                 // Retry once more with additional delay (helpful for new registrations)
                 setTimeout(async () => {
                   if (!mounted) return;
@@ -198,10 +198,10 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                     const userProfile = await userServices.getProfile();
                     if (mounted) {
                       setProfile(userProfile);
-                      console.log('Profile fetched successfully after retry');
+                      // Profile retry success logging disabled for production
                     }
                   } catch (retryError) {
-                    console.error("Profile fetch retry also failed:", retryError);
+                    // Profile retry error logging disabled for production
                     if (mounted) {
                       setProfile(null);
                     }

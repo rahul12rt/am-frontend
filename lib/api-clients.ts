@@ -53,6 +53,8 @@ export interface ProductFilters {
   limit?: number;
   category?: string;
   search?: string;
+  minPrice?: number;
+  maxPrice?: number;
 }
 
 // No need for custom token management - Supabase handles this
@@ -60,7 +62,7 @@ export interface ProductFilters {
 // Base configuration for all API clients
 const baseConfig = {
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000',
-  timeout: 10000,
+  timeout: 30000, // Increased to 30 seconds for order creation with shipping
   headers: {
     'Content-Type': 'application/json',
   },
@@ -68,33 +70,17 @@ const baseConfig = {
 
 // Common request logging
 const logRequest = (config: InternalAxiosRequestConfig) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
-      data: config.data,
-      params: config.params,
-    });
-  }
+  // Logging disabled for production
 };
 
 // Common response logging
 const logResponse = (response: AxiosResponse) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`, {
-      status: response.status,
-      data: response.data,
-    });
-  }
+  // Logging disabled for production
 };
 
 // Common error logging
 const logError = (error: AxiosError) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.error(`❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message,
-    });
-  }
+  // Logging disabled for production
 };
 
 // =================
@@ -110,7 +96,7 @@ const createUnprotectedApiClient = (): AxiosInstance => {
       return config;
     },
     (error: AxiosError) => {
-      console.error('Unprotected API request error:', error);
+      // Error logging disabled for production
       return Promise.reject(error);
     }
   );
@@ -151,12 +137,12 @@ const createProtectedApiClient = (): AxiosInstance => {
       logRequest(config);
       return config;
     } catch (error) {
-      console.error('Error fetching Supabase session:', error);
+      // Error logging disabled for production
       return Promise.reject(error);
     }
   },
   (error: AxiosError) => {
-    console.error('Protected API request error:', error);
+    // Error logging disabled for production
     return Promise.reject(error);
   }
 );
@@ -174,7 +160,7 @@ const createProtectedApiClient = (): AxiosInstance => {
       // On 401, let Supabase handle token refresh automatically
       // The middleware will handle session refreshing
       if (error.response?.status === 401) {
-        console.warn('Unauthorized request - session may have expired');
+        // Warning logging disabled for production
       }
 
       return Promise.reject(error);

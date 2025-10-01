@@ -140,16 +140,7 @@ export const useCartTotal = (enabled: boolean = true, userProfile?: any) => {
     const discountAmount = eligibleForDiscount ? (subtotal * 0.1) : 0;
     const finalTotal = subtotal - discountAmount;
 
-    console.log('useCartTotal Debug:', {
-      cartItems: cartData.items.length,
-      subtotal,
-      actualTotal,
-      savings,
-      eligibleForDiscount,
-      discountAmount,
-      finalTotal,
-      cartSummary: cartData.summary?.totalAmount
-    });
+    // Debug logging disabled for production
 
     return {
       subtotal,
@@ -219,7 +210,7 @@ export const useAddToCart = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.count() });
       queryClient.refetchQueries({ queryKey: queryKeys.cart.count() });
 
-      console.log('Items added to cart successfully:', response.message);
+      // Success logging disabled for production
     },
 
     onError: (error: AxiosError, newItems, context) => {
@@ -229,7 +220,7 @@ export const useAddToCart = () => {
       }
 
       const errorMessage = handleApiError(error);
-      console.error('Failed to add items to cart:', errorMessage);
+      // Error logging disabled for production
 
       // Re-throw error so component can handle it
       throw error;
@@ -265,7 +256,7 @@ export const useUpdateCartItem = () => {
       // Force refetch of cart count for immediate UI update
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.count() });
       queryClient.refetchQueries({ queryKey: queryKeys.cart.count() });
-      console.log('Cart item updated successfully:', updatedItem);
+      // Success logging disabled for production
     },
 
     onError: (error: AxiosError, variables, context) => {
@@ -274,7 +265,7 @@ export const useUpdateCartItem = () => {
       }
 
       const errorMessage = handleApiError(error);
-      console.error('Failed to update cart item:', errorMessage);
+      // Error logging disabled for production
 
       // Re-throw error so component can handle it
       throw error;
@@ -308,7 +299,7 @@ export const useRemoveFromCart = () => {
       // Force refetch of cart count for immediate UI update
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.count() });
       queryClient.refetchQueries({ queryKey: queryKeys.cart.count() });
-      console.log('Item removed from cart successfully:', cartItemId);
+      // Success logging disabled for production
     },
 
     onError: (error: AxiosError, cartItemId, context) => {
@@ -317,7 +308,7 @@ export const useRemoveFromCart = () => {
       }
 
       const errorMessage = handleApiError(error);
-      console.error('Failed to remove item from cart:', errorMessage);
+      // Error logging disabled for production
 
       // Re-throw error so component can handle it
       throw error;
@@ -351,7 +342,7 @@ export const useClearCart = () => {
       // Force refetch of cart count for immediate UI update
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.count() });
       queryClient.refetchQueries({ queryKey: queryKeys.cart.count() });
-      console.log('Cart cleared successfully');
+      // Success logging disabled for production
     },
 
     onError: (error: AxiosError, _, context) => {
@@ -360,7 +351,7 @@ export const useClearCart = () => {
       }
 
       const errorMessage = handleApiError(error);
-      console.error('Failed to clear cart:', errorMessage);
+      // Error logging disabled for production
 
       // Re-throw error so component can handle it
       throw error;

@@ -13,6 +13,8 @@ const OrderSuccessPage = () => {
   const [orderDetails, setOrderDetails] = useState<any>(null);
 
   const orderId = searchParams.get('orderId');
+  const orderNumber = searchParams.get('orderNumber');
+  const status = searchParams.get('status');
 
   useEffect(() => {
     // If no order details in URL, redirect to home
@@ -24,8 +26,9 @@ const OrderSuccessPage = () => {
     // Set basic order details from URL params
     setOrderDetails({
       id: orderId,
+      orderNumber: orderNumber,
     });
-  }, [orderId, router]);
+  }, [orderId, orderNumber, router]);
 
   // Redirect if not authenticated
   if (!profile) {
@@ -72,7 +75,10 @@ const OrderSuccessPage = () => {
             Thank you for your purchase, {profile.first_name}!
           </p>
           <p className="text-gray-500" style={{ fontSize: '1.4rem' }}>
-            Your order has been confirmed and is being processed.
+            {status === 'processing' 
+              ? 'Your order is being processed. You will receive a confirmation email shortly.'
+              : 'Your order has been confirmed and is being processed.'
+            }
           </p>
         </div>
 
@@ -83,7 +89,9 @@ const OrderSuccessPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <p className="text-gray-600 mb-2" style={{ fontSize: '1.4rem' }}>Order Number</p>
-                <p className="font-bold text-gray-900" style={{ fontSize: '1.8rem' }}>{orderDetails.orderNumber}</p>
+                <p className="font-bold text-gray-900" style={{ fontSize: '1.8rem' }}>
+                  {orderDetails.orderNumber || `ORD-${orderDetails.id}`}
+                </p>
               </div>
               <div>
                 <p className="text-gray-600 mb-2" style={{ fontSize: '1.4rem' }}>Order Date</p>
@@ -231,15 +239,15 @@ const OrderSuccessPage = () => {
               className="text-blue-600 hover:text-blue-800 font-medium"
               style={{ fontSize: '1.4rem' }}
             >
-              support@albanmarcus.com
+              contact@albanmarcus.com
             </a>
             <span className="hidden sm:inline text-gray-400">|</span>
             <a
-              href="tel:+919999999999"
+              href="tel:+919480282000"
               className="text-blue-600 hover:text-blue-800 font-medium"
               style={{ fontSize: '1.4rem' }}
             >
-              +91 99999 99999
+              +91 9480282000
             </a>
           </div>
         </div>

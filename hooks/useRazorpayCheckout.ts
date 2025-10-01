@@ -67,7 +67,7 @@ export function useRazorpayCheckout() {
 
       // Set a timeout to reset state if stuck (5 minutes)
       const newTimeoutId = setTimeout(() => {
-        console.warn('Payment process timed out, resetting state');
+        // Payment timeout warning disabled for production
         setPaymentStage('error');
         setLoadingMessage('Payment process timed out. Please try again.');
         setTimeout(() => {
@@ -121,7 +121,7 @@ export function useRazorpayCheckout() {
           setLoadingMessage('Payment successful! Creating your order...');
           
           if (!resp?.razorpay_payment_id || !resp?.razorpay_order_id || !resp?.razorpay_signature) {
-            console.error('Payment failed: Missing fields', resp);
+            // Payment error logging disabled for production
             setPaymentStage('error');
             setLoadingMessage('Payment failed. Please try again.');
             setIsProcessing(false);
@@ -143,7 +143,7 @@ export function useRazorpayCheckout() {
             });
             
             if (orderResponse?.success) {
-              console.log('Order created successfully', orderResponse);
+              // Order success logging disabled for production
               
               // Clear timeout on success
               if (timeoutId) {
@@ -164,17 +164,29 @@ export function useRazorpayCheckout() {
               
               // Redirect to order success page
               setTimeout(() => {
-                router.push(`/order-success?orderId=${orderResponse.order.id}`);
+                router.push(`/order-success?orderId=${orderResponse.order.id}&orderNumber=${orderResponse.order.orderNumber}`);
               }, 1500);
             } else {
-              console.error('Order creation failed', orderResponse);
+              // Order error logging disabled for production
               setPaymentStage('error');
               setLoadingMessage('Payment successful but order creation failed. Please contact support.');
             }
-          } catch (err) {
-            console.error('Order creation error:', err);
-            setPaymentStage('error');
-            setLoadingMessage('Payment successful but order creation failed. Please contact support.');
+          } catch (err: any) {
+            // Order creation error logging disabled for production
+            
+            // Handle timeout errors specifically
+            if (err.code === 'ECONNABORTED' && err.message.includes('timeout')) {
+              setPaymentStage('success'); // Payment was successful, just took longer
+              setLoadingMessage('Order is being processed. You will receive a confirmation email shortly.');
+              
+              // Redirect to success page after a delay
+              setTimeout(() => {
+                router.push('/order-success?status=processing');
+              }, 3000);
+            } else {
+              setPaymentStage('error');
+              setLoadingMessage('Payment successful but order creation failed. Please contact support.');
+            }
           } finally {
             setTimeout(() => setIsProcessing(false), 2000);
           }
@@ -182,7 +194,7 @@ export function useRazorpayCheckout() {
         ,
         modal: {
           ondismiss: () => {
-            console.log('Razorpay modal dismissed by user');
+            // Modal dismiss logging disabled for production
             setIsProcessing(false);
             setPaymentStage('idle');
             setLoadingMessage('');
@@ -194,7 +206,7 @@ export function useRazorpayCheckout() {
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (e: any) {
-      console.error('Payment initiation error:', e);
+      // Payment initiation error logging disabled for production
       setPaymentStage('error');
       setLoadingMessage('Failed to initiate payment. Please try again.');
       setTimeout(() => {

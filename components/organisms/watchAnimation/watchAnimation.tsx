@@ -27,11 +27,11 @@ const WatchAnimation: React.FC = () => {
   // Retry mechanism for failed video loads
   const retryVideoLoad = useCallback(() => {
     if (retryCount < maxRetries) {
-      console.log(`Retrying video load (attempt ${retryCount + 1}/${maxRetries})`);
+      // Retry logging disabled for production
       setRetryCount(prev => prev + 1);
       resetVideo();
     } else {
-      console.error('Max retries reached for video loading');
+      // Max retry error logging disabled for production
       setVideoError(true);
     }
   }, [retryCount, maxRetries, resetVideo]);
@@ -59,13 +59,13 @@ const WatchAnimation: React.FC = () => {
 
     // Enhanced event handlers
     const handleCanPlay = () => {
-      console.log('Video can play');
+      // Video ready logging disabled for production
       setIsVideoLoaded(true);
       setVideoError(false);
       
       // For Safari/iOS, we need to be more careful with autoplay
       if (isSafariBrowser || isIOS) {
-        console.log('Safari/iOS detected - autoplay may be restricted');
+        // Safari detection logging disabled for production
         return;
       }
       
@@ -74,19 +74,19 @@ const WatchAnimation: React.FC = () => {
         video.play().then(() => {
           setIsPlaying(true);
         }).catch((error) => {
-          console.log('Autoplay prevented:', error);
+          // Autoplay prevention logging disabled for production
         });
       }, 100);
     };
 
     const handleLoadedData = () => {
-      console.log('Video data loaded');
+      // Video data logging disabled for production
       setIsVideoLoaded(true);
       setVideoError(false);
     };
 
     const handleError = (e: Event) => {
-      console.error('Video loading error:', e);
+      // Video error logging disabled for production
       setVideoError(true);
       
       // Auto-retry on error
@@ -96,7 +96,7 @@ const WatchAnimation: React.FC = () => {
     };
 
     const handleLoadStart = () => {
-      console.log('Video load started');
+      // Video load start logging disabled for production
     };
 
     const handleProgress = () => {
@@ -106,20 +106,20 @@ const WatchAnimation: React.FC = () => {
         const duration = video.duration;
         if (duration > 0) {
           const bufferedPercent = (bufferedEnd / duration) * 100;
-          console.log(`Video buffered: ${bufferedPercent.toFixed(1)}%`);
+          // Video buffer logging disabled for production
         }
       }
     };
 
     const handleStalled = () => {
-      console.log('Video loading stalled - attempting retry');
+      // Video stall logging disabled for production
       setTimeout(() => {
         retryVideoLoad();
       }, 2000);
     };
 
     const handleSuspend = () => {
-      console.log('Video loading suspended');
+      // Video suspend logging disabled for production
     };
 
     // Add event listeners
@@ -146,7 +146,7 @@ const WatchAnimation: React.FC = () => {
       video.play().then(() => {
         setIsPlaying(true);
       }).catch((error) => {
-        console.error('Play failed:', error);
+        // Play error logging disabled for production
       });
     }
   };
@@ -186,8 +186,8 @@ const WatchAnimation: React.FC = () => {
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onEnded={() => setIsPlaying(false)}
-        onWaiting={() => console.log('Video waiting for data')}
-        onCanPlayThrough={() => console.log('Video can play through')}
+        onWaiting={() => {/* Video waiting logging disabled for production */}}
+        onCanPlayThrough={() => {/* Video ready logging disabled for production */}}
         // Add cache busting parameter to prevent iOS caching issues
         key={`video-${retryCount}`} // Force re-render on retry
       >

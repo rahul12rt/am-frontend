@@ -80,10 +80,10 @@ export const useCreateOrder = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      console.log("Razorpay order created successfully:", data);
+      // Success logging disabled for production
     },
     onError: (error: AxiosError) => {
-      console.error("Razorpay order creation failed:", handleApiError(error));
+      // Error logging disabled for production
     },
   });
 };
@@ -96,10 +96,10 @@ export const useVerifyPayment = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      console.log("Payment verified successfully:", data);
+      // Success logging disabled for production
     },
     onError: (error: AxiosError) => {
-      console.error("Payment verification failed:", handleApiError(error));
+      // Error logging disabled for production
     },
   });
 };
@@ -108,14 +108,16 @@ export const useVerifyPayment = () => {
 export const useCreateOrderAndShip = () => {
   return useMutation({
     mutationFn: async (data: CreateOrderAndShipRequest) => {
-      const response = await protectedApiClient.post("/payment/create-order-and-ship", data);
+      const response = await protectedApiClient.post("/payment/create-order-and-ship", data, {
+        timeout: 45000, // 45 seconds for order creation with shipping integration
+      });
       return response.data;
     },
     onSuccess: (data) => {
-      console.log("Order created and shipped successfully:", data);
+      // Success logging disabled for production
     },
     onError: (error: AxiosError) => {
-      console.error("Order creation failed:", handleApiError(error));
+      // Error logging disabled for production
     },
   });
 };

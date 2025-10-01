@@ -39,6 +39,7 @@ const CheckoutPage = () => {
   const [addressType, setAddressType] = useState<'billing' | 'shipping'>('billing');
   const [lastPaymentParams, setLastPaymentParams] = useState<any>(null);
   const [isRefreshingProfile, setIsRefreshingProfile] = useState(false);
+  const [showEmptyCart, setShowEmptyCart] = useState(false);
 
   // Use addresses from React Query hook
   const addresses = userAddresses || [];
@@ -235,8 +236,21 @@ const CheckoutPage = () => {
     }
   }, [profile]);
 
-  // Show loading state
-  if (cartLoading) {
+  // Handle empty cart delay for Buy Now flow
+  useEffect(() => {
+    if (!cartData?.items || cartData.items.length === 0) {
+      const timer = setTimeout(() => {
+        setShowEmptyCart(true);
+      }, 1500); // Wait 1.5 seconds before showing empty cart
+      
+      return () => clearTimeout(timer);
+    } else {
+      setShowEmptyCart(false);
+    }
+  }, [cartData]);
+
+  // Show loading state - extended for Buy Now flow
+  if (cartLoading || (!cartData && !cartLoading)) {
     return (
       <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-4">
@@ -266,8 +280,19 @@ const CheckoutPage = () => {
     );
   }
 
-  // Show empty cart message
+  // Show empty cart message - but wait a bit for Buy Now flow
   if (!cartData?.items || cartData.items.length === 0) {
+    if (!showEmptyCart) {
+      return (
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center">
+          <div className="flex items-center gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-900" />
+            <span className="text-gray-900" style={{ fontSize: '1.5rem' }}>Preparing your cart...</span>
+          </div>
+        </div>
+      );
+    }
+    
     return (
       <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center text-center">
         <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-auto">
@@ -385,7 +410,7 @@ const CheckoutPage = () => {
                           <p className="text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>
                             {address.full_name}
                             {address.is_default && (
-                              <span className="text-xs bg-gray-900 text-white px-2 py-1 ml-2 rounded uppercase font-bold">Default</span>
+                              <span className="text-xs text-white px-2 py-1 ml-2 rounded uppercase font-bold">Default</span>
                             )}
                           </p>
                           <p className="text-gray-700" style={{ fontSize: '1.3rem' }}>
