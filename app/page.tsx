@@ -8,6 +8,8 @@ import Upgrade from "@/components/organisms/upgrade/Upgrade";
 import QaulityMarque from "@/components/organisms/qualityMarque/QualityMarque";
 import Gallery from "@/components/organisms/gallery/Gallery";
 import GetInTouch from "@/components/organisms/getInTouch/GetInTouch";
+import StructuredData from "@/components/seo/StructuredData";
+import LocalBusinessSchema from "@/components/seo/LocalBusinessSchema";
 import { useGSAPCleanup } from "@/hooks/useGSAPCleanup";
 import { useWatchCache } from "@/contexts/WatchCacheContext";
 import { useEffect } from "react";
@@ -29,6 +31,12 @@ export default function Home() {
 
   return (
     <>
+      {/* SEO Structured Data */}
+      <StructuredData type="organization" />
+      <StructuredData type="website" />
+      <LocalBusinessSchema />
+      
+      {/* Main Content */}
       <Banner />
       <About />
       <NewCollection /> 

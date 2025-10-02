@@ -29,6 +29,8 @@ import { useRouter } from 'next/navigation';
 import { unprotectedApiClient } from '@/lib/api-clients';
 import WatchDetailSkeleton from '@/components/ui/WatchDetailSkeleton';
 import WatchImageComponent from '@/components/ui/WatchImage';
+import StructuredData from '@/components/seo/StructuredData';
+import Head from 'next/head';
 
 export default function Component() {
   const params = useParams();
@@ -511,7 +513,42 @@ export default function Component() {
   const discountPercentage = offerpercentage || 
     (offerprice > 0 && actualprice > offerprice ? Math.round(((actualprice - offerprice) / actualprice) * 100) : 0);
 
+  // Prepare structured data for the watch
+  const productData = {
+    id: watch.id,
+    name: watch.name,
+    description: watch.description,
+    price: offerprice > 0 ? offerprice : actualprice,
+    stockavailability: watch.stockavailability,
+    images: imageViews.map(view => view.url),
+    rating: watch.rating,
+    reviewCount: watch.reviewscount
+  };
+
+  const breadcrumbData = {
+    breadcrumbs: [
+      { name: 'Home', url: '/' },
+      { name: 'Collections', url: '/collections' },
+      { name: watch.name, url: `/collections/${watch.id}` }
+    ]
+  };
+
   return (
+    <>
+      {/* SEO Structured Data */}
+      <StructuredData type="product" data={productData} />
+      <StructuredData type="breadcrumb" data={breadcrumbData} />
+      
+      <Head>
+        <title>{watch.name} - Alban Marcus Luxury Watches | Premium Mechanical Timepiece</title>
+        <meta name="description" content={`${watch.name} - Premium luxury mechanical watch by Alban Marcus. Swiss movement precision, exclusive timepiece for collectors. Price: ₹${(offerprice > 0 ? offerprice : actualprice).toLocaleString('en-IN')}`} />
+        <meta name="keywords" content={`${watch.name}, Alban Marcus, luxury watch, mechanical watch, Swiss movement, premium timepiece, ${selectedWatchColor?.name || ''}`} />
+        <meta property="og:title" content={`${watch.name} - Alban Marcus Luxury Watch`} />
+        <meta property="og:description" content={`Premium mechanical watch with Swiss movement precision. ${watch.description || 'Exclusive luxury timepiece for discerning collectors.'}`} />
+        <meta property="og:image" content={imageViews[0]?.url || '/images/Am_logo_small_transparentpng.png'} />
+        <meta property="og:url" content={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://albanmarcus.com'}/collections/${watch.id}`} />
+        <link rel="canonical" href={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://albanmarcus.com'}/collections/${watch.id}`} />
+      </Head>
     <div className='pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen'>
       <div className='container'>
         <div className='flex items-center text-[14px] pb-[40px] gap-2 text-gray-700'>
@@ -1327,5 +1364,6 @@ export default function Component() {
         onSuccess={handleEmailVerificationSuccess}
       />
     </div>
+    </>
   );
 }

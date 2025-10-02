@@ -4,13 +4,26 @@ import { MdKeyboardArrowRight } from 'react-icons/md';
 import Collections from '@/components/organisms/collections/Collections';
 import { useWatchCache } from '@/contexts/WatchCacheContext';
 import { CollectionsGridSkeleton } from '@/components/ui/SkeletonLoader';
+import StructuredData from '@/components/seo/StructuredData';
+import Head from 'next/head';
 
 const Collection = () => {
   const { allWatches: watches, isLoading: loading, error, isCacheReady } = useWatchCache();
 
+  const breadcrumbData = {
+    breadcrumbs: [
+      { name: 'Home', url: '/' },
+      { name: 'Collections', url: '/collections' }
+    ]
+  };
+
   return (
-    <section className='pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen'>
-      <div className='container'>
+    <>
+      {/* SEO Structured Data */}
+      <StructuredData type="breadcrumb" data={breadcrumbData} />
+      
+      <section className='pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen'>
+        <div className='container'>
         <div className='flex items-center text-[14px] pb-[40px] gap-2 text-gray-700'>
           <Link href='/' className='opacity-60 hover:opacity-100 hover:text-black transition-colors'>
             Home
@@ -42,8 +55,9 @@ const Collection = () => {
         ) : (
           <Collections data={watches} />
         )}
-      </div>
-    </section>
+        </div>
+      </section>
+    </>
   );
 };
 

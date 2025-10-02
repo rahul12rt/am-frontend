@@ -12,6 +12,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import NavigationBoundary from '@/components/NavigationBoundary';
 import CacheMonitor from '@/components/molecules/cacheMonitor/CacheMonitor';
 import AppLoader from '@/components/layout/AppLoader';
+import GoogleAnalytics from '@/components/seo/GoogleAnalytics';
 
 const centurygothic = localFont({
   src: "../public/fonts/gothic/centurygothic.ttf",
@@ -33,9 +34,79 @@ const timesNewRomanNormal = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "ALBAN MARCUS",
-  description:
-    "Mechanical watches may go through up to 50 or 60 different processes before the watch is considered to be as near to perfect as humanly possible before delivery.",
+  title: {
+    default: "Alban Marcus Watches - Luxury Mechanical Watches | Premium Swiss Movement Timepieces",
+    template: "%s | Alban Marcus Watches"
+  },
+  description: "Discover Alban Marcus luxury mechanical watches crafted with precision. Premium Swiss movement timepieces, luxury watch collections, and exclusive mechanical watches for discerning collectors. Shop authentic luxury watches online.",
+  keywords: [
+    "Alban Marcus Watches",
+    "luxury watches",
+    "mechanical watches", 
+    "Swiss movement watches",
+    "premium timepieces",
+    "luxury watch collection",
+    "authentic watches",
+    "mechanical timepieces",
+    "watch collectors",
+    "luxury watch brand",
+    "Swiss made watches",
+    "premium watch collection",
+    "exclusive watches",
+    "luxury watch online",
+    "mechanical watch movement"
+  ],
+  authors: [{ name: "Alban Marcus Watches" }],
+  creator: "Alban Marcus Watches Private Limited",
+  publisher: "Alban Marcus Watches",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://albanmarcus.com'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: "Alban Marcus Watches - Luxury Mechanical Watches",
+    description: "Discover premium Swiss movement mechanical watches. Luxury timepieces crafted with precision for discerning collectors. Shop authentic Alban Marcus watches online.",
+    url: '/',
+    siteName: 'Alban Marcus Watches',
+    images: [
+      {
+        url: '/images/Am_logo_small_transparentpng.png',
+        width: 1200,
+        height: 630,
+        alt: 'Alban Marcus Luxury Watches',
+      }
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Alban Marcus Watches - Luxury Mechanical Watches",
+    description: "Premium Swiss movement mechanical watches crafted with precision. Shop luxury timepieces online.",
+    images: ['/images/Am_logo_small_transparentpng.png'],
+    creator: '@albanmarcus',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
+    // yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
+    // yahoo: process.env.NEXT_PUBLIC_YAHOO_VERIFICATION,
+  },
   icons: {
     icon: [
       {
@@ -66,6 +137,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   themeColor: '#000000',
   viewport: 'width=device-width, initial-scale=1',
+  category: 'shopping',
 };
 
 export default function RootLayout({
@@ -128,6 +200,7 @@ export default function RootLayout({
       <body
         className={`${centurygothic.className} ${ppneuemontrealNormal.variable} ${ppeditorialnewitalic.variable} ${timesNewRomanNormal.variable} bg-black-1 text-white-1`}
       >
+        <GoogleAnalytics />
         <ErrorBoundary>
           <Providers>
             <ToastProvider>

@@ -1,0 +1,37 @@
+User-agent: *
+Allow: /
+
+# Allow all search engines to crawl the site
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# Disallow crawling of admin and private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /checkout/
+Disallow: /cart/
+Disallow: /orders/
+Disallow: /login/
+Disallow: /_next/
+Disallow: /node_modules/
+
+# Allow crawling of important pages
+Allow: /collections/
+Allow: /contact/
+Allow: /warranty/
+Allow: /shipping-policy/
+Allow: /returns/
+Allow: /privacypolicy/
+Allow: /termsandconditions/
+
+# Sitemap location
+Sitemap: https://albanmarcus.com/sitemap.xml
+
+# Crawl delay (optional - helps prevent server overload)
+Crawl-delay: 1
