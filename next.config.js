@@ -12,20 +12,11 @@ const nextConfig = {
         pathname: '/AlbanMarcus/**',
       },
     ],
-    formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 60,
   },
   // Enable compression
   compress: true,
-  // Generate static pages for better SEO
-  output: 'standalone',
   // Optimize for production
   swcMinify: true,
-  // Enable experimental features for better performance
-  experimental: {
-    optimizeCss: true,
-    optimizePackageImports: ['lucide-react', 'react-icons'],
-  },
   // Headers for SEO and security
   async headers() {
     return [
@@ -43,10 +34,6 @@ const nextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
-          },
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on',
           },
         ],
       },

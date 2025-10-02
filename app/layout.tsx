@@ -34,73 +34,76 @@ const timesNewRomanNormal = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://albanmarcus.com'),
   title: {
-    default: "Alban Marcus Watches - Luxury Mechanical Watches | Premium Swiss Movement Timepieces",
-    template: "%s | Alban Marcus Watches"
+    template: '%s | Alban Marcus Watches - luxury Mechanical Watches | Premium Swiss Movement Timepieces',
+    default: 'Alban Marcus Watches - luxury Mechanical Watches | Premium Swiss Movement Timepieces',
   },
-  description: "Discover Alban Marcus luxury mechanical watches crafted with precision. Premium Swiss movement timepieces, luxury watch collections, and exclusive mechanical watches for discerning collectors. Shop authentic luxury watches online.",
+  description: 'Discover Alban Marcus luxury mechanical watches with Swiss movement precision. Premium timepieces for collectors featuring exclusive designs, authentic craftsmanship, and timeless elegance. Shop luxury watches online.',
   keywords: [
-    "Alban Marcus Watches",
-    "luxury watches",
-    "mechanical watches", 
-    "Swiss movement watches",
-    "premium timepieces",
-    "luxury watch collection",
-    "authentic watches",
-    "mechanical timepieces",
-    "watch collectors",
-    "luxury watch brand",
-    "Swiss made watches",
-    "premium watch collection",
-    "exclusive watches",
-    "luxury watch online",
-    "mechanical watch movement"
+    'Alban Marcus Watches',
+    'luxury watches',
+    'mechanical watches', 
+    'Swiss movement watches',
+    'premium timepieces',
+    'luxury watch collection',
+    'authentic luxury watches',
+    'watch collectors',
+    'exclusive timepieces',
+    'premium mechanical watches',
+    'luxury watch brand',
+    'Swiss precision watches'
   ],
-  authors: [{ name: "Alban Marcus Watches" }],
-  creator: "Alban Marcus Watches Private Limited",
-  publisher: "Alban Marcus Watches",
+  authors: [{ name: 'Alban Marcus' }],
+  creator: 'Alban Marcus Watches Private Limited',
+  publisher: 'Alban Marcus',
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://albanmarcus.com'),
-  alternates: {
-    canonical: '/',
-  },
-  openGraph: {
-    title: "Alban Marcus Watches - Luxury Mechanical Watches",
-    description: "Discover premium Swiss movement mechanical watches. Luxury timepieces crafted with precision for discerning collectors. Shop authentic Alban Marcus watches online.",
-    url: '/',
-    siteName: 'Alban Marcus Watches',
-    images: [
-      {
-        url: '/images/Am_logo_small_transparentpng.png',
-        width: 1200,
-        height: 630,
-        alt: 'Alban Marcus Luxury Watches',
-      }
-    ],
-    locale: 'en_US',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: "Alban Marcus Watches - Luxury Mechanical Watches",
-    description: "Premium Swiss movement mechanical watches crafted with precision. Shop luxury timepieces online.",
-    images: ['/images/Am_logo_small_transparentpng.png'],
-    creator: '@albanmarcus',
-  },
+  category: 'luxury goods',
+  classification: 'luxury watches',
+  referrer: 'origin-when-cross-origin',
   robots: {
     index: true,
     follow: true,
+    nocache: false,
     googleBot: {
       index: true,
       follow: true,
+      noimageindex: false,
       'max-video-preview': -1,
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
+  },
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_IN',
+    url: '/',
+    title: 'Alban Marcus Watches - luxury Mechanical Watches',
+    description: 'Discover premium mechanical watches with Swiss movement precision. Exclusive luxury timepieces for discerning collectors and watch enthusiasts.',
+    siteName: 'Alban Marcus Watches',
+    images: [
+      {
+        url: '/images/Am_logo_small_transparentpng.png',
+        width: 800,
+        height: 600,
+        alt: 'Alban Marcus Luxury Watches',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Alban Marcus Watches - luxury Mechanical Watches',
+    description: 'Premium mechanical watches with Swiss movement precision. Exclusive luxury timepieces for collectors.',
+    images: ['/images/Am_logo_small_transparentpng.png'],
+    creator: '@albanmarcus',
+    site: '@albanmarcus',
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
@@ -109,53 +112,51 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      {
-        url: '/images/Am_logo_small_transparentpng.png',
-        sizes: '32x32',
-        type: 'image/png',
-      },
-      {
-        url: '/images/Am_logo_small_transparentpng.png',
-        sizes: '16x16',
-        type: 'image/png',
-      },
-      {
-        url: '/images/Am_logo_small_transparentpng.png',
-        sizes: '192x192',
-        type: 'image/png',
-      },
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
+      { url: '/images/Am_logo_small_transparentpng.png', sizes: '32x32', type: 'image/png' },
+      { url: '/images/Am_logo_small_transparentpng.png', sizes: '16x16', type: 'image/png' },
     ],
-    shortcut: '/images/Am_logo_small_transparentpng.png',
+    shortcut: ['/favicon.ico'],
     apple: [
+      { url: '/images/Am_logo_small_transparentpng.png', sizes: '180x180', type: 'image/png' },
+    ],
+    other: [
       {
+        rel: 'mask-icon',
         url: '/images/Am_logo_small_transparentpng.png',
-        sizes: '180x180',
-        type: 'image/png',
+        color: '#000000',
       },
     ],
   },
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Alban Marcus',
+  },
+  other: {
+    'msapplication-TileColor': '#000000',
+    'msapplication-TileImage': '/images/Am_logo_small_transparentpng.png',
+    'msapplication-config': '/browserconfig.xml',
+  },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: '#000000',
-  viewport: 'width=device-width, initial-scale=1',
-  category: 'shopping',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <head>
-        {/* Additional favicon meta tags for better browser support */}
-        <link rel="icon" type="image/png" sizes="32x32" href="/images/Am_logo_small_transparentpng.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/images/Am_logo_small_transparentpng.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/images/Am_logo_small_transparentpng.png" />
-        <link rel="mask-icon" href="/images/Am_logo_small_transparentpng.png" color="#000000" />
-        <meta name="msapplication-TileColor" content="#000000" />
-        <meta name="msapplication-TileImage" content="/images/Am_logo_small_transparentpng.png" />
-        
         <style dangerouslySetInnerHTML={{
           __html: `
             /* Hide content initially to prevent flash before loading screen */
