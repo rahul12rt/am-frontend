@@ -2,6 +2,11 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // Skip middleware for favicon and static assets
+  if (request.nextUrl.pathname === '/favicon.ico') {
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -35,11 +40,6 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Optional: Add logging for debugging
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`Middleware - Path: ${request.nextUrl.pathname}, User: ${user ? user.id : 'none'}`)
-  }
-
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   return supabaseResponse
 }
@@ -47,12 +47,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
+     * Match all request paths except static files
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|icons|images).*)',
   ],
 }

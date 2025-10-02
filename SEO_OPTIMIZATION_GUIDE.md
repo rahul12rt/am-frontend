@@ -31,7 +31,7 @@ This guide outlines the comprehensive SEO optimizations implemented for the Alba
 ### 4. **Content Optimization**
 - **Keyword Strategy**: 
   - Primary: "Alban Marcus Watches"
-  - Secondary: "luxury watches", "mechanical watches", "Swiss movement"
+  - Secondary: "luxury watches", "mechanical watches", "automatic"
   - Long-tail: "premium mechanical timepieces", "luxury watch collection"
 - **Page-specific SEO** for Collections and Watch Detail pages
 - **Rich snippets** with pricing, availability, and ratings
@@ -51,14 +51,14 @@ This guide outlines the comprehensive SEO optimizations implemented for the Alba
 
 ### Secondary Keywords (Medium Priority)
 1. **"luxury watches India"** - Geographic targeting
-2. **"Swiss movement watches"** - Product feature
+2. **"quarts movement watches"** - Product feature
 3. **"premium mechanical timepieces"** - Product category
 4. **"luxury watch collection"** - Category page
 5. **"authentic luxury watches online"** - E-commerce focus
 
 ### Long-tail Keywords (Content Strategy)
 1. **"best luxury mechanical watches for collectors"**
-2. **"Swiss movement luxury watches under [price range]"**
+2. **"automatic luxury watches under [price range]"**
 3. **"Alban Marcus watch price in India"**
 4. **"luxury watch brands like Rolex alternative"**
 

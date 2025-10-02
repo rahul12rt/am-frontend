@@ -145,7 +145,7 @@ export default function LocalBusinessSchema({
     "knowsAbout": [
       "Luxury Watches",
       "Mechanical Timepieces", 
-      "Swiss Watch Movement",
+      "Automatic Watches",
       "Watch Collecting",
       "Horology",
       "Premium Watches"

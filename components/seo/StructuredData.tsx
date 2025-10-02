@@ -96,7 +96,7 @@ export default function StructuredData({ type, data }: StructuredDataProps) {
           name: "Alban Marcus Watches Private Limited",
           url: baseUrl,
           logo: `${baseUrl}/images/Am_logo_small_transparentpng.png`,
-          description: "Premium luxury mechanical watches crafted with Swiss movement precision. Alban Marcus offers exclusive timepieces for discerning collectors.",
+          description: "Premium luxury mechanical watches crafted with automatic movement precision. Alban Marcus offers exclusive timepieces for discerning collectors.",
           address: {
             "@type": "PostalAddress",
             streetAddress: "No-484/1, P. No. 484, Kalkere, Horamavu",
@@ -125,7 +125,7 @@ export default function StructuredData({ type, data }: StructuredDataProps) {
           "@context": "https://schema.org",
           "@type": "Product",
           name: data.name || "Alban Marcus Luxury Watch",
-          description: data.description || "Premium mechanical watch with Swiss movement",
+          description: data.description || "Premium mechanical watch with automatic movement",
           brand: {
             "@type": "Brand",
             name: "Alban Marcus"
@@ -158,7 +158,7 @@ export default function StructuredData({ type, data }: StructuredDataProps) {
           "@type": "WebSite",
           name: "Alban Marcus Watches",
           url: baseUrl,
-          description: "Luxury mechanical watches with Swiss movement precision. Shop premium timepieces online.",
+          description: "Luxury mechanical watches with automatic movement precision. Shop premium timepieces online.",
           potentialAction: {
             "@type": "SearchAction",
             target: {

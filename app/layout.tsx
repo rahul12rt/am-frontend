@@ -36,15 +36,15 @@ const timesNewRomanNormal = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://albanmarcus.com'),
   title: {
-    template: '%s | Alban Marcus Watches - luxury Mechanical Watches | Premium Swiss Movement Timepieces',
-    default: 'Alban Marcus Watches - luxury Mechanical Watches | Premium Swiss Movement Timepieces',
+    template: '%s | Alban Marcus Watches - luxury Mechanical Watches | Premium quartz Movement Timepieces',
+    default: 'Alban Marcus Watches - luxury Mechanical Watches | Premium quartz Movement Timepieces',
   },
-  description: 'Discover Alban Marcus luxury mechanical watches with Swiss movement precision. Premium timepieces for collectors featuring exclusive designs, authentic craftsmanship, and timeless elegance. Shop luxury watches online.',
+  description: 'Discover Alban Marcus luxury mechanical watches with quartz movement precision. Premium timepieces for collectors featuring exclusive designs, authentic craftsmanship, and timeless elegance. Shop luxury watches online.',
   keywords: [
     'Alban Marcus Watches',
     'luxury watches',
     'mechanical watches', 
-    'Swiss movement watches',
+    'automatic watches',
     'premium timepieces',
     'luxury watch collection',
     'authentic luxury watches',
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     'exclusive timepieces',
     'premium mechanical watches',
     'luxury watch brand',
-    'Swiss precision watches'
+    'automatic watches'
   ],
   authors: [{ name: 'Alban Marcus' }],
   creator: 'Alban Marcus Watches Private Limited',
@@ -110,24 +110,6 @@ export const metadata: Metadata = {
     // yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
     // yahoo: process.env.NEXT_PUBLIC_YAHOO_VERIFICATION,
   },
-  icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
-      { url: '/images/Am_logo_small_transparentpng.png', sizes: '32x32', type: 'image/png' },
-      { url: '/images/Am_logo_small_transparentpng.png', sizes: '16x16', type: 'image/png' },
-    ],
-    shortcut: ['/favicon.ico'],
-    apple: [
-      { url: '/images/Am_logo_small_transparentpng.png', sizes: '180x180', type: 'image/png' },
-    ],
-    other: [
-      {
-        rel: 'mask-icon',
-        url: '/images/Am_logo_small_transparentpng.png',
-        color: '#000000',
-      },
-    ],
-  },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -157,6 +139,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="icon" href="/favicon.ico" />
         <style dangerouslySetInnerHTML={{
           __html: `
             /* Hide content initially to prevent flash before loading screen */
