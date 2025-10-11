@@ -121,6 +121,15 @@ export const metadata: Metadata = {
     'msapplication-TileImage': '/images/Am_logo_small_transparentpng.png',
     'msapplication-config': '/browserconfig.xml',
   },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.png', type: 'image/png' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/apple-touch-icon.png',
+    shortcut: '/favicon.ico',
+  },
 };
 
 export const viewport = {
