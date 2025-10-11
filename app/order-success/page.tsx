@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, Package, Truck, MapPin, Calendar, ArrowRight, Home, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useUser } from '@/contexts/UserContext';
+import { trackPurchase } from '@/components/seo/GoogleAnalytics';
 
 const OrderSuccessPage = () => {
   const searchParams = useSearchParams();
@@ -29,6 +30,53 @@ const OrderSuccessPage = () => {
       orderNumber: orderNumber,
     });
   }, [orderId, orderNumber, router]);
+
+  // Track purchase event when order details are available
+  useEffect(() => {
+    if (orderDetails && orderDetails.id) {
+      // Get order items from localStorage (set during checkout)
+      const orderItemsStr = localStorage.getItem('completedOrderItems');
+      const orderTotalStr = localStorage.getItem('completedOrderTotal');
+      const orderTaxStr = localStorage.getItem('completedOrderTax');
+      const orderShippingStr = localStorage.getItem('completedOrderShipping');
+      
+      if (orderItemsStr && orderTotalStr) {
+        try {
+          const orderItems = JSON.parse(orderItemsStr);
+          const orderTotal = parseFloat(orderTotalStr);
+          const orderTax = parseFloat(orderTaxStr || '0');
+          const orderShipping = parseFloat(orderShippingStr || '0');
+          
+          // Track purchase
+          trackPurchase(
+            orderDetails.orderNumber || orderDetails.id,
+            orderTotal,
+            'INR',
+            orderItems.map((item: any, index: number) => ({
+              item_id: item.watch_id || item.id,
+              item_name: item.watch_name || item.name,
+              item_variant: item.color_name || item.variant,
+              item_brand: 'Alban Marcus',
+              item_category: 'Watches',
+              price: parseFloat(item.unit_price || item.price || '0'),
+              quantity: item.quantity || 1,
+              index: index
+            })),
+            orderTax,
+            orderShipping
+          );
+          
+          // Clear order details from localStorage after tracking
+          localStorage.removeItem('completedOrderItems');
+          localStorage.removeItem('completedOrderTotal');
+          localStorage.removeItem('completedOrderTax');
+          localStorage.removeItem('completedOrderShipping');
+        } catch (error) {
+          // Error tracking purchase
+        }
+      }
+    }
+  }, [orderDetails]);
 
   // Redirect if not authenticated
   if (!profile) {

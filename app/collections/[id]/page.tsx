@@ -31,6 +31,7 @@ import WatchDetailSkeleton from '@/components/ui/WatchDetailSkeleton';
 import WatchImageComponent from '@/components/ui/WatchImage';
 import StructuredData from '@/components/seo/StructuredData';
 import Head from 'next/head';
+import { trackViewItem, trackAddToCart, trackViewItemColor, formatWatchToGAItem } from '@/components/seo/GoogleAnalytics';
 
 export default function Component() {
   const params = useParams();
@@ -105,13 +106,26 @@ export default function Component() {
     setSelectedImage(0);
   }, [selectedColor]);
 
-  // Image preloading disabled for better mobile performance
-  // Next.js Image optimization handles loading efficiently
+  // Track view_item event when watch loads
   useEffect(() => {
-    if (watch && watchId) {
-      // Watch loading logging disabled for production
+    if (watch && watch.id && watch.WatchColors && watch.WatchColors[selectedColor]) {
+      const currentColor = watch.WatchColors[selectedColor];
+      const watchPrice = parseFloat(currentColor.offerprice || currentColor.actualprice || '0');
+      
+      trackViewItem('INR', watchPrice, [{
+        item_id: watch.id,
+        item_name: watch.name,
+        item_category: watch.category || 'Watches',
+        item_category2: watch.series || '',
+        item_category3: watch.theme || '',
+        item_brand: 'Alban Marcus',
+        item_variant: currentColor.name,
+        price: watchPrice,
+        discount: parseFloat(currentColor.actualprice || '0') - watchPrice,
+        quantity: 1
+      }]);
     }
-  }, [watch, watchId]);
+  }, [watch, selectedColor]);
 
   const handleQuantityChange = (newQuantity: number) => {
     if (!cartItem) return;
@@ -352,6 +366,19 @@ export default function Component() {
           },
         ],
       });
+
+      // Track add_to_cart event
+      const itemPrice = parseFloat(selectedWatchColor.offerprice || selectedWatchColor.actualprice || '0');
+      trackAddToCart('INR', itemPrice * quantity, [{
+        item_id: watch.id,
+        item_name: watch.name,
+        item_category: watch.category || 'Watches',
+        item_category2: watch.series || '',
+        item_variant: selectedWatchColor.name,
+        item_brand: 'Alban Marcus',
+        price: itemPrice,
+        quantity: quantity
+      }]);
 
       showToast(`${watch.name} (${selectedWatchColor.name}) added to cart successfully!`, "success");
       
@@ -707,7 +734,17 @@ export default function Component() {
                             type="radio"
                             name="watchVariant"
                             checked={selectedColor === index}
-                            onChange={() => setSelectedColor(index)}
+                            onChange={() => {
+                              setSelectedColor(index);
+                              // Track color selection
+                              trackViewItemColor(
+                                watch.id,
+                                watch.name,
+                                color.name,
+                                color.hex_code || '#000000',
+                                parseFloat(color.offerprice || color.actualprice || '0')
+                              );
+                            }}
                             className="sr-only"
                           />
                           

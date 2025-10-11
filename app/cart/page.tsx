@@ -19,6 +19,7 @@ import {
   useCartCount,
   useClearCart
 } from "@/hooks/queries/useCart";
+import { trackViewCart, trackRemoveFromCart, trackBeginCheckout, formatCartItemToGAItem } from '@/components/seo/GoogleAnalytics';
 
 const CartPage: React.FC = () => {
   const { user, profile, isAuthenticated, isLoading, loading } = useAuth();
@@ -44,6 +45,19 @@ const CartPage: React.FC = () => {
       setItemsAwaitingRefetch(new Set());
     }
   }, [cartFetching, cartData]);
+
+  // Track view_cart event when cart loads
+  useEffect(() => {
+    if (cartData && cartData.items && cartData.items.length > 0) {
+      const cartValue = cartData.items.reduce((total, item) => {
+        const itemPrice = parseFloat(item.watchColor?.offerprice || item.watchColor?.Watch?.offerprice || '0');
+        return total + (itemPrice * item.quantity);
+      }, 0);
+      
+      const items = cartData.items.map((item, index) => formatCartItemToGAItem(item, index));
+      trackViewCart('INR', cartValue, items);
+    }
+  }, [cartData]);
   
   const { data: totalData } = useCartTotal(isAuthenticated, profile);
   const { data: itemCount } = useCartCount(isAuthenticated);
@@ -90,8 +104,20 @@ const CartPage: React.FC = () => {
   };
 
   const handleRemoveItem = async (cartItemId: string, itemName: string) => {
+    // Find the item to track before removing
+    const itemToRemove = cartData?.items.find(item => item.id === cartItemId);
+    
     try {
       await removeFromCart.mutateAsync(cartItemId);
+      
+      // Track remove_from_cart event
+      if (itemToRemove) {
+        const itemPrice = parseFloat(itemToRemove.watchColor?.offerprice || itemToRemove.watchColor?.Watch?.offerprice || '0');
+        trackRemoveFromCart('INR', itemPrice * itemToRemove.quantity, [
+          formatCartItemToGAItem(itemToRemove)
+        ]);
+      }
+      
       // Mark item as awaiting refetch to show loading during cart data update
       setItemsAwaitingRefetch(prev => new Set(prev).add(cartItemId));
       showToast(`${itemName} removed from cart`, "success");
@@ -124,6 +150,15 @@ const CartPage: React.FC = () => {
       showToast("Your cart is empty", "error");
       return;
     }
+
+    // Track begin_checkout event
+    const cartValue = cartData.items.reduce((total, item) => {
+      const itemPrice = parseFloat(item.watchColor?.offerprice || item.watchColor?.Watch?.offerprice || '0');
+      return total + (itemPrice * item.quantity);
+    }, 0);
+    
+    const items = cartData.items.map((item, index) => formatCartItemToGAItem(item, index));
+    trackBeginCheckout('INR', cartValue, items);
 
     if (!profile?.email) {
       setIsVerificationModalOpen(true);
@@ -233,12 +268,7 @@ const CartPage: React.FC = () => {
       itemPrice = parseFloat((item.watchColor as any).price.toString());
     }
     
-    console.log('Item price calculation:', {
-      item,
-      itemPrice,
-      quantity: item.quantity,
-      lineTotal: itemPrice * item.quantity
-    });
+    // Item price calculation
     
     return total + (itemPrice * item.quantity);
   }, 0) || 0;

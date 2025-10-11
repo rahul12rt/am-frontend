@@ -49,7 +49,7 @@ export function WatchCacheProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (!isLoading && allWatches.length > 0) {
       setIsCacheReady(true);
-      console.log(`🚀 Watch cache initialized with ${allWatches.length} watches`);
+      // Watch cache initialized
     }
   }, [isLoading, allWatches.length]);
 
@@ -106,7 +106,7 @@ export function WatchCacheProvider({ children }: { children: React.ReactNode }) 
   const preloadWatchImages = useCallback((watchId: string) => {
     // Preloading disabled to improve mobile performance and image quality
     // Next.js Image optimization handles caching efficiently
-    console.log(`🚫 Image preloading disabled for watch: ${watchId}`);
+    // Image preloading disabled
     return;
   }, []);
 

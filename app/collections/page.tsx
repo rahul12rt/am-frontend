@@ -1,4 +1,5 @@
 'use client';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { MdKeyboardArrowRight } from 'react-icons/md';
 import Collections from '@/components/organisms/collections/Collections';
@@ -6,9 +7,22 @@ import { useWatchCache } from '@/contexts/WatchCacheContext';
 import { CollectionsGridSkeleton } from '@/components/ui/SkeletonLoader';
 import StructuredData from '@/components/seo/StructuredData';
 import Head from 'next/head';
+import { trackViewItemList, formatWatchToGAItem } from '@/components/seo/GoogleAnalytics';
 
 const Collection = () => {
   const { allWatches: watches, isLoading: loading, error, isCacheReady } = useWatchCache();
+
+  // Track view_item_list event when watches load
+  useEffect(() => {
+    if (watches && watches.length > 0 && isCacheReady) {
+      // Track first 10 items for performance
+      const itemsToTrack = watches.slice(0, 10).map((watch, index) => 
+        formatWatchToGAItem(watch, index)
+      );
+      
+      trackViewItemList('collections_all', 'All Watches Collection', itemsToTrack);
+    }
+  }, [watches, isCacheReady]);
 
   const breadcrumbData = {
     breadcrumbs: [
