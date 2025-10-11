@@ -50,7 +50,8 @@ const CartPage: React.FC = () => {
   useEffect(() => {
     if (cartData && cartData.items && cartData.items.length > 0) {
       const cartValue = cartData.items.reduce((total, item) => {
-        const itemPrice = parseFloat(item.watchColor?.offerprice || item.watchColor?.Watch?.offerprice || '0');
+        const priceValue = item.watchColor?.offerprice || item.watchColor?.Watch?.offerprice || '0';
+        const itemPrice = parseFloat(String(priceValue));
         return total + (itemPrice * item.quantity);
       }, 0);
       
@@ -112,7 +113,8 @@ const CartPage: React.FC = () => {
       
       // Track remove_from_cart event
       if (itemToRemove) {
-        const itemPrice = parseFloat(itemToRemove.watchColor?.offerprice || itemToRemove.watchColor?.Watch?.offerprice || '0');
+        const priceValue = itemToRemove.watchColor?.offerprice || itemToRemove.watchColor?.Watch?.offerprice || '0';
+        const itemPrice = parseFloat(String(priceValue));
         trackRemoveFromCart('INR', itemPrice * itemToRemove.quantity, [
           formatCartItemToGAItem(itemToRemove)
         ]);
@@ -153,7 +155,8 @@ const CartPage: React.FC = () => {
 
     // Track begin_checkout event
     const cartValue = cartData.items.reduce((total, item) => {
-      const itemPrice = parseFloat(item.watchColor?.offerprice || item.watchColor?.Watch?.offerprice || '0');
+      const priceValue = item.watchColor?.offerprice || item.watchColor?.Watch?.offerprice || '0';
+      const itemPrice = parseFloat(String(priceValue));
       return total + (itemPrice * item.quantity);
     }, 0);
     
