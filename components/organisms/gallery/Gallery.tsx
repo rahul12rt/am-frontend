@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const images = [
   "imageSectiion_2_final.jpg",
@@ -10,6 +11,11 @@ const images = [
 ];
 
 const Gallery = () => {
+  const router = useRouter();
+
+  const handleImageClick = () => {
+    router.push("/collections");
+  };
 
   return (
     <section className="pb-[80px]">
@@ -18,6 +24,7 @@ const Gallery = () => {
           {images.map((image, index) => (
             <div
               key={index}
+              onClick={handleImageClick}
               className={`relative rounded-[1rem] cursor-pointer h-[300px] md:h-auto
                 ${
                   index === 2
