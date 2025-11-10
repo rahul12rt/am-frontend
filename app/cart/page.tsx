@@ -19,6 +19,7 @@ import {
   useCartCount,
   useClearCart
 } from "@/hooks/queries/useCart";
+import { trackViewCart, trackRemoveFromCart, trackBeginCheckout, formatCartItemToGAItem } from '@/components/seo/GoogleAnalytics';
 
 const CartPage: React.FC = () => {
   const { user, profile, isAuthenticated, isLoading, loading } = useAuth();
@@ -44,7 +45,22 @@ const CartPage: React.FC = () => {
       setItemsAwaitingRefetch(new Set());
     }
   }, [cartFetching, cartData]);
-  const { data: totalData } = useCartTotal(isAuthenticated);
+
+  // Track view_cart event when cart loads
+  useEffect(() => {
+    if (cartData && cartData.items && cartData.items.length > 0) {
+      const cartValue = cartData.items.reduce((total, item) => {
+        const priceValue = item.watchColor?.offerprice || item.watchColor?.Watch?.offerprice || '0';
+        const itemPrice = parseFloat(String(priceValue));
+        return total + (itemPrice * item.quantity);
+      }, 0);
+      
+      const items = cartData.items.map((item, index) => formatCartItemToGAItem(item, index));
+      trackViewCart('INR', cartValue, items);
+    }
+  }, [cartData]);
+  
+  const { data: totalData } = useCartTotal(isAuthenticated, profile);
   const { data: itemCount } = useCartCount(isAuthenticated);
 
   const updateCartItem = useUpdateCartItem();
@@ -89,8 +105,21 @@ const CartPage: React.FC = () => {
   };
 
   const handleRemoveItem = async (cartItemId: string, itemName: string) => {
+    // Find the item to track before removing
+    const itemToRemove = cartData?.items.find(item => item.id === cartItemId);
+    
     try {
       await removeFromCart.mutateAsync(cartItemId);
+      
+      // Track remove_from_cart event
+      if (itemToRemove) {
+        const priceValue = itemToRemove.watchColor?.offerprice || itemToRemove.watchColor?.Watch?.offerprice || '0';
+        const itemPrice = parseFloat(String(priceValue));
+        trackRemoveFromCart('INR', itemPrice * itemToRemove.quantity, [
+          formatCartItemToGAItem(itemToRemove)
+        ]);
+      }
+      
       // Mark item as awaiting refetch to show loading during cart data update
       setItemsAwaitingRefetch(prev => new Set(prev).add(cartItemId));
       showToast(`${itemName} removed from cart`, "success");
@@ -123,6 +152,16 @@ const CartPage: React.FC = () => {
       showToast("Your cart is empty", "error");
       return;
     }
+
+    // Track begin_checkout event
+    const cartValue = cartData.items.reduce((total, item) => {
+      const priceValue = item.watchColor?.offerprice || item.watchColor?.Watch?.offerprice || '0';
+      const itemPrice = parseFloat(String(priceValue));
+      return total + (itemPrice * item.quantity);
+    }, 0);
+    
+    const items = cartData.items.map((item, index) => formatCartItemToGAItem(item, index));
+    trackBeginCheckout('INR', cartValue, items);
 
     if (!profile?.email) {
       setIsVerificationModalOpen(true);
@@ -218,9 +257,46 @@ const CartPage: React.FC = () => {
   }
 
   const { items } = cartData;
-  const subtotal = cartData?.summary?.totalAmount ? parseFloat(cartData.summary.totalAmount) : 0;
+  
+  // Calculate subtotal from cart data directly as fallback
+  const cartSubtotal = cartData?.summary?.totalAmount ? parseFloat(cartData.summary.totalAmount) : 0;
+  const calculatedSubtotal = items?.reduce((total, item) => {
+    // Try multiple possible price fields
+    let itemPrice = 0;
+    if (item.watchColor?.Watch) {
+      itemPrice = parseFloat(item.watchColor.Watch.offerprice?.toString() || '0');
+    } else if ((item as any).price) {
+      itemPrice = parseFloat((item as any).price.toString());
+    } else if ((item.watchColor as any)?.price) {
+      itemPrice = parseFloat((item.watchColor as any).price.toString());
+    }
+    
+    // Item price calculation
+    
+    return total + (itemPrice * item.quantity);
+  }, 0) || 0;
+  
+  // Use the higher of the two calculations or fallback to cart summary
+  const subtotal = totalData?.subtotal || calculatedSubtotal || cartSubtotal || 0;
   const deliveryFee = 0; // Assuming free delivery
-  const total = subtotal + deliveryFee;
+  const discountAmount = totalData?.discountAmount || (profile?.eligibleForDiscount ? subtotal * 0.1 : 0);
+  const finalTotal = totalData?.finalTotal || (subtotal - discountAmount);
+  const isEligibleForDiscount = totalData?.eligibleForDiscount || profile?.eligibleForDiscount || false;
+  
+  // Debug logging
+  console.log('Cart Page Debug:', {
+    cartData: cartData,
+    items: items,
+    cartSubtotal,
+    calculatedSubtotal,
+    totalDataSubtotal: totalData?.subtotal,
+    finalSubtotal: subtotal,
+    discountAmount,
+    finalTotal,
+    isEligibleForDiscount,
+    profile: profile?.eligibleForDiscount,
+    totalData: totalData
+  });
 
   return (
     <div className="pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
@@ -357,6 +433,23 @@ const CartPage: React.FC = () => {
                   <span className="text-gray-600" style={{ fontSize: '1.5rem' }}>Subtotal ({items.length} {items.length === 1 ? 'item' : 'items'})</span>
                   <span className="font-medium text-gray-900" style={{ fontSize: '1.5rem' }}>₹{subtotal.toLocaleString()}</span>
                 </div>
+                
+                {/* Discount Section with Animation */}
+                {isEligibleForDiscount && (
+                  <div className="animate-pulse bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 transform transition-all duration-500 hover:scale-105">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-700 font-semibold" style={{ fontSize: '1.5rem' }}>🎉 Special Discount (10%)</span>
+                        <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full animate-bounce">
+                          APPLIED
+                        </span>
+                      </div>
+                      <span className="font-bold text-green-700" style={{ fontSize: '1.5rem' }}>-₹{discountAmount.toLocaleString()}</span>
+                    </div>
+                    <p className="text-green-600 text-sm mt-1">You're saving ₹{discountAmount.toLocaleString()} on this order!</p>
+                  </div>
+                )}
+                
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600" style={{ fontSize: '1.5rem' }}>Shipping</span>
                   <span className="font-medium text-green-600" style={{ fontSize: '1.5rem' }}>Free</span>
@@ -364,7 +457,12 @@ const CartPage: React.FC = () => {
                 <div className="border-t border-gray-200 my-4"></div>
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-gray-900" style={{ fontSize: '2.2rem' }}>Total</span>
-                  <span className="font-bold text-gray-900" style={{ fontSize: '2.2rem' }}>₹{total.toLocaleString()}</span>
+                  <div className="text-right">
+                    {isEligibleForDiscount && discountAmount > 0 && (
+                      <div className="text-gray-500 line-through text-sm">₹{subtotal.toLocaleString()}</div>
+                    )}
+                    <span className="font-bold text-gray-900" style={{ fontSize: '2.2rem' }}>₹{finalTotal.toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
 

@@ -591,7 +591,7 @@ export const userServices = {
   /**
    * Send OTP to email for verification
    */
-  sendEmailOTP: async (email: string): Promise<{ success: boolean; message: string }> => {
+  sendEmailOTP: async (email: string): Promise<{ success: boolean; message: string; alreadyVerified?: boolean }> => {
     const response = await protectedApiClient.post<ApiResponse<any>>('/user/email/send-otp', { email });
     
     if (!response.data.success) {
@@ -600,14 +600,15 @@ export const userServices = {
     
     return {
       success: response.data.success,
-      message: response.data.message || 'OTP sent successfully'
+      message: response.data.message || 'OTP sent successfully',
+      alreadyVerified: (response.data as any).alreadyVerified
     };
   },
 
   /**
    * Verify email OTP
    */
-  verifyEmailOTP: async (email: string, otp: string): Promise<{ success: boolean; verified: boolean; user?: any }> => {
+  verifyEmailOTP: async (email: string, otp: string): Promise<{ success: boolean; verified: boolean; user?: any; alreadyVerified?: boolean; message?: string }> => {
     const response = await protectedApiClient.post<any>('/user/email/verify-otp', { email, otp });
     
     if (!response.data.success) {
@@ -617,6 +618,8 @@ export const userServices = {
     return {
       success: response.data.success,
       verified: response.data.verified || false,
+      alreadyVerified: (response.data as any).alreadyVerified,
+      message: (response.data as any).message,
       user: response.data.user
     };
   },

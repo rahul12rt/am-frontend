@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { Watch } from '@/lib/api-services';
 import { useWatches } from '@/hooks/queries/useWatches';
+import { usePathname } from 'next/navigation';
 
 interface WatchCacheContextType {
   // Core cache data
@@ -31,15 +32,24 @@ const WatchCacheContext = createContext<WatchCacheContextType | undefined>(undef
 export function WatchCacheProvider({ children }: { children: React.ReactNode }) {
   const [preloadedImages, setPreloadedImages] = useState<Set<string>>(new Set());
   const [isCacheReady, setIsCacheReady] = useState(false);
+  const pathname = usePathname();
   
-  // Fetch all watches data
-  const { data: allWatches = [], isLoading, error, refetch } = useWatches();
+  // Define paths that need watch data
+  const watchDataPaths = ['/', '/collections', '/watches', '/most-loved', '/new-collection'];
+  const needsWatchData = watchDataPaths.some(path => 
+    pathname === path || pathname.startsWith(path + '/') || pathname.startsWith('/watches/')
+  );
+  
+  // Fetch all watches data only when needed
+  const { data: allWatches = [], isLoading, error, refetch } = useWatches(undefined, {
+    enabled: needsWatchData
+  });
 
   // Set cache ready when data is loaded
   useEffect(() => {
     if (!isLoading && allWatches.length > 0) {
       setIsCacheReady(true);
-      console.log(`🚀 Watch cache initialized with ${allWatches.length} watches`);
+      // Watch cache initialized
     }
   }, [isLoading, allWatches.length]);
 
@@ -92,52 +102,13 @@ export function WatchCacheProvider({ children }: { children: React.ReactNode }) 
     return shuffled.slice(0, count);
   }, [allWatches]);
 
-  // Image preloading function
+  // Image preloading function - DISABLED for mobile performance
   const preloadWatchImages = useCallback((watchId: string) => {
-    const watch = getWatchById(watchId);
-    if (!watch || !watch.WatchColors) return;
-
-    const imagesToPreload: string[] = [];
-    
-    // Collect all images from all color variants
-    watch.WatchColors.forEach(color => {
-      if (color.WatchImage && color.WatchImage.length > 0) {
-        const imageData = color.WatchImage[0];
-        
-        // Add all available image views
-        const imageViews = [
-          imageData.isoview,
-          imageData.front,
-          imageData.back,
-          imageData.side,
-          imageData.strap,
-          imageData.closeup,
-          imageData.dial
-        ];
-        
-        imageViews.forEach(url => {
-          if (url && url !== 'undefined' && url !== 'null') {
-            const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
-            imagesToPreload.push(formattedUrl);
-          }
-        });
-      }
-    });
-
-    // Preload images
-    imagesToPreload.forEach(url => {
-      if (!preloadedImages.has(url)) {
-        const img = new Image();
-        img.onload = () => {
-          setPreloadedImages(prev => new Set(prev).add(url));
-        };
-        img.onerror = () => {
-          console.warn(`Failed to preload image: ${url}`);
-        };
-        img.src = url;
-      }
-    });
-  }, [getWatchById, preloadedImages]);
+    // Preloading disabled to improve mobile performance and image quality
+    // Next.js Image optimization handles caching efficiently
+    // Image preloading disabled
+    return;
+  }, []);
 
   const refreshCache = useCallback(() => {
     refetch();

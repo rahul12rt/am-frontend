@@ -9,6 +9,7 @@ import { useAddresses } from '@/hooks/queries/useAddress';
 import AddressForm from '@/components/organisms/checkout/AddressForm';
 import PaymentIcons from '@/components/atoms/PaymentIcons';
 import { useRazorpayCheckout } from '@/hooks/useRazorpayCheckout';
+import OrderCreationLoader from '@/components/ui/OrderCreationLoader';
 import { type Address } from '@/lib/api-services';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -25,7 +26,7 @@ const CheckoutPage = () => {
   const { profile, refetchProfile } = useUser();
   const { data: userAddresses, isLoading: addressesLoading, refetch: refetchAddresses } = useAddresses();
   const { showToast } = useToast();
-  const { payNow, isProcessing } = useRazorpayCheckout();
+  const { payNow, isProcessing, paymentStage, loadingMessage, cancelPayment, retryPayment } = useRazorpayCheckout();
 
   const [selectedBillingAddress, setSelectedBillingAddress] = useState<string>('');
   const [selectedShippingAddress, setSelectedShippingAddress] = useState<string>('');
@@ -36,13 +37,17 @@ const CheckoutPage = () => {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [addressType, setAddressType] = useState<'billing' | 'shipping'>('billing');
+  const [lastPaymentParams, setLastPaymentParams] = useState<any>(null);
   const [isRefreshingProfile, setIsRefreshingProfile] = useState(false);
+  const [showEmptyCart, setShowEmptyCart] = useState(false);
 
   // Use addresses from React Query hook
   const addresses = userAddresses || [];
   const deliveryFee = 0;
   const subtotal = cartData?.summary?.totalAmount ? parseFloat(cartData.summary.totalAmount) : 0;
-  const total = subtotal + deliveryFee;
+  const isEligibleForDiscount = profile?.eligibleForDiscount || false;
+  const discountAmount = isEligibleForDiscount ? (subtotal * 0.1) : 0;
+  const finalTotal = subtotal - discountAmount + deliveryFee;
 
   // Validate checkout readiness
   const validateCheckout = async () => {
@@ -61,7 +66,7 @@ const CheckoutPage = () => {
         billingAddress,
         shippingAddress,
         cartData?.items || [],
-        total
+        finalTotal
       );
 
       setValidationErrors(validation.errors);
@@ -129,13 +134,19 @@ const CheckoutPage = () => {
     }
 
     try {
-      await payNow({
-        totalAmountInRupees: total,
+      const paymentParams = {
+        totalAmountInRupees: finalTotal,
         itemsSummary: itemsSummary,
         prefill: prefillData,
         billingAddressId: selectedBillingAddress,
-        shippingAddressId: finalShippingAddress
-      });
+        shippingAddressId: finalShippingAddress,
+        cartData: cartData // Pass current cart data to lock pricing
+      };
+      
+      // Store payment parameters for retry functionality
+      setLastPaymentParams(paymentParams);
+      
+      await payNow(paymentParams);
     } catch (error) {
       console.error('Payment error:', error);
       showToast('Payment failed. Please try again.', 'error');
@@ -225,8 +236,21 @@ const CheckoutPage = () => {
     }
   }, [profile]);
 
-  // Show loading state
-  if (cartLoading) {
+  // Handle empty cart delay for Buy Now flow
+  useEffect(() => {
+    if (!cartData?.items || cartData.items.length === 0) {
+      const timer = setTimeout(() => {
+        setShowEmptyCart(true);
+      }, 1500); // Wait 1.5 seconds before showing empty cart
+      
+      return () => clearTimeout(timer);
+    } else {
+      setShowEmptyCart(false);
+    }
+  }, [cartData]);
+
+  // Show loading state - extended for Buy Now flow
+  if (cartLoading || (!cartData && !cartLoading)) {
     return (
       <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-4">
@@ -256,8 +280,19 @@ const CheckoutPage = () => {
     );
   }
 
-  // Show empty cart message
+  // Show empty cart message - but wait a bit for Buy Now flow
   if (!cartData?.items || cartData.items.length === 0) {
+    if (!showEmptyCart) {
+      return (
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center">
+          <div className="flex items-center gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-900" />
+            <span className="text-gray-900" style={{ fontSize: '1.5rem' }}>Preparing your cart...</span>
+          </div>
+        </div>
+      );
+    }
+    
     return (
       <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center text-center">
         <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-auto">
@@ -375,7 +410,7 @@ const CheckoutPage = () => {
                           <p className="text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>
                             {address.full_name}
                             {address.is_default && (
-                              <span className="text-xs bg-gray-900 text-white px-2 py-1 ml-2 rounded uppercase font-bold">Default</span>
+                              <span className="text-xs text-white px-2 py-1 ml-2 rounded uppercase font-bold">Default</span>
                             )}
                           </p>
                           <p className="text-gray-700" style={{ fontSize: '1.3rem' }}>
@@ -540,16 +575,54 @@ const CheckoutPage = () => {
                 <div className="space-y-3 border-t border-gray-200 pt-4">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700" style={{ fontSize: '1.5rem' }}>Order value</span>
-                    <span className="text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>₹{cartData?.summary?.totalAmount ? parseFloat(cartData.summary.totalAmount).toLocaleString() : '0'}</span>
+                    <span className="text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>₹{subtotal.toLocaleString()}</span>
                   </div>
+                  
+                  {/* Discount Section with Popper Animation */}
+                  {isEligibleForDiscount && discountAmount > 0 && (
+                    <div className="relative">
+                      <div className="animate-bounce bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-4 shadow-lg transform transition-all duration-700 hover:scale-105">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">🎉</span>
+                            <div>
+                              <span className="text-green-700 font-bold" style={{ fontSize: '1.4rem' }}>Special Discount (10%)</span>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                                  APPLIED
+                                </span>
+                                <span className="text-green-600 text-sm">You're saving big!</span>
+                              </div>
+                            </div>
+                          </div>
+                          <span className="font-bold text-green-700" style={{ fontSize: '1.6rem' }}>-₹{discountAmount.toLocaleString()}</span>
+                        </div>
+                      </div>
+                      {/* Popper arrow */}
+                      <div className="absolute -bottom-2 left-8 w-4 h-4 bg-green-50 border-r-2 border-b-2 border-green-300 transform rotate-45"></div>
+                    </div>
+                  )}
+                  
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700" style={{ fontSize: '1.5rem' }}>Delivery</span>
                     <span className="text-gray-900 font-medium" style={{ fontSize: '1.5rem' }}>{deliveryFee > 0 ? `₹${deliveryFee.toLocaleString()}` : 'Free'}</span>
                   </div>
                   <div className="flex justify-between items-center pt-3 border-t border-gray-200">
                     <span className="text-gray-900 font-bold" style={{ fontSize: '1.8rem' }}>Total</span>
-                    <span className="text-gray-900 font-bold" style={{ fontSize: '1.8rem' }}>₹{cartData?.summary?.totalAmount ? (parseFloat(cartData.summary.totalAmount) + deliveryFee).toLocaleString() : '0'}</span>
+                    <div className="text-right">
+                      {isEligibleForDiscount && discountAmount > 0 && (
+                        <div className="text-gray-500 line-through text-sm">₹{subtotal.toLocaleString()}</div>
+                      )}
+                      <span className="text-gray-900 font-bold" style={{ fontSize: '1.8rem' }}>₹{finalTotal.toLocaleString()}</span>
+                    </div>
                   </div>
+                </div>
+                
+                {/* Cart Editing Notice */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                  <p className="text-blue-700 text-sm text-center">
+                    <span className="font-semibold">Need to modify your order?</span> You can add, remove, or update quantities in your <Link href="/cart" className="underline hover:text-blue-900">cart</Link>. Changes cannot be made during checkout.
+                  </p>
                 </div>
                 {/* Validation Status */}
                 {validationErrors.length > 0 && (
@@ -640,6 +713,18 @@ const CheckoutPage = () => {
         }}
         onSuccess={handleAddressSuccess}
         editAddress={editingAddress}
+      />
+
+      {/* Order Creation Loader */}
+      <OrderCreationLoader 
+        stage={paymentStage}
+        message={loadingMessage}
+        onRetry={() => {
+          if (lastPaymentParams) {
+            retryPayment(lastPaymentParams);
+          }
+        }}
+        onCancel={cancelPayment}
       />
     </div>
   );

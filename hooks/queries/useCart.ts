@@ -53,8 +53,8 @@ export const useCartCount = (enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.cart.count(),
     queryFn: cartServices.getCartCount,
-    staleTime: 60 * 1000, // 1 minute (count can be slightly stale)
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 1000, // 10 seconds (keep count fresh)
+    gcTime: 5 * 60 * 1000, // 5 minutes
     enabled: enabled, // Only run query when enabled (user is authenticated)
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
@@ -63,7 +63,8 @@ export const useCartCount = (enabled: boolean = true) => {
       }
       return failureCount < 2;
     },
-    refetchOnWindowFocus: false, // Disable auto-refetch to prevent constant reloading
+    refetchOnWindowFocus: true, // Enable refetch to keep count updated
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds when focused
   });
 };
 
@@ -87,26 +88,59 @@ export const useCartCountFromCache = (enabled: boolean = true) => {
 /**
  * Get cart total price (derived from cart data)
  */
-export const useCartTotal = (enabled: boolean = true) => {
+export const useCartTotal = (enabled: boolean = true, userProfile?: any) => {
   const { data: cartData, ...rest } = useCart(enabled);
 
   const total = useMemo(() => {
-    if (!cartData?.items) return { subtotal: 0, total: 0, savings: 0, itemCount: 0 };
+    if (!cartData?.items || cartData.items.length === 0) return { 
+      subtotal: 0, 
+      total: 0, 
+      savings: 0, 
+      itemCount: 0, 
+      discount: 0,
+      discountAmount: 0,
+      finalTotal: 0,
+      eligibleForDiscount: false
+    };
 
     let subtotal = 0;
     let actualTotal = 0;
 
+    // Calculate from cart items
     cartData.items.forEach(item => {
+      let offerPrice = 0;
+      let actualPrice = 0;
+      
       if (item.watchColor?.Watch) {
-        const offerPrice = parseFloat(item.watchColor.Watch.offerprice.toString());
-        const actualPrice = parseFloat(item.watchColor.Watch.actualprice.toString());
-
-        subtotal += offerPrice * item.quantity;
-        actualTotal += actualPrice * item.quantity;
+        offerPrice = parseFloat(item.watchColor.Watch.offerprice?.toString() || '0');
+        actualPrice = parseFloat(item.watchColor.Watch.actualprice?.toString() || '0');
+      } else if ((item as any).price) {
+        offerPrice = parseFloat((item as any).price.toString());
+        actualPrice = offerPrice; // Assume no savings if we can't get actual price
+      } else if ((item.watchColor as any)?.price) {
+        offerPrice = parseFloat((item.watchColor as any).price.toString());
+        actualPrice = offerPrice; // Assume no savings if we can't get actual price
       }
+
+      subtotal += offerPrice * item.quantity;
+      actualTotal += actualPrice * item.quantity;
     });
 
+    // Fallback to cart summary if item calculation fails
+    if (subtotal === 0 && cartData.summary?.totalAmount) {
+      subtotal = parseFloat(cartData.summary.totalAmount);
+      actualTotal = subtotal; // Assume no savings if we can't calculate from items
+    }
+
     const savings = actualTotal - subtotal;
+    
+    // Apply 10% discount if user is eligible
+    const eligibleForDiscount = userProfile?.eligibleForDiscount || false;
+    const discountPercentage = eligibleForDiscount ? 10 : 0;
+    const discountAmount = eligibleForDiscount ? (subtotal * 0.1) : 0;
+    const finalTotal = subtotal - discountAmount;
+
+    // Debug logging disabled for production
 
     return {
       subtotal,
@@ -114,8 +148,12 @@ export const useCartTotal = (enabled: boolean = true) => {
       savings,
       itemCount: cartData.items.length,
       totalAmount: cartData.summary?.totalAmount ? parseFloat(cartData.summary.totalAmount) : subtotal,
+      discount: discountPercentage,
+      discountAmount,
+      finalTotal,
+      eligibleForDiscount
     };
-  }, [cartData]);
+  }, [cartData, userProfile]);
 
   return {
     ...rest,
@@ -168,8 +206,11 @@ export const useAddToCart = () => {
     onSuccess: (response: AddToCartResponse) => {
       // Invalidate cart queries to get fresh data
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.all() });
+      // Force refetch of cart count for immediate UI update
+      queryClient.invalidateQueries({ queryKey: queryKeys.cart.count() });
+      queryClient.refetchQueries({ queryKey: queryKeys.cart.count() });
 
-      console.log('Items added to cart successfully:', response.message);
+      // Success logging disabled for production
     },
 
     onError: (error: AxiosError, newItems, context) => {
@@ -179,7 +220,7 @@ export const useAddToCart = () => {
       }
 
       const errorMessage = handleApiError(error);
-      console.error('Failed to add items to cart:', errorMessage);
+      // Error logging disabled for production
 
       // Re-throw error so component can handle it
       throw error;
@@ -212,7 +253,10 @@ export const useUpdateCartItem = () => {
 
     onSuccess: (updatedItem) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.all() });
-      console.log('Cart item updated successfully:', updatedItem);
+      // Force refetch of cart count for immediate UI update
+      queryClient.invalidateQueries({ queryKey: queryKeys.cart.count() });
+      queryClient.refetchQueries({ queryKey: queryKeys.cart.count() });
+      // Success logging disabled for production
     },
 
     onError: (error: AxiosError, variables, context) => {
@@ -221,7 +265,7 @@ export const useUpdateCartItem = () => {
       }
 
       const errorMessage = handleApiError(error);
-      console.error('Failed to update cart item:', errorMessage);
+      // Error logging disabled for production
 
       // Re-throw error so component can handle it
       throw error;
@@ -252,7 +296,10 @@ export const useRemoveFromCart = () => {
 
     onSuccess: (_, cartItemId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.all() });
-      console.log('Item removed from cart successfully:', cartItemId);
+      // Force refetch of cart count for immediate UI update
+      queryClient.invalidateQueries({ queryKey: queryKeys.cart.count() });
+      queryClient.refetchQueries({ queryKey: queryKeys.cart.count() });
+      // Success logging disabled for production
     },
 
     onError: (error: AxiosError, cartItemId, context) => {
@@ -261,7 +308,7 @@ export const useRemoveFromCart = () => {
       }
 
       const errorMessage = handleApiError(error);
-      console.error('Failed to remove item from cart:', errorMessage);
+      // Error logging disabled for production
 
       // Re-throw error so component can handle it
       throw error;
@@ -292,7 +339,10 @@ export const useClearCart = () => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.all() });
-      console.log('Cart cleared successfully');
+      // Force refetch of cart count for immediate UI update
+      queryClient.invalidateQueries({ queryKey: queryKeys.cart.count() });
+      queryClient.refetchQueries({ queryKey: queryKeys.cart.count() });
+      // Success logging disabled for production
     },
 
     onError: (error: AxiosError, _, context) => {
@@ -301,7 +351,7 @@ export const useClearCart = () => {
       }
 
       const errorMessage = handleApiError(error);
-      console.error('Failed to clear cart:', errorMessage);
+      // Error logging disabled for production
 
       // Re-throw error so component can handle it
       throw error;

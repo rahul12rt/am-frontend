@@ -18,6 +18,7 @@ import Accordion from '../accordion/Accordion';
 import { getOrders } from '@/services/orderService';
 import { SkeletonLoader, LoadingOverlay } from '@/components/atoms';
 import { User as UserIcon, LogOut, MapPin, ShoppingBag, X, CheckCircle, AlertCircle, Info, ChevronRight, Package } from 'lucide-react';
+import { trackLogin, trackSignUp } from '@/components/seo/GoogleAnalytics';
 
 interface InlineMessage {
   text: string;
@@ -249,7 +250,10 @@ const User = ({ onClose }: UserProps) => {
         otp,
       });
 
-      console.log('Login response:', res);
+      // Login successful
+
+      // Track login event
+      trackLogin('phone', res?.user?.id);
 
       // Refetch profile after successful login
       setTimeout(async () => {
@@ -258,7 +262,7 @@ const User = ({ onClose }: UserProps) => {
           await refetchProfile();
           showToast("Login successful! ", 'success');
         } catch (error) {
-          console.error('Failed to refetch profile:', error);
+          // Failed to refetch profile
           showToast("Login successful, but failed to load profile", 'info');
         } finally {
           setIsRefetchingProfile(false);
@@ -279,7 +283,10 @@ const User = ({ onClose }: UserProps) => {
         first_name: firstName,
       });
 
-      console.log('Signup response:', res);
+      // Signup successful
+      
+      // Track signup event
+      trackSignUp('phone', res?.user?.id);
       
       // Show success message and refetch profile like login does
       showToast("Registration successful! Welcome to Alban Marcus! 🎉", 'success');
@@ -291,7 +298,7 @@ const User = ({ onClose }: UserProps) => {
           await refetchProfile();
           showToast("Profile loaded successfully!", 'success');
         } catch (error) {
-          console.error('Failed to refetch profile after registration:', error);
+          // Failed to refetch profile after registration
           showToast("Registration successful, but failed to load profile", 'info');
         } finally {
           setIsRefetchingProfile(false);

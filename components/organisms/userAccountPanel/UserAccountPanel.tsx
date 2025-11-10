@@ -4,7 +4,6 @@ import ReactDOM from 'react-dom';
 import { X, User as UserIcon, MapPin, ShoppingBag, ChevronRight, LogOut } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { UserProfile, Address } from '@/types/user';
-import { getOrders } from '@/services/orderService';
 import Accordion from '@/components/molecules/accordion/Accordion';
 
 interface UserAccountPanelProps {
@@ -16,7 +15,6 @@ const UserAccountPanel: React.FC<UserAccountPanelProps> = ({ isOpen, onClose }) 
   const { profile, logout } = useUser();
   const [isClient, setIsClient] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [orders, setOrders] = useState<any[]>([]);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
@@ -28,10 +26,6 @@ const UserAccountPanel: React.FC<UserAccountPanelProps> = ({ isOpen, onClose }) 
       setIsMounted(true);
       document.body.style.overflow = 'hidden';
       
-      // Load orders when panel opens
-      if (profile) {
-        getOrders().then(setOrders).catch(console.error);
-      }
     } else {
       const timer = setTimeout(() => {
         setIsMounted(false);
@@ -156,56 +150,30 @@ const UserAccountPanel: React.FC<UserAccountPanelProps> = ({ isOpen, onClose }) 
                 </Accordion>
               </div>
 
-              {/* Orders */}
+              {/* Orders Link */}
               <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
-                <Accordion 
-                  title="Orders" 
-                  icon={<ShoppingBag className="w-6 h-6 text-gray-600" />}
+                <a
+                  href="/orders"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onClose();
+                    window.location.href = '/orders';
+                  }}
+                  className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors group"
                 >
-                  {orders.length > 0 ? (
-                    <div className="space-y-4 p-6">
-                      {orders.slice(0, 3).map(order => (
-                        <div key={order.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <p className="text-gray-900 font-bold" style={{ fontSize: '1.5rem' }}>Order #{order.id}</p>
-                              <p className="text-gray-600" style={{ fontSize: '1.3rem' }}>
-                                {new Date(order.created_at || Date.now()).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <div className={`px-3 py-1 rounded-full font-medium ${
-                              order.status === 'completed' ? 'bg-green-100 text-green-800 border border-green-200' :
-                              order.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
-                              order.status === 'processing' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
-                              'bg-gray-100 text-gray-800 border border-gray-200'
-                            }`} style={{ fontSize: '1.3rem' }}>
-                              {order.status?.charAt(0)?.toUpperCase() + order.status?.slice(1) || 'Unknown'}
-                            </div>
-                          </div>
-                          {order.total_amount && (
-                            <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                              <span className="text-gray-600" style={{ fontSize: '1.3rem' }}>Total Amount</span>
-                              <span className="text-gray-900 font-bold" style={{ fontSize: '1.5rem' }}>₹{order.total_amount}</span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                      {orders.length > 3 && (
-                        <div className="text-center pt-4">
-                          <p className="text-gray-600" style={{ fontSize: '1.3rem' }}>
-                            +{orders.length - 3} more orders
-                          </p>
-                        </div>
-                      )}
+                  <div className="flex items-center gap-4">
+                    <ShoppingBag className="w-6 h-6 text-gray-600 group-hover:text-gray-900 transition-colors" />
+                    <div>
+                      <h3 className="font-bold text-gray-900" style={{ fontSize: '1.8rem' }}>
+                        My Orders
+                      </h3>
+                      <p className="text-gray-600" style={{ fontSize: '1.3rem' }}>
+                        View and track your orders
+                      </p>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-12 text-gray-600 p-6">
-                      <ShoppingBag className="w-16 h-16 mb-4 text-gray-400" strokeWidth={1.5} />
-                      <p style={{ fontSize: '1.5rem' }} className="font-medium">No orders yet</p>
-                      <p style={{ fontSize: '1.3rem' }} className="text-gray-500 mt-2">Start shopping to see your orders here</p>
-                    </div>
-                  )}
-                </Accordion>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                </a>
               </div>
             </div>
 

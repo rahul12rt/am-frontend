@@ -25,12 +25,12 @@ const CacheMonitor = () => {
       const loadTime = Date.now() - startTime;
       setStats({
         totalWatches: allWatches.length,
-        preloadedImages: preloadedImages.size,
-        cacheHitRate: 100, // Since we're using cache
+        preloadedImages: 0, // Preloading disabled
+        cacheHitRate: 0, // Using Next.js Image optimization instead
         loadTime
       });
     }
-  }, [isCacheReady, allWatches.length, preloadedImages.size, startTime]);
+  }, [isCacheReady, allWatches.length, startTime]);
 
   // Only show in development
   if (process.env.NODE_ENV !== 'development') {
@@ -43,8 +43,8 @@ const CacheMonitor = () => {
       <div className="space-y-1">
         <div>Status: {isCacheReady ? '✅ Ready' : isLoading ? '⏳ Loading' : '❌ Error'}</div>
         <div>Watches: {stats.totalWatches}</div>
-        <div>Preloaded Images: {stats.preloadedImages}</div>
-        <div>Cache Hit Rate: {stats.cacheHitRate}%</div>
+        <div>Image Preloading: ❌ Disabled</div>
+        <div>Optimization: Next.js Images</div>
         <div>Load Time: {stats.loadTime}ms</div>
       </div>
     </div>

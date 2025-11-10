@@ -27,6 +27,11 @@ import LoginModal from '@/components/molecules/loginModal/LoginModal';
 import EmailVerificationModal from '@/components/organisms/checkout/EmailVerificationModal';
 import { useRouter } from 'next/navigation';
 import { unprotectedApiClient } from '@/lib/api-clients';
+import WatchDetailSkeleton from '@/components/ui/WatchDetailSkeleton';
+import WatchImageComponent from '@/components/ui/WatchImage';
+import StructuredData from '@/components/seo/StructuredData';
+import Head from 'next/head';
+import { trackViewItem, trackAddToCart, trackViewItemColor, formatWatchToGAItem } from '@/components/seo/GoogleAnalytics';
 
 export default function Component() {
   const params = useParams();
@@ -101,14 +106,26 @@ export default function Component() {
     setSelectedImage(0);
   }, [selectedColor]);
 
-  // Preload images when watch data is available
+  // Track view_item event when watch loads
   useEffect(() => {
-    if (watch && watchId) {
-      // Preload images for all color variants of this watch
-      preloadImages(watchId);
-      console.log(`🖼️ Preloading images for watch: ${watch.name}`);
+    if (watch && watch.id && watch.WatchColors && watch.WatchColors[selectedColor]) {
+      const currentColor = watch.WatchColors[selectedColor];
+      const watchPrice = parseFloat(currentColor.offerprice || currentColor.actualprice || '0');
+      
+      trackViewItem('INR', watchPrice, [{
+        item_id: watch.id,
+        item_name: watch.name,
+        item_category: watch.category || 'Watches',
+        item_category2: watch.series || '',
+        item_category3: watch.theme || '',
+        item_brand: 'Alban Marcus',
+        item_variant: currentColor.name,
+        price: watchPrice,
+        discount: parseFloat(currentColor.actualprice || '0') - watchPrice,
+        quantity: 1
+      }]);
     }
-  }, [watch, watchId, preloadImages]);
+  }, [watch, selectedColor]);
 
   const handleQuantityChange = (newQuantity: number) => {
     if (!cartItem) return;
@@ -206,7 +223,7 @@ export default function Component() {
         showToast(data.message || 'Failed to check serviceability', 'error');
       }
     } catch (error) {
-      console.error('Serviceability check error:', error);
+      // Serviceability error logging disabled for production
       showToast('Failed to check serviceability. Please try again.', 'error');
       // Don't clear previous result on network error - keep showing previous data
     } finally {
@@ -249,17 +266,13 @@ export default function Component() {
     
     try {
       // Force refresh the profile to get the latest data including email
-      console.log('Refreshing profile after login...');
+      // Profile refresh logging disabled for production
       await refetchProfile();
       
       // Wait a moment for the profile state to update
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      console.log('Profile refreshed successfully:', { 
-        id: profile?.id, 
-        email: profile?.email,
-        hasEmail: !!profile?.email 
-      });
+      // Profile success logging disabled for production
       
       // Execute the original action that triggered login
       if (loginAction === 'buy_now') {
@@ -268,7 +281,7 @@ export default function Component() {
         await handleAddToCartAfterAuth();
       }
     } catch (error) {
-      console.error('Failed to refresh profile after login:', error);
+      // Profile error logging disabled for production
       showToast('Failed to load profile. Please try again.', 'error');
     }
   };
@@ -321,7 +334,7 @@ export default function Component() {
       // Navigate to checkout
       router.push('/checkout');
     } catch (error: any) {
-      console.error("Add to cart error:", error);
+      // Add to cart error logging disabled for production
       showToast("Failed to add item to cart. Please try again.", "error");
     } finally {
       setIsBuyingNow(false);
@@ -354,6 +367,19 @@ export default function Component() {
         ],
       });
 
+      // Track add_to_cart event
+      const itemPrice = parseFloat(selectedWatchColor.offerprice || selectedWatchColor.actualprice || '0');
+      trackAddToCart('INR', itemPrice * quantity, [{
+        item_id: watch.id,
+        item_name: watch.name,
+        item_category: watch.category || 'Watches',
+        item_category2: watch.series || '',
+        item_variant: selectedWatchColor.name,
+        item_brand: 'Alban Marcus',
+        price: itemPrice,
+        quantity: quantity
+      }]);
+
       showToast(`${watch.name} (${selectedWatchColor.name}) added to cart successfully!`, "success");
       
       // Check if email verification is needed for future checkout
@@ -361,7 +387,7 @@ export default function Component() {
         showToast("Please verify your email for faster checkout", "info");
       }
     } catch (error: any) {
-      console.error("Add to cart error:", error);
+      // Add to cart error logging disabled for production
 
       // Handle specific error cases
       if (error?.response?.status === 409) {
@@ -380,21 +406,18 @@ export default function Component() {
 
   // Handle buy now after authentication
   const handleBuyNowAfterAuth = async () => {
-    console.log('Checking email after authentication:', { 
-      email: profile?.email,
-      profileId: profile?.id 
-    });
+    // Email check logging disabled for production
     
     // Check if email exists and is valid
     const hasValidEmail = profile?.email && profile.email.trim() !== '';
     
     if (!hasValidEmail) {
-      console.log('Email verification needed - showing modal');
+      // Email verification logging disabled for production
       setShowEmailVerificationModal(true);
       return;
     }
 
-    console.log('Email exists, proceeding to checkout:', profile?.email);
+    // Email exists logging disabled for production
 
     // Use the shared helper function to add item and go to checkout
     await handleAddItemToCartForCheckout();
@@ -483,18 +506,7 @@ export default function Component() {
   });
 
   if (loading) {
-    return (
-      <div className='pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen'>
-        <div className='container'>
-          <div className='flex items-center justify-center min-h-[400px]'>
-            <div className="inline-flex items-center space-x-3">
-              <Loader2 className='w-8 h-8 animate-spin text-gray-900' />
-              <span className='text-lg font-medium text-gray-900'>Loading luxury watch details...</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <WatchDetailSkeleton />;
   }
 
   if (error || !watch) {
@@ -528,7 +540,42 @@ export default function Component() {
   const discountPercentage = offerpercentage || 
     (offerprice > 0 && actualprice > offerprice ? Math.round(((actualprice - offerprice) / actualprice) * 100) : 0);
 
+  // Prepare structured data for the watch
+  const productData = {
+    id: watch.id,
+    name: watch.name,
+    description: watch.description,
+    price: offerprice > 0 ? offerprice : actualprice,
+    stockavailability: watch.stockavailability,
+    images: imageViews.map(view => view.url),
+    rating: watch.rating,
+    reviewCount: watch.reviewscount
+  };
+
+  const breadcrumbData = {
+    breadcrumbs: [
+      { name: 'Home', url: '/' },
+      { name: 'Collections', url: '/collections' },
+      { name: watch.name, url: `/collections/${watch.id}` }
+    ]
+  };
+
   return (
+    <>
+      {/* SEO Structured Data */}
+      <StructuredData type="product" data={productData} />
+      <StructuredData type="breadcrumb" data={breadcrumbData} />
+      
+      <Head>
+        <title>{watch.name} - Alban Marcus Luxury Watches | Premium Mechanical Timepiece</title>
+        <meta name="description" content={`${watch.name} - Premium luxury mechanical watch by Alban Marcus. Swiss movement precision, exclusive timepiece for collectors. Price: ₹${(offerprice > 0 ? offerprice : actualprice).toLocaleString('en-IN')}`} />
+        <meta name="keywords" content={`${watch.name}, Alban Marcus, luxury watch, mechanical watch, Swiss movement, premium timepiece, ${selectedWatchColor?.name || ''}`} />
+        <meta property="og:title" content={`${watch.name} - Alban Marcus Luxury Watch`} />
+        <meta property="og:description" content={`Premium mechanical watch with Swiss movement precision. ${watch.description || 'Exclusive luxury timepiece for discerning collectors.'}`} />
+        <meta property="og:image" content={imageViews[0]?.url || '/images/Am_logo_small_transparentpng.png'} />
+        <meta property="og:url" content={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://albanmarcus.com'}/collections/${watch.id}`} />
+        <link rel="canonical" href={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://albanmarcus.com'}/collections/${watch.id}`} />
+      </Head>
     <div className='pt-[90px] pb-[70px] bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen'>
       <div className='container'>
         <div className='flex items-center text-[14px] pb-[40px] gap-2 text-gray-700'>
@@ -552,11 +599,12 @@ export default function Component() {
                         className={`w-20 h-20 rounded-lg border-2 overflow-hidden transition-all duration-200 ${selectedImage === index ? 'border-gray-900 ring-2 ring-gray-300' : 'border-gray-300 hover:border-gray-500'}`}
                         title={view.label}
                       >
-                        <Image
+                        <WatchImageComponent
                           src={view.url}
                           alt={view.label}
                           width={80}
                           height={80}
+                          fill={false}
                           className='w-full h-full object-cover'
                         />
                       </button>
@@ -565,12 +613,11 @@ export default function Component() {
                 )}
                 <div className='flex-1 relative'>
                   <div className='aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl overflow-hidden border border-gray-200 relative group'>
-                    <Image
+                    <WatchImageComponent
                       src={imageViews[selectedImage]?.url || imageViews[0]?.url || '/images/alban-marcus-watch.png'}
                       alt={watch.name || 'Watch'}
-                      width={500}
-                      height={500}
-                      className='w-full h-full object-contain p-8 cursor-zoom-in transition-transform duration-500 group-hover:scale-150'
+                      className='object-contain p-8 cursor-zoom-in transition-transform duration-500 group-hover:scale-150'
+                      priority={selectedImage === 0}
                     />
                     
                     {/* Zoom Icon */}
@@ -663,7 +710,7 @@ export default function Component() {
                       
                       const formatUrl = (url: string) => {
                         if (!url || url === 'undefined' || url === 'null') {
-                          console.log(`Missing image for variant: ${color.name}, using fallback`);
+                          // Missing image logging disabled for production
                           return '/images/alban-marcus-watch.png';
                         }
                         if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -687,22 +734,28 @@ export default function Component() {
                             type="radio"
                             name="watchVariant"
                             checked={selectedColor === index}
-                            onChange={() => setSelectedColor(index)}
+                            onChange={() => {
+                              setSelectedColor(index);
+                              // Track color selection
+                              trackViewItemColor(
+                                watch.id,
+                                watch.name,
+                                color.name,
+                                color.hex_code || '#000000',
+                                parseFloat(color.offerprice || color.actualprice || '0')
+                              );
+                            }}
                             className="sr-only"
                           />
                           
                           {/* Image container */}
                           <div className='relative w-16 h-16 rounded-lg overflow-hidden bg-white border border-gray-200 flex-shrink-0'>
-                            <Image
+                            <WatchImageComponent
                               src={finalImageUrl}
                               alt={color.name}
-                              fill
                               className='object-contain p-2'
-                              sizes='64px'
-                              onError={(e) => {
-                                console.error(`Failed to load image for ${color.name}:`, finalImageUrl);
-                                // Set fallback image on error
-                                e.currentTarget.src = '/images/alban-marcus-watch.png';
+                              onError={() => {
+                                // Error logging disabled for production
                               }}
                             />
                           </div>
@@ -1348,5 +1401,6 @@ export default function Component() {
         onSuccess={handleEmailVerificationSuccess}
       />
     </div>
+    </>
   );
 }

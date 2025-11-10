@@ -7,13 +7,17 @@ import { queryKeys } from '@/lib/query-keys';
 import { useRouter } from 'next/navigation';
 
 declare global {
-  interface Window { Razorpay?: any }
+  interface Window { 
+    Razorpay?: any;
+  }
 }
 
 export function useRazorpayCheckout() {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [sdkReady, setSdkReady] = useState<boolean>(false);
-  const [paymentStage, setPaymentStage] = useState<'processing' | 'success' | 'creating-order' | 'completed'>('processing');
+  const [paymentStage, setPaymentStage] = useState<'idle' | 'processing' | 'payment_success' | 'creating_order' | 'success' | 'error'>('idle');
+  const [loadingMessage, setLoadingMessage] = useState('');
+  const [sdkReady, setSdkReady] = useState(false);
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   const createOrderMutation = useCreateOrder();
   const verifyPaymentMutation = useVerifyPayment();
@@ -42,8 +46,9 @@ export function useRazorpayCheckout() {
     prefill?: { name?: string; email?: string; contact?: string };
     billingAddressId: string;
     shippingAddressId: string;
+    cartData: any; // Cart data to lock and send to backend
   }) => {
-    const { totalAmountInRupees, itemsSummary, prefill, billingAddressId, shippingAddressId } = params;
+    const { totalAmountInRupees, itemsSummary, prefill, billingAddressId, shippingAddressId, cartData } = params;
 
     if (!totalAmountInRupees || totalAmountInRupees <= 0) {
       alert('Invalid amount');
@@ -53,11 +58,32 @@ export function useRazorpayCheckout() {
     try {
       setIsProcessing(true);
       setPaymentStage('processing');
+      setLoadingMessage('Initializing payment...');
+
+      // Clear any existing timeout
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
+      // Set a timeout to reset state if stuck (5 minutes)
+      const newTimeoutId = setTimeout(() => {
+        // Payment timeout warning disabled for production
+        setPaymentStage('error');
+        setLoadingMessage('Payment process timed out. Please try again.');
+        setTimeout(() => {
+          setIsProcessing(false);
+          setPaymentStage('idle');
+          setLoadingMessage('');
+        }, 3000);
+      }, 5 * 60 * 1000); // 5 minutes
+      setTimeoutId(newTimeoutId);
 
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded || !window.Razorpay) {
         throw new Error('Razorpay SDK failed to load');
       }
+
+      setLoadingMessage('Creating payment order...');
 
       // 1) Create order
       const orderResponse = await createOrderMutation.mutateAsync({
@@ -90,51 +116,89 @@ export function useRazorpayCheckout() {
           razorpay_order_id: string;
           razorpay_signature: string;
         }) => {
-          // Stage 1: Client callback from Razorpay (not final truth)
-          if (resp?.razorpay_payment_id && resp?.razorpay_order_id && resp?.razorpay_signature) {
-            console.log('Payment successful (client callback)', {
-              order_id: resp.razorpay_order_id,
-              payment_id: resp.razorpay_payment_id,
-            });
-          } else {
-            console.error('Payment failed (client callback): Missing fields', resp);
-            alert('Payment failed. Please try again.');
+          // Stage 1: Payment successful from Razorpay
+          setPaymentStage('payment_success');
+          setLoadingMessage('Payment successful! Creating your order...');
+          
+          if (!resp?.razorpay_payment_id || !resp?.razorpay_order_id || !resp?.razorpay_signature) {
+            // Payment error logging disabled for production
+            setPaymentStage('error');
+            setLoadingMessage('Payment failed. Please try again.');
             setIsProcessing(false);
             return;
           }
 
           try {
-            // Stage 2: Complete order creation flow
+            // Stage 2: Create order and shipment
+            setPaymentStage('creating_order');
+            setLoadingMessage('Processing your order and arranging shipment...');
+            
             const orderResponse = await createOrderAndShipMutation.mutateAsync({
               razorpay_order_id: resp.razorpay_order_id,
               razorpay_payment_id: resp.razorpay_payment_id,
               razorpay_signature: resp.razorpay_signature,
               billing_address_id: billingAddressId,
               shipping_address_id: shippingAddressId,
+              cart_data: cartData, // Send locked cart data from frontend
             });
+            
             if (orderResponse?.success) {
-              console.log('Order created successfully', orderResponse);
+              // Order success logging disabled for production
               
+              // Clear timeout on success
+              if (timeoutId) {
+                clearTimeout(timeoutId);
+                setTimeoutId(null);
+              }
+              
+              setPaymentStage('success');
+              setLoadingMessage('Order created successfully! Redirecting...');
+              
+              // Refresh cart data (backend has already cleared the cart)
               queryClient.invalidateQueries({ queryKey: queryKeys.cart.all() });
-              
-              // Show success message
-              alert(`Order placed successfully! Order ID: ${orderResponse.order.id}`);
+              // Also invalidate specific cart queries to ensure UI updates
+              queryClient.invalidateQueries({ queryKey: queryKeys.cart.items() });
+              queryClient.invalidateQueries({ queryKey: queryKeys.cart.count() });
+              // Force immediate refetch of cart count for instant UI update
+              queryClient.refetchQueries({ queryKey: queryKeys.cart.count() });
               
               // Redirect to order success page
-              router.push(`/order-success?orderId=${orderResponse.order.id}`);
+              setTimeout(() => {
+                router.push(`/order-success?orderId=${orderResponse.order.id}&orderNumber=${orderResponse.order.orderNumber}`);
+              }, 1500);
             } else {
-              console.error('Order creation failed', orderResponse);
-              alert('Payment successful but order creation failed. Please contact support.');
+              // Order error logging disabled for production
+              setPaymentStage('error');
+              setLoadingMessage('Payment successful but order creation failed. Please contact support.');
             }
-          } catch (err) {
-            alert('Payment successful but order creation failed. Please contact support.');
+          } catch (err: any) {
+            // Order creation error logging disabled for production
+            
+            // Handle timeout errors specifically
+            if (err.code === 'ECONNABORTED' && err.message.includes('timeout')) {
+              setPaymentStage('success'); // Payment was successful, just took longer
+              setLoadingMessage('Order is being processed. You will receive a confirmation email shortly.');
+              
+              // Redirect to success page after a delay
+              setTimeout(() => {
+                router.push('/order-success?status=processing');
+              }, 3000);
+            } else {
+              setPaymentStage('error');
+              setLoadingMessage('Payment successful but order creation failed. Please contact support.');
+            }
           } finally {
-            setIsProcessing(false);
+            setTimeout(() => setIsProcessing(false), 2000);
           }
         }
         ,
         modal: {
-          ondismiss: () => setIsProcessing(false),
+          ondismiss: () => {
+            // Modal dismiss logging disabled for production
+            setIsProcessing(false);
+            setPaymentStage('idle');
+            setLoadingMessage('');
+          },
         },
       };
 
@@ -142,16 +206,47 @@ export function useRazorpayCheckout() {
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (e: any) {
-      console.error('Payment initiation error:', e);
-      alert(e?.message || 'Failed to initiate payment');
+      // Payment initiation error logging disabled for production
+      setPaymentStage('error');
+      setLoadingMessage('Failed to initiate payment. Please try again.');
+      setTimeout(() => {
+        setPaymentStage('idle');
+        setLoadingMessage('');
+        setIsProcessing(false);
+      }, 3000);
     } finally {
-      setIsProcessing(false);
+      // Don't reset here immediately as we want to show error states
     }
   }, [createOrderMutation, verifyPaymentMutation, createOrderAndShipMutation, loadRazorpayScript, queryClient, router]);
+
+  const cancelPayment = useCallback(() => {
+    // Clear timeout
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      setTimeoutId(null);
+    }
+    setIsProcessing(false);
+    setPaymentStage('idle');
+    setLoadingMessage('');
+  }, [timeoutId]);
+
+  const retryPayment = useCallback((params: any) => {
+    setPaymentStage('idle');
+    setLoadingMessage('');
+    setIsProcessing(false);
+    // Allow user to try payment again
+    setTimeout(() => {
+      payNow(params);
+    }, 500);
+  }, [payNow]);
 
   return { 
     payNow, 
     isProcessing, 
+    paymentStage,
+    loadingMessage,
+    cancelPayment,
+    retryPayment,
     sdkReady, 
     createOrderMutation, 
     verifyPaymentMutation, 

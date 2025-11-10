@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, Package, Truck, MapPin, Calendar, ArrowRight, Home, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useUser } from '@/contexts/UserContext';
+import { trackPurchase } from '@/components/seo/GoogleAnalytics';
 
 const OrderSuccessPage = () => {
   const searchParams = useSearchParams();
@@ -13,6 +14,8 @@ const OrderSuccessPage = () => {
   const [orderDetails, setOrderDetails] = useState<any>(null);
 
   const orderId = searchParams.get('orderId');
+  const orderNumber = searchParams.get('orderNumber');
+  const status = searchParams.get('status');
 
   useEffect(() => {
     // If no order details in URL, redirect to home
@@ -24,14 +27,62 @@ const OrderSuccessPage = () => {
     // Set basic order details from URL params
     setOrderDetails({
       id: orderId,
+      orderNumber: orderNumber,
     });
-  }, [orderId, router]);
+  }, [orderId, orderNumber, router]);
+
+  // Track purchase event when order details are available
+  useEffect(() => {
+    if (orderDetails && orderDetails.id) {
+      // Get order items from localStorage (set during checkout)
+      const orderItemsStr = localStorage.getItem('completedOrderItems');
+      const orderTotalStr = localStorage.getItem('completedOrderTotal');
+      const orderTaxStr = localStorage.getItem('completedOrderTax');
+      const orderShippingStr = localStorage.getItem('completedOrderShipping');
+      
+      if (orderItemsStr && orderTotalStr) {
+        try {
+          const orderItems = JSON.parse(orderItemsStr);
+          const orderTotal = parseFloat(orderTotalStr);
+          const orderTax = parseFloat(orderTaxStr || '0');
+          const orderShipping = parseFloat(orderShippingStr || '0');
+          
+          // Track purchase
+          trackPurchase(
+            orderDetails.orderNumber || orderDetails.id,
+            orderTotal,
+            'INR',
+            orderItems.map((item: any, index: number) => ({
+              item_id: item.watch_id || item.id,
+              item_name: item.watch_name || item.name,
+              item_variant: item.color_name || item.variant,
+              item_brand: 'Alban Marcus',
+              item_category: 'Watches',
+              price: parseFloat(item.unit_price || item.price || '0'),
+              quantity: item.quantity || 1,
+              index: index
+            })),
+            orderTax,
+            orderShipping
+          );
+          
+          // Clear order details from localStorage after tracking
+          localStorage.removeItem('completedOrderItems');
+          localStorage.removeItem('completedOrderTotal');
+          localStorage.removeItem('completedOrderTax');
+          localStorage.removeItem('completedOrderShipping');
+        } catch (error) {
+          // Error tracking purchase
+        }
+      }
+    }
+  }, [orderDetails]);
 
   // Redirect if not authenticated
   if (!profile) {
     return (
       <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center text-center">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-auto">
+        <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md mx-4 sm:mx-auto">
           <h2 className="font-bold mb-4 text-gray-900" style={{ fontSize: '2.2rem' }}>Authentication Required</h2>
           <p className="text-gray-600 mb-6" style={{ fontSize: '1.5rem' }}>Please sign in to view your order.</p>
           <Link
@@ -72,18 +123,23 @@ const OrderSuccessPage = () => {
             Thank you for your purchase, {profile.first_name}!
           </p>
           <p className="text-gray-500" style={{ fontSize: '1.4rem' }}>
-            Your order has been confirmed and is being processed.
+            {status === 'processing' 
+              ? 'Your order is being processed. You will receive a confirmation email shortly.'
+              : 'Your order has been confirmed and is being processed.'
+            }
           </p>
         </div>
 
         {/* Order Details Card */}
-        <div className="bg-white rounded-3xl shadow-lg p-8 mb-8">
+        <div className="bg-white rounded-3xl shadow-lg p-6 sm:p-8 mb-8">
           <div className="border-b border-gray-200 pb-6 mb-6">
             <h2 className="font-bold text-gray-900 mb-4" style={{ fontSize: '2.4rem' }}>Order Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <p className="text-gray-600 mb-2" style={{ fontSize: '1.4rem' }}>Order Number</p>
-                <p className="font-bold text-gray-900" style={{ fontSize: '1.8rem' }}>{orderDetails.orderNumber}</p>
+                <p className="font-bold text-gray-900" style={{ fontSize: '1.8rem' }}>
+                  {orderDetails.orderNumber || `ORD-${orderDetails.id}`}
+                </p>
               </div>
               <div>
                 <p className="text-gray-600 mb-2" style={{ fontSize: '1.4rem' }}>Order Date</p>
@@ -101,7 +157,7 @@ const OrderSuccessPage = () => {
           {/* Order Status Timeline */}
           <div className="mb-8">
             <h3 className="font-bold text-gray-900 mb-6" style={{ fontSize: '2rem' }}>Order Status</h3>
-            <div className="flex items-center justify-between relative">
+            <div className="flex flex-col sm:flex-row items-center justify-between relative">
               {/* Progress Line */}
               <div className="absolute top-6 left-6 right-6 h-0.5 bg-gray-200">
                 <div className="h-full bg-green-500 w-1/4 transition-all duration-500"></div>
@@ -231,15 +287,15 @@ const OrderSuccessPage = () => {
               className="text-blue-600 hover:text-blue-800 font-medium"
               style={{ fontSize: '1.4rem' }}
             >
-              support@albanmarcus.com
+              contact@albanmarcus.com
             </a>
             <span className="hidden sm:inline text-gray-400">|</span>
             <a
-              href="tel:+919999999999"
+              href="tel:+919480282000"
               className="text-blue-600 hover:text-blue-800 font-medium"
               style={{ fontSize: '1.4rem' }}
             >
-              +91 99999 99999
+              +91 9480282000
             </a>
           </div>
         </div>
