@@ -110,7 +110,7 @@ export const metadata: Metadata = {
     // yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
     // yahoo: process.env.NEXT_PUBLIC_YAHOO_VERIFICATION,
   },
-  manifest: '/manifest.json',
+  manifest: '/site.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -149,6 +149,9 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" />
+        <link rel="manifest" href="/site.webmanifest" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/android-chrome-192x192.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/android-chrome-512x512.png" />
         <style dangerouslySetInnerHTML={{
           __html: `
             /* Hide content initially to prevent flash before loading screen */
